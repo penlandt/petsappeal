@@ -16,7 +16,12 @@ class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::check() ? Auth::user() : null;
+
+        if (!$user) {
+            abort(403, 'Unauthorized');
+        }
+
         $companyId = $user->company_id;
 
 $locations = Location::where('company_id', $companyId)

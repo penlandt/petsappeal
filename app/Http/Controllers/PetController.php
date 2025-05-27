@@ -49,8 +49,9 @@ class PetController extends Controller
 
         \App\Models\Pet::create($data);
 
-        return redirect()->route('clients.show', $data['client_id'])
-                         ->with('success', 'Pet added successfully!');
+        return redirect()->route('pets.index')
+                 ->with('success', 'Pet added successfully!');
+
     }
 
     public function edit($id)
@@ -70,24 +71,24 @@ class PetController extends Controller
 
 
     public function update(Request $request, Pet $pet)
-    {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'species' => 'nullable|string|max:255',
-            'breed' => 'nullable|string|max:255',
-            'birthdate' => 'nullable|date',
-            'color' => 'nullable|string|max:255',
-            'gender' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'inactive' => 'nullable|boolean',
-        ]);
+{
+    $data = $request->validate([
+        'name' => 'required|string|max:255',
+        'species' => 'nullable|string|max:255',
+        'breed' => 'nullable|string|max:255',
+        'birthdate' => 'nullable|date',
+        'color' => 'nullable|string|max:255',
+        'gender' => 'nullable|string|max:255',
+        'notes' => 'nullable|string',
+        'inactive' => 'nullable|boolean',
+    ]);
 
-        $data['inactive'] = $request->has('inactive'); // checkbox handling
+    $data['inactive'] = $request->has('inactive'); // checkbox handling
 
-        $pet->update($data);
+    $pet->update($data);
 
-        return redirect()
-            ->route('clients.show', $pet->client_id)
-            ->with('success', 'Pet updated successfully!');
+    return redirect()
+        ->route('pets.index')
+        ->with('success', 'Pet updated successfully!');
     }
 }

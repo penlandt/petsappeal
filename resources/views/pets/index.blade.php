@@ -6,19 +6,16 @@
     </x-slot>
 
     <div class="px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center mb-2">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">All Pets</h3>
-            <a href="{{ route('pets.create') }}"
-               class="inline-flex items-center px-3 py-1 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                + Add New Pet
-            </a>
-        </div>
-
-        <div class="mb-2">
+        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
             <input type="text"
                    id="petFilter"
                    placeholder="Filter by pet or owner name..."
                    class="w-full md:w-1/2 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 text-sm">
+
+            <a href="{{ route('pets.create') }}"
+               class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-sm text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap">
+                + Add New Pet
+            </a>
         </div>
 
         <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded shadow">

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Service;
 
 class ServiceController extends Controller
 {
@@ -11,20 +13,29 @@ class ServiceController extends Controller
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
-        $company = $user->company;
+        $user = Auth::user();
+
+        $query = Service::where('company_id', $user->company_id);
+
+        if (!$request->boolean('show_inactive')) {
+            $query->where('inactive', false);
+        }
+
+        if ($request->filled('filter')) {
+            $query->where('name', 'like', '%' . $request->input('filter') . '%');
+        }
+
+        $services = $query->orderBy('name')->get();
+
+        if ($request->ajax()) {
+            return view('services.partials.table', compact('services'))->render();
+        }
 
         $showInactive = $request->boolean('show_inactive');
 
-        $services = $company->services()
-            ->when(!$showInactive, function ($query) {
-                $query->where('inactive', false);
-            })
-            ->orderBy('name')
-            ->get();
-
         return view('services.index', compact('services', 'showInactive'));
     }
+
 
     /**
      * Show the form for creating a new resource.

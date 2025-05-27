@@ -13,3 +13,10 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+/storage/app/public
+/storage/framework/*
+/storage/logs/*
+/bootstrap/cache/*
+*.log
+*.sqlite
+.DS_Store
