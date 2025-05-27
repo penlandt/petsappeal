@@ -29,7 +29,9 @@ class ScheduleController extends Controller
             ->orderBy('name')
             ->get();
 
-        $staff = Staff::where('company_id', $companyId)
+        $locationIds = $locations->pluck('id')->toArray();
+
+        $staff = Staff::whereIn('location_id', $locationIds)
             ->where(function ($query) {
                 $query->whereNull('end_date')
                       ->orWhere('end_date', '>=', now()->toDateString());
