@@ -7,16 +7,10 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PublicController;
 
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
 */
 
 Route::get('/', function () {
@@ -27,9 +21,13 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
 
-// All routes below here require login
-Route::middleware(['auth'])->group(function () {
-    Route::resource('companies', CompanyController::class);
+// Company creation (accessible before company exists)
+Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
+Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
+
+// All other routes require login and a company
+Route::middleware(['auth', 'has.company'])->group(function () {
+    Route::resource('companies', CompanyController::class)->except(['create', 'store']);
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
@@ -57,11 +55,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/availability-exceptions/{id}', [\App\Http\Controllers\AvailabilityExceptionController::class, 'destroy'])->name('availability-exceptions.destroy');
     Route::post('/availability-exceptions', [\App\Http\Controllers\AvailabilityExceptionController::class, 'store'])->name('availability-exceptions.store');
 
-
     // Schedule Management
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
-    Route::get('/api/appointment-form-data', [AppointmentController::class, 'formData'])
-        ->name('appointments.form-data');
+    Route::get('/api/appointment-form-data', [AppointmentController::class, 'formData'])->name('appointments.form-data');
     Route::get('/api/clients/search', [AppointmentController::class, 'searchClients']);
     Route::get('/api/clients/{client}/pets', [AppointmentController::class, 'getClientPets']);
     Route::get('/api/appointments/{appointment}', [AppointmentController::class, 'show']);
@@ -71,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
 });
 
+// Public front-end routes
 Route::get('/', [PublicController::class, 'home'])->name('public.home');
 Route::get('/about', [PublicController::class, 'about'])->name('public.about');
 Route::get('/pricing', [PublicController::class, 'pricing'])->name('public.pricing');

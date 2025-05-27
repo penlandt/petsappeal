@@ -25,6 +25,7 @@
                                 </button>
                             </x-slot>
                             <x-slot name="content">
+                                <x-dropdown-link :href="route('companies.index')">Company Info</x-dropdown-link>
                                 <x-dropdown-link :href="route('clients.index')">Clients</x-dropdown-link>
                                 <x-dropdown-link :href="route('pets.index')">Pets</x-dropdown-link>
                                 <x-dropdown-link :href="route('services.index')">Services</x-dropdown-link>

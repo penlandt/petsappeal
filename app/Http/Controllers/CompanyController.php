@@ -3,87 +3,87 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Company;
 
 class CompanyController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        //
-
-        $companies = Company::all();
+        $companies = Company::where('id', Auth::user()->company_id)->get();
 
         return view('companies.index', compact('companies'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        //
+        return view('companies.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'state' => 'required|string|max:2',
+            'postal_code' => 'required|string|max:10',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+        ]);
+
+        $company = Company::create([
+            'name' => $request->name,
+            'address' => $request->address,
+            'city' => $request->city,
+            'state' => $request->state,
+            'postal_code' => $request->postal_code,
+            'phone' => $request->phone,
+            'email' => $request->email,
+        ]);
+
+        $user = Auth::user();
+        $user->company_id = $company->id;
+        $user->save();
+
+        return redirect()->route('dashboard')->with('success', 'Company created and linked to your account.');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
-        //
+        $company = Company::findOrFail($id);
+        return view('companies.show', compact('company'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
-        //
+        $company = Company::findOrFail($id);
+        return view('companies.edit', compact('company'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'state' => 'required|string|max:2',
+            'postal_code' => 'required|string|max:10',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+        ]);
+
+        $company = Company::findOrFail($id);
+        $company->update($request->all());
+
+        return redirect()->route('companies.index')->with('success', 'Company updated.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        //
+        $company = Company::findOrFail($id);
+        $company->delete();
+
+        return redirect()->route('companies.index')->with('success', 'Company deleted.');
     }
 }
