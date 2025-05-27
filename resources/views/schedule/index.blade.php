@@ -23,6 +23,20 @@
     </x-slot>
 
     <div class="py-6 px-4 sm:px-6 lg:px-8">
+    @if (!$canSchedule)
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-6 dark:bg-yellow-200 dark:text-yellow-900">
+        <p class="font-semibold">Schedule not available</p>
+        <p>You must create at least one 
+            <a href="{{ route('locations.create') }}" class="underline text-blue-600 hover:text-blue-800">Location</a> 
+            and one 
+            <a href="{{ route('staff.create') }}" class="underline text-blue-600 hover:text-blue-800">Staff Member</a> 
+            before using the schedule.
+        </p>
+    </div>
+@endif
+
+@if ($canSchedule)
+
         <div class="flex justify-between items-end mb-6 gap-4 flex-wrap">
             <!-- Location Picker -->
             <form method="GET" action="{{ route('schedule.index') }}">
@@ -829,5 +843,6 @@
     </script>
 
 @endpush
+@endif
 
 </x-app-layout>

@@ -33,7 +33,11 @@
                         <select name="state" required
                             class="w-full mt-1 rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                             <option value="">Select</option>
-                            @foreach (['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'] as $abbr)
+                            @foreach ([
+                                'AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA',
+                                'MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX',
+                                'UT','VT','VA','WA','WV','WI','WY'
+                            ] as $abbr)
                                 <option value="{{ $abbr }}" @if(old('state') == $abbr) selected @endif>{{ $abbr }}</option>
                             @endforeach
                         </select>
@@ -59,7 +63,7 @@
                 </div>
 
                 <div class="pt-6 text-right">
-                    <x-primary-button>Create Company</x-primary-button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Create Company</button>
                 </div>
             </form>
         </div>

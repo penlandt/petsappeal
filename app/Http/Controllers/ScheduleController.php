@@ -24,27 +24,34 @@ class ScheduleController extends Controller
 
         $companyId = $user->company_id;
 
-$locations = Location::where('company_id', $companyId)
-    ->where('inactive', false)
-    ->orderBy('name')
-    ->get();
+        $locations = Location::where('company_id', $companyId)
+            ->where('inactive', false)
+            ->orderBy('name')
+            ->get();
 
-        $defaultLocation = $locations->first();
-
-        $selectedLocationId = $request->query('location_id', $defaultLocation->id);
-        $selectedDate = $request->input('date', now()->toDateString());
-        $dayOfWeek = Carbon::parse($selectedDate)->format('l');
-
-        \Log::info("Selected date: $selectedDate | Day of week: $dayOfWeek");
-
-        // ✅ Get all active staff for this location
-        $staff = Staff::where('location_id', $selectedLocationId)
+        $staff = Staff::where('company_id', $companyId)
             ->where(function ($query) {
                 $query->whereNull('end_date')
                       ->orWhere('end_date', '>=', now()->toDateString());
             })
             ->orderBy('last_name')
             ->get();
+
+        // If missing location or staff, skip calendar setup
+        if ($locations->isEmpty() || $staff->isEmpty()) {
+            return view('schedule.index', [
+                'canSchedule' => false,
+                'locations' => $locations,
+                'staff' => $staff,
+            ]);
+        }
+
+        $defaultLocation = $locations->first();
+        $selectedLocationId = $request->query('location_id', $defaultLocation->id);
+        $selectedDate = $request->input('date', now()->toDateString());
+        $dayOfWeek = Carbon::parse($selectedDate)->format('l');
+
+        \Log::info("Selected date: $selectedDate | Day of week: $dayOfWeek");
 
         $clients = Client::where('company_id', $companyId)->orderBy('last_name')->get();
         $services = Service::where('company_id', $companyId)->orderBy('name')->get();
@@ -56,13 +63,11 @@ $locations = Location::where('company_id', $companyId)
                 ->where('day_of_week', $dayOfWeek)
                 ->first();
 
-            // Handle weekly OFF days or before/after hours
             if ($weekly) {
                 $start = strtoupper(trim($weekly->start_time));
                 $end = strtoupper(trim($weekly->end_time));
 
                 if ($start === 'OFF' || $end === 'OFF' || empty($start) || empty($end)) {
-                    // Full-day unavailable
                     $backgroundEvents[] = [
                         'resourceId' => $member->id,
                         'start' => $selectedDate . 'T00:00:00',
@@ -71,7 +76,6 @@ $locations = Location::where('company_id', $companyId)
                         'color' => '#cccccc',
                     ];
                 } else {
-                    // Shade before start and after end
                     $backgroundEvents[] = [
                         'resourceId' => $member->id,
                         'start' => $selectedDate . 'T00:00:00',
@@ -88,7 +92,6 @@ $locations = Location::where('company_id', $companyId)
                     ];
                 }
             } else {
-                // No weekly availability at all → mark full day unavailable
                 $backgroundEvents[] = [
                     'resourceId' => $member->id,
                     'start' => $selectedDate . 'T00:00:00',
@@ -98,7 +101,6 @@ $locations = Location::where('company_id', $companyId)
                 ];
             }
 
-            // Handle exceptions
             $exceptions = StaffAvailabilityException::where('staff_id', $member->id)
                 ->whereDate('start_date', '<=', $selectedDate)
                 ->whereDate('end_date', '>=', $selectedDate)
@@ -109,7 +111,6 @@ $locations = Location::where('company_id', $companyId)
                 $hasTimes = !empty($ex->start_time) && !empty($ex->end_time);
 
                 if ($isSameDay && $hasTimes) {
-                    // Partial-day unavailability
                     $backgroundEvents[] = [
                         'resourceId' => $member->id,
                         'start' => $selectedDate . 'T' . $ex->start_time,
@@ -118,7 +119,6 @@ $locations = Location::where('company_id', $companyId)
                         'color' => '#ffaaaa',
                     ];
                 } else {
-                    // Full-day unavailability
                     $backgroundEvents[] = [
                         'resourceId' => $member->id,
                         'start' => $selectedDate . 'T00:00:00',
@@ -131,6 +131,7 @@ $locations = Location::where('company_id', $companyId)
         }
 
         return view('schedule.index', [
+            'canSchedule' => true,
             'locations' => $locations,
             'defaultLocation' => $defaultLocation,
             'selectedLocationId' => $selectedLocationId,

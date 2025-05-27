@@ -19,7 +19,7 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+})->middleware(['auth', 'has.company'])->name('dashboard');
 
 // Company creation (accessible before company exists)
 Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
