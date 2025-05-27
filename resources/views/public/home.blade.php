@@ -1,33 +1,32 @@
-@extends('layouts.guest')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            Welcome to PETSAppeal
+        </h2>
+    </x-slot>
 
-@section('content')
-    <h1 class="text-3xl font-bold mb-6">Smarter Grooming Salon Scheduling Starts Here</h1>
-
-    <p class="mb-4 text-lg leading-relaxed">
-        PETSAppeal is the all-in-one software solution for pet grooming salons. Easily manage appointments, clients, pets, and staff — all from one intuitive dashboard.
-    </p>
-
-    <p class="mb-8 text-lg leading-relaxed">
-        Our platform simplifies day-to-day scheduling so you can focus on what matters most: delivering exceptional grooming services to happy pets and their owners.
-    </p>
-
-    <h2 class="text-2xl font-semibold mt-10 mb-4">What’s Available Now</h2>
-    <ul class="list-disc list-inside text-lg mb-6">
-        <li>Client and pet management</li>
-        <li>Staff scheduling and availability</li>
-        <li>Appointment booking with calendar view</li>
-        <li>Dark mode-friendly user interface</li>
-    </ul>
-
-    <h2 class="text-2xl font-semibold mt-10 mb-4">Coming Soon</h2>
-    <ul class="list-disc list-inside text-lg mb-10">
-        <li><strong>Grooming Reports & Statistics</strong> – Track performance, revenue, and service history</li>
-        <li><strong>Retail Point of Sale (POS)</strong> – Sell grooming products and manage inventory</li>
-        <li><strong>Boarding Management</strong> – Track stays, feeding, and medication schedules</li>
-        <li><strong>Daycare Scheduling</strong> – Streamlined drop-off and pick-up management</li>
-    </ul>
-
-    <a href="{{ route('register') }}" class="inline-block px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded hover:bg-blue-700 transition">
-        Get Started Free
-    </a>
-@endsection
+    <div class="py-12">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
+                <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
+                    Pet Grooming & Retail Management Made Easy
+                </h1>
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                    PETSAppeal is the all-in-one solution for pet grooming salons, boarding kennels, and pet supply stores.
+                    Manage appointments, track clients, and grow your business with modern, user-friendly software.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{{ route('public.about') }}" class="px-5 py-2 rounded-lg bg-blue-600 text-white text-center hover:bg-blue-700">
+                        Learn More
+                    </a>
+                    <a href="{{ route('public.pricing') }}" class="px-5 py-2 rounded-lg bg-green-600 text-white text-center hover:bg-green-700">
+                        View Pricing
+                    </a>
+                    <a href="{{ route('public.contact') }}" class="px-5 py-2 rounded-lg bg-gray-600 text-white text-center hover:bg-gray-700">
+                        Contact Us
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>

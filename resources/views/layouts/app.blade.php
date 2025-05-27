@@ -29,9 +29,12 @@
         @endif
 
         <!-- Page Content -->
-        <main class="py-6 px-4 sm:px-6 lg:px-8">
-            {{ $slot }}
+        <main class="py-12 flex justify-center">
+            <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                {{ $slot }}
+            </div>
         </main>
+
 </div>
     </div>
 @stack('scripts')

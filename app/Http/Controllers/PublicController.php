@@ -37,7 +37,7 @@ class PublicController extends Controller
 
         // You can configure this to send to your real email later
         Mail::raw($request->message, function ($message) use ($request) {
-            $message->to('support@petsappeal.com')
+            $message->to('support@pets-appeal.com')
                     ->subject('New Contact Form Submission')
                     ->replyTo($request->email, $request->name);
         });
