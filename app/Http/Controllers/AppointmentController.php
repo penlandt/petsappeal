@@ -89,9 +89,26 @@ class AppointmentController extends Controller
     $recurrenceInterval = (int) $request->input('recurrence_interval'); // Number of weeks or months
     $recurrenceGroupId = $recurrenceType ? \Illuminate\Support\Str::uuid()->toString() : null;
 
+    if ($recurrenceType && $recurrenceInterval > 0) {
+        \App\Models\AppointmentRecurrenceRule::create([
+            'recurrence_group_id' => $recurrenceGroupId,
+            'location_id' => $validated['location_id'],
+            'staff_id' => $validated['staff_id'],
+            'pet_id' => $validated['pet_id'],
+            'service_id' => $validated['service_id'],
+            'price' => $validated['price'],
+            'repeat_type' => $recurrenceType,
+            'repeat_interval' => $recurrenceInterval,
+            'start_date' => $start->toDateString(),
+            'start_time' => $start->toTimeString(),
+            'notes' => $validated['notes'] ?? null,
+        ]);
+    }
+
     $cutoffDate = now()->addMonths(6);
     $currentStart = $start->copy();
     $occurrence = 0;
+    $skipped = [];
 
     while (true) {
         if ($occurrence > 0) {
@@ -106,6 +123,27 @@ class AppointmentController extends Controller
             }
         }
 
+        $dayOfWeek = strtolower($currentStart->format('l'));
+        $startTimeStr = $currentStart->format('H:i:s');
+        $dateStr = $currentStart->toDateString();
+
+        $availability = \App\Models\StaffAvailability::where('staff_id', $validated['staff_id'])
+            ->where('day_of_week', $dayOfWeek)
+            ->where('start_time', '<=', $startTimeStr)
+            ->where('end_time', '>', $startTimeStr)
+            ->first();
+
+        $isException = \App\Models\StaffAvailabilityException::where('staff_id', $validated['staff_id'])
+            ->whereDate('start_date', '<=', $dateStr)
+            ->whereDate('end_date', '>=', $dateStr)
+            ->exists();
+
+        if (!$availability || $isException) {
+            $skipped[] = $currentStart->format('M j, Y \a\t g:i A');
+            $occurrence++;
+            continue;
+        }
+
         $appt = new \App\Models\Appointment();
         $appt->location_id = $validated['location_id'];
         $appt->staff_id = $validated['staff_id'];
@@ -116,7 +154,6 @@ class AppointmentController extends Controller
         $appt->start_time = $currentStart->copy();
         $appt->recurrence_group_id = $recurrenceGroupId;
         $appt->status = 'Booked';
-
         $appt->save();
 
         $occurrence++;
@@ -126,12 +163,19 @@ class AppointmentController extends Controller
         }
     }
 
+    $message = 'Appointment(s) created!';
+    if (count($skipped)) {
+        $message .= ' The following dates were skipped due to staff unavailability:';
+        foreach ($skipped as $s) {
+            $message .= "\n- {$s}";
+        }
+    }
+
     return redirect()->route('schedule.index', [
         'date' => $request->input('date'),
         'location_id' => $request->input('location_id'),
-    ])->with('success', 'Appointment created!');
+    ])->with('success', $message);
 }
-
 
     public function allAppointments()
     {
@@ -150,7 +194,14 @@ class AppointmentController extends Controller
                 'start' => $start->format('Y-m-d\TH:i:s'),
                 'end' => $end->format('Y-m-d\TH:i:s'),
                 'resourceId' => $appointment->staff_id,
+                'status' => $appointment->status,
+                'price' => $appointment->price,
+                'service_name' => $appointment->service->name ?? null,
+                'client_name' => optional($appointment->pet->client)->first_name . ' ' . optional($appointment->pet->client)->last_name,
+                'client_phone' => optional($appointment->pet->client)->phone,
+                'notes' => $appointment->notes,
             ];
+            
         });
 
         return response()->json($events);
@@ -194,7 +245,8 @@ class AppointmentController extends Controller
                 'service_id' => 'required|exists:services,id',
                 'price' => 'required|numeric|min:0',
                 'notes' => 'nullable|string',
-                'status' => 'required|in:Booked,Confirmed,Cancelled,No-Show',
+                'status' => 'required|in:Booked,Confirmed,Cancelled,No-Show,Checked In,Checked Out',
+
                 'appointment_date' => 'required|date',
                 'start_time' => 'required|date_format:H:i',
                 'staff_id' => 'required|exists:staff,id',

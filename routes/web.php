@@ -6,6 +6,10 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\ImportExportController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +69,42 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/api/appointments', [AppointmentController::class, 'allAppointments']);
     Route::put('/appointments/{id}', [AppointmentController::class, 'update']);
     Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+
+    // Tools Management
+    Route::get('/import-export', [ImportExportController::class, 'index'])->name('import_export.index');
+
+    Route::get('/export/clients', [ImportExportController::class, 'exportClients'])->name('export.clients');
+    Route::get('/export/pets', [ImportExportController::class, 'exportPets'])->name('export.pets');
+    Route::get('/export/services', [ImportExportController::class, 'exportServices'])->name('export.services');
+
+    Route::post('/import/clients', [ImportExportController::class, 'importClients'])->name('import.clients');
+    Route::post('/import/pets', [ImportExportController::class, 'importPets'])->name('import.pets');
+    Route::post('/import/services', [ImportExportController::class, 'importServices'])->name('import.services');
+
+    // Admin Management
+    Route::get('/admin/users', [UserManagementController::class, 'index'])->name('admin.users');
+    Route::get('/admin/users/{user}/edit', [UserManagementController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/admin/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
+    Route::get('/admin/users/{user}/impersonate', [UserManagementController::class, 'impersonate'])->name('admin.users.impersonate');
+    Route::get('/admin/stop-impersonating', function () {
+        $impersonatorId = session()->pull('impersonator_id');
+    
+        if ($impersonatorId) {
+            $originalUser = \App\Models\User::find($impersonatorId);
+            auth()->login($originalUser);
+        }
+    
+        return redirect()->route('admin.users')->with('success', 'Returned to your admin account.');
+    })->name('admin.stop-impersonating');
+
+    // Reports
+    Route::get('/reports/recurring-conflicts', [ReportController::class, 'recurringConflicts'])->name('reports.recurring-conflicts');
+    Route::delete('/reports/recurring-conflicts/{id}', [ReportController::class, 'deleteConflict'])->name('reports.recurring-conflicts.delete');
+
+    // Profile
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 // Public front-end routes

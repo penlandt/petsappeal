@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
         @if (session('success'))
-            <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-800 rounded">
-                {{ session('success') }}
+            <div class="mb-4 text-green-600 dark:text-green-400 font-semibold whitespace-pre-line">
+                {!! nl2br(e(session('success'))) !!}
             </div>
         @endif
 
@@ -65,6 +65,37 @@
         <div id="calendarWrapper">
             <div id="calendar" class="mt-6"></div>
         </div>
+        <!-- Appointment Status Color Key -->
+        <div class="mt-8">
+            <h3 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">Appointment Status Color Key:</h3>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded" style="background-color: #4b5563;"></div>
+                    <span class="text-sm text-gray-800 dark:text-gray-200">Booked</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded" style="background-color: #2563eb;"></div>
+                    <span class="text-sm text-gray-800 dark:text-gray-200">Confirmed</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded" style="background-color: #b91c1c;"></div>
+                    <span class="text-sm text-gray-800 dark:text-gray-200">Cancelled</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded" style="background-color: #92400e;"></div>
+                    <span class="text-sm text-gray-800 dark:text-gray-200">No-Show</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded" style="background-color: #059669;"></div>
+                    <span class="text-sm text-gray-800 dark:text-gray-200">Checked In</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded" style="background-color: #6b21a8;"></div>
+                    <span class="text-sm text-gray-800 dark:text-gray-200">Checked Out</span>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 <!-- New Appointment Modal -->
@@ -288,6 +319,8 @@
                     <option value="Confirmed">Confirmed</option>
                     <option value="Cancelled">Cancelled</option>
                     <option value="No-Show">No-Show</option>
+                    <option value="Checked In">Checked In</option>
+                    <option value="Checked Out">Checked Out</option>
                 </select>
             </div>
 
@@ -317,6 +350,8 @@
         </form>
     </div>
 </div>
+
+<div id="calendar-tooltip" class="tooltip-box"></div>
 
 @push('scripts')
 <!-- FullCalendar CSS -->
@@ -352,7 +387,21 @@
 }
 </style>
 
-
+<style>
+    .tooltip-box {
+    position: absolute;
+    background-color: #1f2937; /* dark gray */
+    color: white;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    z-index: 99999;
+    white-space: nowrap;
+    pointer-events: none;
+    display: none;
+    max-width: 300px;
+}
+</style>
 
 <script>
     const servicePriceMap = {
@@ -407,6 +456,63 @@
                     events: {!! json_encode($backgroundEvents) !!}
                 }
             ],
+
+            eventDidMount: function(info) {
+                const status = info.event.extendedProps.status;
+
+                let bgColor = '';
+                switch (status) {
+                    case 'Confirmed':
+                        bgColor = '#2563eb'; // blue-600
+                        break;
+                    case 'Cancelled':
+                        bgColor = '#b91c1c'; // red-700
+                        break;
+                    case 'No-Show':
+                        bgColor = '#92400e'; // amber-800
+                        break;
+                    case 'Checked In':
+                        bgColor = '#059669'; // green-600
+                        break;
+                    case 'Checked Out':
+                        bgColor = '#6b21a8'; // purple-800
+                        break;
+                    default:
+                        bgColor = '#4b5563'; // default gray-600 for "Booked" or unknown
+                }
+
+                info.el.style.backgroundColor = bgColor;
+                info.el.style.borderColor = bgColor;
+
+                // Tooltip logic
+                const tooltip = document.getElementById('calendar-tooltip');
+                const appt = info.event.extendedProps;
+
+                info.el.addEventListener('mouseenter', (e) => {
+                    tooltip.innerHTML = `
+                        <strong>${info.event.title}</strong><br>
+                        <span>Client: ${appt.client_name || 'N/A'}</span><br>
+                        <span>Phone: ${appt.client_phone || 'N/A'}</span><br>
+                        <span>Service: ${appt.service_name || 'N/A'}</span><br>
+                        <span>Status: ${appt.status}</span><br>
+                        <span>Notes: ${appt.notes ? appt.notes.replace(/\n/g, '<br>') : 'None'}</span>
+                    `;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                });
+
+                info.el.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                });
+
+                info.el.addEventListener('mouseleave', () => {
+                    tooltip.style.display = 'none';
+                });
+            },
+
+
 
             eventClick: function(info) {
                 const appointmentId = info.event.id;
