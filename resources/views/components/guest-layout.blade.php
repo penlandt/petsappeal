@@ -19,7 +19,9 @@
 
         <!-- Page Content -->
         <main class="flex justify-center pt-6 sm:pt-12 px-4">
-            {{ $slot }}
+    
+        {{ $slot }}
+    
         </main>
     </div>
 

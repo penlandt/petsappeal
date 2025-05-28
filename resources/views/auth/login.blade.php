@@ -19,8 +19,18 @@
                 <div class="mb-6">
                     <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                     <input id="password" name="password" type="password" required
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+
+                    @if (Route::has('password.request'))
+                        <div class="mt-2">
+                            <a href="{{ route('password.request') }}"
+                            class="text-sm text-blue-500 hover:underline">
+                                Forgot your password?
+                            </a>
+                        </div>
+                    @endif
                 </div>
+
 
                 <div class="flex items-center justify-between">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
