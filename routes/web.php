@@ -60,7 +60,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::post('/availability-exceptions', [\App\Http\Controllers\AvailabilityExceptionController::class, 'store'])->name('availability-exceptions.store');
 
     // Schedule Management
-    Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+    Route::get('/modules/grooming/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::get('/api/appointment-form-data', [AppointmentController::class, 'formData'])->name('appointments.form-data');
     Route::get('/api/clients/search', [AppointmentController::class, 'searchClients']);
     Route::get('/api/clients/{client}/pets', [AppointmentController::class, 'getClientPets']);
@@ -105,6 +105,27 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     // Profile
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Retail Management
+    Route::get('/modules/retail', function () {
+        return view('modules.retail');
+    })->name('modules.retail');
+    
+    // Boarding Management
+    Route::get('/modules/boarding', function () {
+        return view('modules.boarding');
+    })->name('modules.boarding');
+    
+    // Daycare Management
+    Route::get('/modules/daycare', function () {
+        return view('modules.daycare');
+    })->name('modules.daycare');
+    
+    // House/Pet-Sitting Management
+    Route::get('/modules/house-sitting', function () {
+        return view('modules.house');
+    })->name('modules.house');
+    
 });
 
 // Public front-end routes

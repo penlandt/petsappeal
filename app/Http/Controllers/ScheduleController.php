@@ -41,7 +41,7 @@ class ScheduleController extends Controller
 
         // If missing location or staff, skip calendar setup
         if ($locations->isEmpty() || $staff->isEmpty()) {
-            return view('schedule.index', [
+            return view('modules.grooming.schedule', [
                 'canSchedule' => false,
                 'locations' => $locations,
                 'staff' => $staff,
@@ -132,7 +132,7 @@ class ScheduleController extends Controller
             }
         }
 
-        return view('schedule.index', [
+        return view('modules.grooming.schedule', [
             'canSchedule' => true,
             'locations' => $locations,
             'defaultLocation' => $defaultLocation,

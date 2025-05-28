@@ -18,7 +18,7 @@
         @endif
 
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Schedule Appointments
+            Grooming Module
         </h2>
     </x-slot>
 
@@ -26,10 +26,10 @@
     @if (!$canSchedule)
     <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-6 dark:bg-yellow-200 dark:text-yellow-900">
         <p class="font-semibold">Schedule not available</p>
-        <p>You must create at least one 
-            <a href="{{ route('locations.create') }}" class="underline text-blue-600 hover:text-blue-800">Location</a> 
-            and one 
-            <a href="{{ route('staff.create') }}" class="underline text-blue-600 hover:text-blue-800">Staff Member</a> 
+        <p>You must create at least one
+            <a href="{{ route('locations.create') }}" class="underline text-blue-600 hover:text-blue-800">Location</a>
+            and one
+            <a href="{{ route('staff.create') }}" class="underline text-blue-600 hover:text-blue-800">Staff Member</a>
             before using the schedule.
         </p>
     </div>
@@ -722,13 +722,15 @@
                     });
             },
 
+
+
+
             dateClick: function(info) {
                 console.log('dateClick triggered:', info);
                 window.selectedStaffId = info.resource.id;
 
                 const modal = document.getElementById('appointmentModal');
 
-                // Show the modal
                 modal.style.display = 'flex';
                 modal.style.position = 'fixed';
                 modal.style.top = '0';
@@ -738,17 +740,14 @@
                 modal.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
                 modal.style.zIndex = '9999';
 
-                // Now that it's visible, safely grab the form
                 const form = document.getElementById('appointmentForm');
                 form.reset();
 
                 form.addEventListener('submit', function () {
                     console.log('Appointment form is submitting...');
 
-                    // Remove existing if they exist
                     form.querySelectorAll('input[name="appointment_date"], input[name="start_time"]').forEach(el => el.remove());
 
-                    // Add hidden inputs
                     const dateInput = document.createElement('input');
                     dateInput.type = 'hidden';
                     dateInput.name = 'appointment_date';
@@ -772,15 +771,11 @@
                     locationInput.name = 'location_id';
                     locationInput.value = '{{ $selectedLocationId }}';
                     form.appendChild(locationInput);
-
                 });
 
-                // Store selected appointment date and time for later use when saving the form.
-                // These values are not bound to visible form inputs but will be submitted manually.
                 window.selectedAppointmentDate = info.dateStr.split('T')[0];
                 window.selectedAppointmentTime = new Date(info.dateStr).toTimeString().slice(0, 5);
 
-                // Initialize TomSelect on client_id
                 if (window.clientSelect) {
                     window.clientSelect.destroy();
                 }
@@ -796,10 +791,7 @@
                         const form = document.querySelector('#appointmentModal form');
                         const petSelect = form.querySelector('#pet_id');
 
-                        // Clear existing options
                         petSelect.innerHTML = '';
-
-                        // Add a blank placeholder
                         const placeholder = document.createElement('option');
                         placeholder.value = '';
                         placeholder.textContent = '-- Select a pet --';
@@ -814,8 +806,22 @@
                                     const option = document.createElement('option');
                                     option.value = pet.id;
                                     option.textContent = `${pet.name} (${pet.species})`;
+                                    option.dataset.notes = pet.notes || '';
                                     petSelect.appendChild(option);
                                 });
+
+                                // Copy notes when a pet is selected
+                                petSelect.addEventListener('change', function () {
+                                    const selectedOption = petSelect.options[petSelect.selectedIndex];
+                                    const petNotes = selectedOption.dataset.notes || '';
+                                    document.getElementById('notes').value = petNotes;
+                                });
+
+                                // ✅ If a pet is added, pre-select the first and trigger notes
+                                if (petSelect.options.length > 1) {
+                                    petSelect.selectedIndex = 1;
+                                    petSelect.dispatchEvent(new Event('change'));
+                                }
                             })
                             .catch(error => {
                                 console.error('Failed to load pets:', error);
@@ -844,12 +850,9 @@
                         : '';
                 });
 
-                // Set up listener for client selection to load pets
                 form.querySelector('#client_id').addEventListener('change', function () {
                     const clientId = this.value;
                     const petSelect = form.querySelector('#pet_id');
-
-                    // Clear existing options
                     petSelect.innerHTML = '';
 
                     if (!clientId) return;
@@ -861,14 +864,24 @@
                                 const option = document.createElement('option');
                                 option.value = pet.id;
                                 option.textContent = `${pet.name} (${pet.species})`;
+                                option.dataset.notes = pet.notes || '';
                                 petSelect.appendChild(option);
                             });
+
+                            // Ensure notes field is updated if pet is pre-selected
+                            if (petSelect.options.length > 1) {
+                                petSelect.selectedIndex = 1;
+                                petSelect.dispatchEvent(new Event('change'));
+                            }
                         })
                         .catch(error => {
                             console.error('Failed to load pets:', error);
                         });
                 });
             },
+            
+
+
             datesSet: function(info) {
                 const selected = info.startStr.substring(0, 10);
                 const current = '{{ $selectedDate }}';

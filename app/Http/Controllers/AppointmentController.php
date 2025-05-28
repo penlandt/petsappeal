@@ -62,7 +62,7 @@ class AppointmentController extends Controller
         $pets = $client->pets()
             ->where('inactive', false)
             ->orderBy('name')
-            ->get(['id', 'name', 'species']);
+            ->get(['id', 'name', 'species', 'notes']);
 
 
         return response()->json($pets);
