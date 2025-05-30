@@ -10,6 +10,8 @@ use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\POS\POSController;
+use App\Http\Controllers\POS\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -89,43 +91,101 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/admin/users/{user}/impersonate', [UserManagementController::class, 'impersonate'])->name('admin.users.impersonate');
     Route::get('/admin/stop-impersonating', function () {
         $impersonatorId = session()->pull('impersonator_id');
-    
+
         if ($impersonatorId) {
             $originalUser = \App\Models\User::find($impersonatorId);
             auth()->login($originalUser);
         }
-    
+
         return redirect()->route('admin.users')->with('success', 'Returned to your admin account.');
     })->name('admin.stop-impersonating');
 
-    // Reports
-    Route::get('/reports/recurring-conflicts', [ReportController::class, 'recurringConflicts'])->name('reports.recurring-conflicts');
-    Route::delete('/reports/recurring-conflicts/{id}', [ReportController::class, 'deleteConflict'])->name('reports.recurring-conflicts.delete');
-
-    // Profile
-    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-
     // Retail Management
-    Route::get('/modules/retail', function () {
-        return view('modules.retail');
-    })->name('modules.retail');
+    Route::get('/modules/retail', [ProductController::class, 'index'])->name('modules.retail');
+
+    // 🆕 Point of Sale
+    Route::get('/pos', [POSController::class, 'index'])
+        ->middleware(['auth', 'has.company'])
+        ->name('pos.index');
+
+    Route::get('/pos/products', [ProductController::class, 'index'])
+        ->middleware(['auth', 'has.company'])
+        ->name('pos.products');
+
+    Route::post('/pos/select-location', [POSController::class, 'setLocation'])
+    ->middleware(['auth', 'has.company'])
+    ->name('pos.set-location');
+
+    Route::post('/pos/checkout', [POSController::class, 'checkout'])
+    ->middleware(['auth', 'has.company'])
+    ->name('pos.checkout');
+
+        
+    // Add new product routes for POS system
+    Route::get('/pos/products/create', [ProductController::class, 'create'])
+        ->middleware(['auth', 'has.company'])
+        ->name('pos.products.create');
+
+    Route::post('/pos/products', [ProductController::class, 'store'])
+        ->middleware(['auth', 'has.company'])
+        ->name('pos.products.store');
+
+    Route::get('/pos/products/{product}/edit', [ProductController::class, 'edit'])
+        ->middleware(['auth', 'has.company'])
+        ->name('pos.products.edit');
+
+    Route::put('/pos/products/{product}', [ProductController::class, 'update'])
+        ->middleware(['auth', 'has.company'])
+        ->name('pos.products.update');
+
+    Route::get('/api/pos/products', [ProductController::class, 'getProductsJson'])
+    ->middleware(['auth', 'has.company'])
+    ->name('pos.products.json');
     
+    Route::get('/pos/api/products', [ProductController::class, 'getProductsJson'])
+    ->middleware(['auth', 'has.company'])
+    ->name('pos.api.products');
+
+    Route::get('/pos/api/products', [ProductController::class, 'apiProducts'])
+    ->middleware(['auth', 'has.company'])
+    ->name('pos.api.products');
+    
+    Route::get('/pos/api/products/search', [ProductController::class, 'search'])
+    ->middleware(['auth', 'has.company'])
+    ->name('pos.products.search');
+    
+    // Profile Management
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->middleware(['auth', 'has.company'])
+        ->name('profile.edit');
+
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->middleware(['auth', 'has.company'])
+        ->name('profile.update');
+
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->middleware(['auth', 'has.company'])
+        ->name('profile.destroy');
+
+    // Reports
+    Route::get('/reports/recurring-conflicts', [ReportController::class, 'recurringConflicts'])
+        ->middleware(['auth', 'has.company'])
+        ->name('reports.recurring-conflicts');
+
     // Boarding Management
     Route::get('/modules/boarding', function () {
         return view('modules.boarding');
     })->name('modules.boarding');
-    
+
     // Daycare Management
     Route::get('/modules/daycare', function () {
         return view('modules.daycare');
     })->name('modules.daycare');
-    
+
     // House/Pet-Sitting Management
     Route::get('/modules/house-sitting', function () {
         return view('modules.house');
     })->name('modules.house');
-    
 });
 
 // Public front-end routes

@@ -10,17 +10,20 @@ class Location extends Model
     use HasFactory;
 
     protected $fillable = [
-        'company_id',
         'name',
         'address',
         'city',
         'state',
         'postal_code',
+        'timezone',
         'phone',
         'email',
         'inactive',
-        'timezone',
+        'company_id',
+        'product_tax_rate',
+        'service_tax_rate',
     ];
+    
 
     public function company()
     {

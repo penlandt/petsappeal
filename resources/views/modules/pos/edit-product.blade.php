@@ -1,0 +1,77 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                Edit Product
+            </h2>
+            <a href="{{ route('pos.products') }}"
+               class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded">
+                Back to Products
+            </a>
+        </div>
+    </x-slot>
+
+    <div class="py-12 px-4 sm:px-6 lg:px-8 max-w-md mx-auto bg-white dark:bg-gray-800 shadow-md rounded">
+        <form method="POST" action="{{ route('pos.products.update', $product->id) }}">
+            @csrf
+            @method('PUT')
+
+            <div class="mb-4">
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                <input id="name" name="name" type="text" required
+                       value="{{ old('name', $product->name) }}"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                @error('name')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="upc" class="block text-sm font-medium text-gray-700 dark:text-gray-300">UPC</label>
+                <input id="upc" name="upc" type="text"
+                       value="{{ old('upc', $product->upc) }}"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                @error('upc')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="price" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
+                <input id="price" name="price" type="number" step="0.01" min="0" required
+                       value="{{ old('price', $product->price) }}"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                @error('price')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cost</label>
+                <input id="cost" name="cost" type="number" step="0.01" min="0" required
+                       value="{{ old('cost', $product->cost) }}"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                @error('cost')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-6">
+                <label for="stock_quantity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stock Quantity</label>
+                <input id="stock_quantity" name="stock_quantity" type="number" min="0" required
+                       value="{{ old('stock_quantity', $product->stock_quantity) }}"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                @error('stock_quantity')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</x-app-layout>

@@ -42,7 +42,10 @@
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('modules.retail')">Retail</x-dropdown-link>
+                                <!-- Retail replaced by single Register link -->
+                                <x-dropdown-link :href="route('pos.index')">Point of Sale</x-dropdown-link>
+
+                                <!-- Other Modules -->
                                 <x-dropdown-link :href="route('schedule.index')">Grooming</x-dropdown-link>
                                 <x-dropdown-link :href="route('modules.boarding')">Boarding</x-dropdown-link>
                                 <x-dropdown-link :href="route('modules.daycare')">Daycare</x-dropdown-link>
@@ -50,7 +53,6 @@
                             </x-slot>
                         </x-dropdown>
                     </div>
-
 
                     <!-- Reports Dropdown -->
                     <div class="hidden sm:ml-10 sm:flex sm:items-center">
@@ -70,7 +72,6 @@
                             </x-slot>
                         </x-dropdown>
                     </div>
-
 
                     <!-- Tools Dropdown -->
                     <div class="hidden sm:ml-10 sm:flex sm:items-center">
@@ -150,7 +151,6 @@
                                 <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Log Out</x-dropdown-link>
                             </form>
                         </x-slot>
-
                     </x-dropdown>
                 @else
                     <div class="space-x-4">

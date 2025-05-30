@@ -69,6 +69,34 @@
                         class="mt-1 block w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring focus:ring-indigo-200 focus:border-indigo-500 sm:text-sm" />
                 </div>
 
+                <div class="flex flex-col md:flex-row md:space-x-4">
+                    <div class="w-full md:w-1/2">
+                        <label for="product_tax_rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Tax Rate (%)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            name="product_tax_rate"
+                            id="product_tax_rate"
+                            class="form-control bg-white text-black dark:bg-gray-800 dark:text-white"
+                            value="{{ old('product_tax_rate', $location->product_tax_rate ?? '') }}"
+                        >
+                    </div>
+                    <div class="w-full md:w-1/2 mt-4 md:mt-0">
+                        <label for="service_tax_rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Service Tax Rate (%)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            name="service_tax_rate"
+                            id="service_tax_rate"
+                            class="form-control bg-white text-black dark:bg-gray-800 dark:text-white"
+                            value="{{ old('service_tax_rate', $location->service_tax_rate ?? '') }}"
+                        >
+                    </div>
+                </div>
+
+
+
+
                 <div class="mb-6">
                     <label class="inline-flex items-center">
                         <input type="checkbox" name="inactive" value="1"
