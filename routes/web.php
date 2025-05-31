@@ -90,6 +90,10 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::post('/import/pets', [ImportExportController::class, 'importPets'])->name('import.pets');
     Route::post('/import/services', [ImportExportController::class, 'importServices'])->name('import.services');
 
+    Route::get('/export/products', [\App\Http\Controllers\ImportExportController::class, 'exportProducts'])->name('export.products');
+    Route::post('/import/products', [ImportExportController::class, 'importProducts'])->name('import.products');
+
+
     // Admin Management
     Route::get('/admin/users', [UserManagementController::class, 'index'])->name('admin.users');
     Route::get('/admin/users/{user}/edit', [UserManagementController::class, 'edit'])->name('admin.users.edit');
@@ -160,6 +164,10 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/pos/api/products/search', [ProductController::class, 'search'])
     ->middleware(['auth', 'has.company'])
     ->name('pos.products.search');
+
+    // Point of Sale Add Product Modal
+    Route::post('/pos/api/products', [\App\Http\Controllers\POS\POSController::class, 'storeProduct']);
+
     
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])

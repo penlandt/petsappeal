@@ -120,4 +120,34 @@ public function checkout(Request $request)
     }
 }
 
+public function storeProduct(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'price' => 'required|numeric|min:0',
+        'cost' => 'required|numeric|min:0',
+        'quantity' => 'required|integer|min:0',
+        'upc' => 'nullable|string|max:255',
+        'sku' => 'nullable|string|max:255',
+        'description' => 'nullable|string',
+        'inactive' => 'nullable|boolean',
+    ]);
+
+    $user = auth()->user();
+
+    $product = new \App\Models\Product();
+    $product->company_id = $user->company_id;
+    $product->name = $request->name;
+    $product->price = $request->price;
+    $product->cost = $request->cost;
+    $product->quantity = $request->quantity;
+    $product->upc = $request->upc;
+    $product->sku = $request->sku;
+    $product->description = $request->description;
+    $product->inactive = $request->inactive ?? 0;
+    $product->save();
+
+    return response()->json(['success' => true, 'product_id' => $product->id]);
+}
+
 }

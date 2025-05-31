@@ -34,6 +34,11 @@
                    class="export-button bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
                     Export Services
                 </a>
+                <a href="{{ route('export.products') }}"
+                class="export-button bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                    Export Products
+                </a>
+
             </div>
 
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Import Data</h3>
@@ -46,6 +51,7 @@
                         <option value="clients">Clients</option>
                         <option value="pets">Pets</option>
                         <option value="services">Services</option>
+                        <option value="products">Products</option>
                     </select>
                 </div>
                 <div class="mb-4">
@@ -94,6 +100,10 @@
                 case 'services':
                     actionUrl = '{{ route('import.services') }}';
                     break;
+                case 'products':
+                    actionUrl = '{{ route('import.products') }}';
+                    break;
+
                 default:
                     alert('Invalid import type selected.');
                     e.preventDefault();

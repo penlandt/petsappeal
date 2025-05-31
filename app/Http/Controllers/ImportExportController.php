@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Response;
+use App\Models\Product;
 
 class ImportExportController extends Controller
 {
@@ -211,7 +213,9 @@ class ImportExportController extends Controller
 
     $handle = fopen($file->getRealPath(), 'r');
     $header = fgetcsv($handle);
-
+    $header = array_map(fn($h) => trim($h), $header); // Trim whitespace
+    $header = array_filter($header); // Remove blanks
+    
     Log::info('CSV header parsed', ['header' => $header]);
 
     DB::beginTransaction();
@@ -340,6 +344,101 @@ public function importServices(Request $request): \Illuminate\Http\RedirectRespo
     }
 
     return redirect()->back()->with('success', 'Services imported successfully.');
+}
+
+public function exportProducts()
+{
+    $user = auth()->user();
+    $products = Product::where('company_id', $user->company_id)->get();
+
+    $csvData = [];
+    $csvData[] = ['Name', 'UPC', 'SKU', 'Description', 'Cost', 'Price', 'Quantity', 'Inactive'];
+
+    foreach ($products as $product) {
+        $csvData[] = [
+            $product->name,
+            $product->upc,
+            $product->sku,
+            $product->description,
+            $product->cost,
+            $product->price,
+            $product->quantity,
+            $product->inactive,
+        ];
+    }
+
+    $output = fopen('php://temp', 'r+');
+    foreach ($csvData as $row) {
+        fputcsv($output, $row);
+    }
+    rewind($output);
+    $csv = stream_get_contents($output);
+    fclose($output);
+
+    $filename = 'products_export_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+    return Response::make($csv, 200, [
+        'Content-Type' => 'text/csv',
+        'Content-Disposition' => "attachment; filename={$filename}",
+    ]);
+}
+
+public function importProducts(Request $request)
+{
+    $request->validate([
+        'import_file' => 'required|file|mimes:csv,txt',
+    ]);
+
+    $file = $request->file('import_file');
+    $user = auth()->user();
+    $handle = fopen($file, 'r');
+
+    // Read first line and remove BOM if present
+    $rawHeaderLine = fgets($handle);
+    $rawHeaderLine = preg_replace('/^\xEF\xBB\xBF/', '', $rawHeaderLine); // ← this line removes BOM
+    $rawHeader = str_getcsv($rawHeaderLine);
+
+    \Log::info('Sanitized CSV header:', $rawHeader);
+
+    // Normalize header by trimming spaces
+    $header = array_map('trim', $rawHeader);
+
+    $required = ['Name', 'UPC', 'Cost', 'Price', 'Quantity'];
+    $missing = array_diff($required, $header);
+
+    if (!empty($missing)) {
+        return redirect()->back()->with('error', 'Missing required columns: ' . implode(', ', $missing));
+    }
+
+    $updated = 0;
+    $created = 0;
+
+    while (($row = fgetcsv($handle)) !== false) {
+        $productData = array_combine($header, $row);
+
+        $product = Product::firstOrNew([
+            'company_id' => $user->company_id,
+            'name' => $productData['Name'],
+        ]);
+
+        $product->fill([
+            'upc' => $productData['UPC'] ?? null,
+            'sku' => $productData['SKU'] ?? null,
+            'description' => $productData['Description'] ?? null,
+            'cost' => $productData['Cost'] ?? 0,
+            'price' => $productData['Price'] ?? 0,
+            'quantity' => $productData['Quantity'] ?? 0,
+            'inactive' => $productData['Inactive'] ?? 0,
+        ]);
+        $product->company_id = $user->company_id;
+        $product->save();
+
+        $product->wasRecentlyCreated ? $created++ : $updated++;
+    }
+
+    fclose($handle);
+
+    return redirect()->back()->with('success', "Imported {$created} new products, updated {$updated} existing ones.");
 }
 
 }

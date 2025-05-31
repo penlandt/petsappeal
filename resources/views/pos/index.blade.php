@@ -40,11 +40,17 @@
         @else
             <div class="flex flex-col lg:flex-row gap-6">
                 <div class="w-full lg:w-2/3">
-                    <div class="mb-4">
-                        <input type="text" id="product-search"
-                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                            placeholder="Search for a product...">
-                    </div>
+                <div class="flex justify-between items-center mb-4">
+                    <input type="text" id="product-search"
+                        class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                        placeholder="Search for a product...">
+
+                    <button onclick="openAddProductModal()"
+                        class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap">
+                        + Add Product
+                    </button>
+                </div>
+
 
                     <div id="product-list" class="mb-6 bg-white dark:bg-gray-800 rounded shadow p-4 max-h-96 overflow-auto">
                         <!-- Products will be dynamically loaded here -->
@@ -119,6 +125,66 @@
     Submit Payment
 </button>
         </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div id="addProductModal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-xl">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Add New Product</h2>
+        <form id="addProductForm">
+            @csrf
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                    <input type="text" id="newProductName" required
+                        class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
+                    <input type="number" id="newProductPrice" required step="0.01"
+                        class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cost</label>
+                    <input type="number" id="newProductCost" required step="0.01"
+                        class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity</label>
+                    <input type="number" id="newProductQuantity" required step="1" min="0"
+                        class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">UPC</label>
+                    <input type="text" id="newProductUPC"
+                        class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">SKU</label>
+                    <input type="text" id="newProductSKU"
+                        class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" />
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                <textarea id="newProductDescription"
+                    class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white"></textarea>
+            </div>
+            <div class="mt-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="newProductInactive"
+                        class="rounded border-gray-300 dark:bg-gray-700 dark:text-white">
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">Mark as Inactive</span>
+                </label>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button type="button" onclick="closeAddProductModal()"
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -408,6 +474,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderCart();
 });
+
+function openAddProductModal() {
+    document.getElementById('addProductModal').classList.remove('hidden');
+    document.getElementById('addProductModal').classList.add('flex');
+}
+
+function closeAddProductModal() {
+    document.getElementById('addProductModal').classList.add('hidden');
+    document.getElementById('addProductModal').classList.remove('flex');
+}
+
+document.getElementById('addProductForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const data = {
+        name: document.getElementById('newProductName').value.trim(),
+        price: parseFloat(document.getElementById('newProductPrice').value),
+        cost: parseFloat(document.getElementById('newProductCost').value),
+        quantity: parseInt(document.getElementById('newProductQuantity').value),
+        upc: document.getElementById('newProductUPC').value.trim(),
+        sku: document.getElementById('newProductSKU').value.trim(),
+        description: document.getElementById('newProductDescription').value.trim(),
+        inactive: document.getElementById('newProductInactive').checked ? 1 : 0,
+    };
+
+    if (!data.name || data.price < 0 || data.cost < 0 || data.quantity < 0) {
+        alert("Please enter valid product information.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/pos/api/products', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Product added successfully!');
+            closeAddProductModal();
+            document.getElementById('product-search').value = data.name;
+            searchProducts(data.name);
+        } else {
+            alert('Failed to add product.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('An error occurred.');
+    }
+});
+
 </script>
 @endif
 
