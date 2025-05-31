@@ -5,20 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Product extends Model
+class CompanyModuleAccess extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'company_id',
-        'name',
-        'upc',
-        'sku',
-        'description',
-        'cost',
-        'price',
-        'taxable',
-        'quantity',
-        'inactive',
+        'module',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

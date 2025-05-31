@@ -22,9 +22,16 @@ class AuthServiceProvider extends ServiceProvider
      * @return void
      */
     public function boot()
-    {
-        $this->registerPolicies();
+{
+    $this->registerPolicies();
 
-        //
-    }
+    Gate::define('access-module', function ($user, ?string $module) {
+        if (!$user || !$module || !$user->company) {
+            return false;
+        }
+    
+        return $user->company->moduleAccess()->where('module', $module)->exists();
+    });
+    
+}
 }

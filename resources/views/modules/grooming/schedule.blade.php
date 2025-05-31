@@ -17,9 +17,12 @@
             </div>
         @endif
 
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Grooming Module
-        </h2>
+        <div class="flex flex-wrap justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                Grooming Module
+            </h2>
+            @include('modules.grooming.partials.secondary-menu')
+        </div>
     </x-slot>
 
     <div class="py-6 px-4 sm:px-6 lg:px-8">

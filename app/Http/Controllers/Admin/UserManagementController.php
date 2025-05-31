@@ -23,22 +23,49 @@ class UserManagementController extends Controller
         return view('admin.users.index', compact('users', 'search'));
     }
     public function edit(\App\Models\User $user)
-    {
-        return view('admin.users.edit', compact('user'));
-    }
+{
+    $availableModules = ['pos', 'grooming', 'boarding', 'daycare', 'house'];
 
-    public function update(Request $request, \App\Models\User $user)
+    $userModules = $user->company
+        ? $user->company->moduleAccess()->pluck('module')->toArray()
+        : [];
+
+    return view('admin.users.edit', compact('user', 'availableModules', 'userModules'));
+}
+
+public function update(Request $request, \App\Models\User $user)
 {
     $validated = $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email,' . $user->id,
         'is_admin' => 'required|boolean',
+        'modules' => 'array',
+        'modules.*' => 'string',
     ]);
 
-    $user->update($validated);
+    $user->update([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'is_admin' => $validated['is_admin'],
+    ]);
+
+    // Sync module access for the user's company
+    if ($user->company) {
+        $user->company->moduleAccess()->delete();
+
+        foreach ($validated['modules'] ?? [] as $module) {
+            \App\Models\CompanyModuleAccess::create([
+                'company_id' => $user->company->id,
+                'module' => $module,
+            ]);
+        }
+    }
 
     return redirect()->route('admin.users')->with('success', 'User updated successfully.');
 }
+
+
+
 
 public function impersonate(\App\Models\User $user)
 {

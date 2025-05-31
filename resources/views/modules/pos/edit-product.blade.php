@@ -70,6 +70,16 @@
                 @enderror
             </div>
 
+            <div class="mt-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="taxable" value="1"
+                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                        {{ old('taxable', $product->taxable) ? 'checked' : '' }}>
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">Taxable</span>
+                </label>
+            </div>
+
+
             <!-- Cost -->
             <div class="mb-4">
                 <label for="cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cost</label>

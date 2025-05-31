@@ -352,7 +352,8 @@ public function exportProducts()
     $products = Product::where('company_id', $user->company_id)->get();
 
     $csvData = [];
-    $csvData[] = ['Name', 'UPC', 'SKU', 'Description', 'Cost', 'Price', 'Quantity', 'Inactive'];
+    $csvData[] = ['Name', 'UPC', 'SKU', 'Description', 'Cost', 'Price', 'Quantity', 'Inactive', 'Taxable'];
+
 
     foreach ($products as $product) {
         $csvData[] = [
@@ -364,6 +365,7 @@ public function exportProducts()
             $product->price,
             $product->quantity,
             $product->inactive,
+            $product->taxable ? '1' : '0',
         ];
     }
 
@@ -403,7 +405,8 @@ public function importProducts(Request $request)
     // Normalize header by trimming spaces
     $header = array_map('trim', $rawHeader);
 
-    $required = ['Name', 'UPC', 'Cost', 'Price', 'Quantity'];
+    $required = ['Name', 'UPC', 'Cost', 'Price', 'Quantity']; // Taxable is optional
+
     $missing = array_diff($required, $header);
 
     if (!empty($missing)) {
@@ -429,7 +432,9 @@ public function importProducts(Request $request)
             'price' => $productData['Price'] ?? 0,
             'quantity' => $productData['Quantity'] ?? 0,
             'inactive' => $productData['Inactive'] ?? 0,
+            'taxable' => isset($productData['Taxable']) ? (bool) $productData['Taxable'] : true,
         ]);
+        
         $product->company_id = $user->company_id;
         $product->save();
 

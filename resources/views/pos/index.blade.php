@@ -171,13 +171,20 @@
                 <textarea id="newProductDescription"
                     class="w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white"></textarea>
             </div>
-            <div class="mt-4">
+            <div class="mt-4 flex flex-wrap items-center gap-6">
                 <label class="inline-flex items-center">
                     <input type="checkbox" id="newProductInactive"
-                        class="rounded border-gray-300 dark:bg-gray-700 dark:text-white">
-                    <span class="ml-2 text-gray-700 dark:text-gray-300">Mark as Inactive</span>
+                        class="rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-indigo-600 focus:ring-indigo-500">
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">Inactive</span>
+                </label>
+
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="newProductTaxable" checked
+                        class="rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-indigo-600 focus:ring-indigo-500">
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">Taxable</span>
                 </label>
             </div>
+
             <div class="mt-6 flex justify-end gap-2">
                 <button type="button" onclick="closeAddProductModal()"
                     class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
@@ -211,7 +218,9 @@ window.addToCart = function(productId, name, price) {
     if (existingItem) {
         existingItem.quantity += quantity;
     } else {
-        cart.push({ id: productId, name, price, quantity });
+        const isTaxable = arguments.length > 3 ? arguments[3] : true; // default true
+        cart.push({ id: productId, name, price, quantity, taxable: isTaxable });
+
     }
 
     saveCartToLocalStorage();
@@ -230,6 +239,7 @@ function saveCartToLocalStorage() {
 }
 
 function renderCart() {
+    console.log('renderCart was called');
     const cartItems = document.getElementById('cart-items');
     cartItems.innerHTML = '';
     cart.forEach((item, index) => {
@@ -238,7 +248,11 @@ function renderCart() {
         tr.innerHTML = `
             <td class="px-4 py-2 text-gray-900 dark:text-white">${item.name}</td>
             <td class="px-4 py-2 text-gray-900 dark:text-white">${item.quantity.toFixed(2)}</td>
-            <td class="px-4 py-2 text-gray-900 dark:text-white">$${item.price.toFixed(2)}</td>
+            <td class="px-4 py-2 text-gray-900 dark:text-white">
+                <input type="number" step="0.01" min="0" value="${item.price}"
+                    onchange="updateCartPrice(${index}, this.value)"
+                    class="w-20 px-2 py-1 border rounded dark:bg-gray-700 dark:text-white" />
+            </td>
             <td class="px-4 py-2 text-gray-900 dark:text-white">$${total.toFixed(2)}</td>
             <td class="px-4 py-2 text-right">
                 <button onclick="removeFromCart(${index})"
@@ -246,22 +260,39 @@ function renderCart() {
             </td>
         `;
         cartItems.appendChild(tr);
+        console.log(tr.innerHTML);
+
     });
     updateTotals();
 }
 
+
+
+function updateCartPrice(index, newPrice) {
+    cart[index].price = parseFloat(newPrice) || 0;
+    renderCart();
+}
+
 function updateTotals() {
     let subtotal = 0;
+    let taxableAmount = 0;
+
     cart.forEach(item => {
-        subtotal += item.price * item.quantity;
+        const lineTotal = item.price * item.quantity;
+        subtotal += lineTotal;
+        if (item.taxable) {
+            taxableAmount += lineTotal;
+        }
     });
-    const tax = subtotal * (productTaxRate / 100);
+
+    const tax = taxableAmount * (productTaxRate / 100);
     const total = subtotal + tax;
 
     document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
     document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
     document.getElementById('total').textContent = `$${total.toFixed(2)}`;
 }
+
 
 function checkoutCart() {
     if (cart.length === 0) {
@@ -436,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="number" id="qty-${product.id}" value="1" min="0.01" step="0.01"
                         class="w-20 px-2 py-1 rounded border dark:bg-gray-700 dark:text-white" />
                     <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                        onclick="addToCart(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.price})">
+                        onclick="addToCart(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.price}, ${product.taxable})">
                         Add
                     </button>
                 </div>

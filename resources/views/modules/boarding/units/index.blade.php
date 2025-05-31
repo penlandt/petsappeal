@@ -1,16 +1,19 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Boarding Units
-            </h2>
+<x-slot name="header">
+    <div class="flex items-center justify-between">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            Boarding Units
+        </h2>
+        <div class="flex items-center space-x-4">
             @include('modules.boarding.partials.secondary-menu')
             <a href="{{ route('boarding.units.create') }}"
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                 + Add Unit
             </a>
         </div>
-    </x-slot>
+    </div>
+</x-slot>
+
 
     <div class="py-6 px-4 sm:px-6 lg:px-8">
         @if (session('success'))

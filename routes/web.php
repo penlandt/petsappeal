@@ -17,6 +17,7 @@ use App\Http\Controllers\Modules\Boarding\BoardingReservationController;
 use App\Http\Controllers\Modules\Boarding\BoardingLocationController;
 use App\Models\Modules\Boarding\BoardingReservation;
 use App\Http\Controllers\LocationSelectionController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,10 @@ Route::post('/companies', [CompanyController::class, 'store'])->name('companies.
 // All other routes require login and a company
 Route::middleware(['auth', 'has.company'])->group(function () {
     Route::resource('companies', CompanyController::class)->except(['create', 'store']);
+
+    
+
+
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
@@ -69,15 +74,18 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::post('/availability-exceptions', [\App\Http\Controllers\AvailabilityExceptionController::class, 'store'])->name('availability-exceptions.store');
 
     // Schedule Management
-    Route::get('/modules/grooming/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
-    Route::get('/api/appointment-form-data', [AppointmentController::class, 'formData'])->name('appointments.form-data');
-    Route::get('/api/clients/search', [AppointmentController::class, 'searchClients']);
-    Route::get('/api/clients/{client}/pets', [AppointmentController::class, 'getClientPets']);
-    Route::get('/api/appointments/{appointment}', [AppointmentController::class, 'show']);
-    Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
-    Route::get('/api/appointments', [AppointmentController::class, 'allAppointments']);
-    Route::put('/appointments/{id}', [AppointmentController::class, 'update']);
-    Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    Route::middleware(['check.module.access:grooming'])->group(function () {
+        Route::get('/modules/grooming/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+        Route::get('/api/appointment-form-data', [AppointmentController::class, 'formData'])->name('appointments.form-data');
+        Route::get('/api/clients/search', [AppointmentController::class, 'searchClients']);
+        Route::get('/api/clients/{client}/pets', [AppointmentController::class, 'getClientPets']);
+        Route::get('/api/appointments/{appointment}', [AppointmentController::class, 'show']);
+        Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+        Route::get('/api/appointments', [AppointmentController::class, 'allAppointments']);
+        Route::put('/appointments/{id}', [AppointmentController::class, 'update']);
+        Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    });
+    
 
     // Tools Management
     Route::get('/import-export', [ImportExportController::class, 'index'])->name('import_export.index');
@@ -115,60 +123,25 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/modules/retail', [ProductController::class, 'index'])->name('modules.retail');
 
     // 🆕 Point of Sale
-    Route::get('/pos', [POSController::class, 'index'])
-        ->middleware(['auth', 'has.company'])
-        ->name('pos.index');
+    // 🆕 Point of Sale
+Route::middleware(['auth', 'has.company', 'check.module.access:pos'])->group(function () {
+    Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
 
-    Route::get('/pos/products', [ProductController::class, 'index'])
-        ->middleware(['auth', 'has.company'])
-        ->name('pos.products');
+    Route::get('/pos/products', [ProductController::class, 'index'])->name('pos.products');
+    Route::post('/pos/select-location', [POSController::class, 'setLocation'])->name('pos.set-location');
+    Route::post('/pos/checkout', [POSController::class, 'checkout'])->name('pos.checkout');
 
-    Route::post('/pos/select-location', [POSController::class, 'setLocation'])
-    ->middleware(['auth', 'has.company'])
-    ->name('pos.set-location');
+    Route::get('/pos/products/create', [ProductController::class, 'create'])->name('pos.products.create');
+    Route::post('/pos/products', [ProductController::class, 'store'])->name('pos.products.store');
+    Route::get('/pos/products/{product}/edit', [ProductController::class, 'edit'])->name('pos.products.edit');
+    Route::put('/pos/products/{product}', [ProductController::class, 'update'])->name('pos.products.update');
 
-    Route::post('/pos/checkout', [POSController::class, 'checkout'])
-    ->middleware(['auth', 'has.company'])
-    ->name('pos.checkout');
+    Route::get('/api/pos/products', [ProductController::class, 'getProductsJson'])->name('pos.products.json');
+    Route::get('/pos/api/products', [ProductController::class, 'apiProducts'])->name('pos.api.products');
+    Route::get('/pos/api/products/search', [ProductController::class, 'search'])->name('pos.products.search');
+    Route::post('/pos/api/products', [POSController::class, 'storeProduct']);
+});
 
-        
-    // Add new product routes for POS system
-    Route::get('/pos/products/create', [ProductController::class, 'create'])
-        ->middleware(['auth', 'has.company'])
-        ->name('pos.products.create');
-
-    Route::post('/pos/products', [ProductController::class, 'store'])
-        ->middleware(['auth', 'has.company'])
-        ->name('pos.products.store');
-
-    Route::get('/pos/products/{product}/edit', [ProductController::class, 'edit'])
-        ->middleware(['auth', 'has.company'])
-        ->name('pos.products.edit');
-
-    Route::put('/pos/products/{product}', [ProductController::class, 'update'])
-        ->middleware(['auth', 'has.company'])
-        ->name('pos.products.update');
-
-    Route::get('/api/pos/products', [ProductController::class, 'getProductsJson'])
-    ->middleware(['auth', 'has.company'])
-    ->name('pos.products.json');
-    
-    Route::get('/pos/api/products', [ProductController::class, 'getProductsJson'])
-    ->middleware(['auth', 'has.company'])
-    ->name('pos.api.products');
-
-    Route::get('/pos/api/products', [ProductController::class, 'apiProducts'])
-    ->middleware(['auth', 'has.company'])
-    ->name('pos.api.products');
-    
-    Route::get('/pos/api/products/search', [ProductController::class, 'search'])
-    ->middleware(['auth', 'has.company'])
-    ->name('pos.products.search');
-
-    // Point of Sale Add Product Modal
-    Route::post('/pos/api/products', [\App\Http\Controllers\POS\POSController::class, 'storeProduct']);
-
-    
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->middleware(['auth', 'has.company'])
@@ -188,65 +161,43 @@ Route::middleware(['auth', 'has.company'])->group(function () {
         ->name('reports.recurring-conflicts');
 
     // Boarding Management
-    Route::get('/modules/boarding', function () {
-        return view('modules.boarding');
-    })->name('modules.boarding');
+    Route::middleware(['check.module.access:boarding'])->group(function () {
+        Route::get('/modules/boarding', function () {
+            return view('modules.boarding');
+        })->name('modules.boarding');
     
-    Route::get('/boarding/units/create', [BoardingUnitController::class, 'create'])->name('boarding.units.create');
-
-
-    Route::middleware(['auth'])->group(function () {
+        Route::get('/boarding/units/create', [BoardingUnitController::class, 'create'])->name('boarding.units.create');
         Route::get('/boarding/units', [BoardingUnitController::class, 'index'])->name('boarding.units.index');
-    });
-
-    Route::post('/boarding/units', [BoardingUnitController::class, 'store'])->name('boarding.units.store');
-
-    Route::get('/boarding/units/{id}/edit', [BoardingUnitController::class, 'edit'])->name('boarding.units.edit');
-
-    Route::put('/boarding/units/{id}', [BoardingUnitController::class, 'update'])->name('boarding.units.update');
-
-    Route::delete('/boarding/units/{id}', [BoardingUnitController::class, 'destroy'])->name('boarding.units.destroy');
-
-    Route::get('/boarding/reservations', [BoardingReservationController::class, 'index'])->name('boarding.reservations.index');
-
-    Route::get('/boarding/reservations/create', [BoardingReservationController::class, 'create'])->name('boarding.reservations.create');
-
-    Route::post('/boarding/reservations', [BoardingReservationController::class, 'store'])->name('boarding.reservations.store');
-
-    Route::get('/boarding/select-location', [BoardingLocationController::class, 'selectLocation'])
-    ->name('boarding.location.select')
-    ->middleware('auth');
-
-    Route::post('/boarding/set-location', [BoardingLocationController::class, 'setLocation'])
-    ->name('boarding.location.set')
-    ->middleware('auth');
-
-    Route::post('/boarding/fetch-pet-notes', [\App\Http\Controllers\Modules\Boarding\BoardingReservationController::class, 'getPetNotes'])
-    ->name('boarding.fetch-pet-notes');
-
-    Route::post('/set-location', function (Illuminate\Http\Request $request) {
-        $request->session()->put('selected_location_id', $request->location_id);
-        return response()->json(['success' => true]);
-    })->middleware(['auth']);
+        Route::post('/boarding/units', [BoardingUnitController::class, 'store'])->name('boarding.units.store');
+        Route::get('/boarding/units/{id}/edit', [BoardingUnitController::class, 'edit'])->name('boarding.units.edit');
+        Route::put('/boarding/units/{id}', [BoardingUnitController::class, 'update'])->name('boarding.units.update');
+        Route::delete('/boarding/units/{id}', [BoardingUnitController::class, 'destroy'])->name('boarding.units.destroy');
     
-    Route::get('/boarding/reservations/json', [\App\Http\Controllers\Modules\Boarding\BoardingReservationController::class, 'json'])->name('boarding.reservations.json');
-
-    Route::get('/boarding/reservations/{reservation}/edit', [BoardingReservationController::class, 'edit'])->name('boarding.reservations.edit');
-
-    Route::put('/boarding/reservations/{reservation}', [BoardingReservationController::class, 'update'])->name('boarding.reservations.update');
-
-    Route::delete('/boarding/reservations/{reservation}', [BoardingReservationController::class, 'destroy'])
-    ->name('boarding.reservations.destroy');
+        Route::get('/boarding/reservations', [BoardingReservationController::class, 'index'])->name('boarding.reservations.index');
+        Route::get('/boarding/reservations/create', [BoardingReservationController::class, 'create'])->name('boarding.reservations.create');
+        Route::post('/boarding/reservations', [BoardingReservationController::class, 'store'])->name('boarding.reservations.store');
+        Route::get('/boarding/reservations/{reservation}/edit', [BoardingReservationController::class, 'edit'])->name('boarding.reservations.edit');
+        Route::put('/boarding/reservations/{reservation}', [BoardingReservationController::class, 'update'])->name('boarding.reservations.update');
+        Route::delete('/boarding/reservations/{reservation}', [BoardingReservationController::class, 'destroy'])->name('boarding.reservations.destroy');
+    
+        Route::post('/boarding/fetch-pet-notes', [BoardingReservationController::class, 'getPetNotes'])->name('boarding.fetch-pet-notes');
+        Route::get('/boarding/reservations/json', [BoardingReservationController::class, 'json'])->name('boarding.reservations.json');
+    
+        Route::get('/boarding/select-location', [BoardingLocationController::class, 'selectLocation'])->name('boarding.location.select');
+        Route::post('/boarding/set-location', [BoardingLocationController::class, 'setLocation'])->name('boarding.location.set');
+    });
+    
 
     // Daycare Management
     Route::get('/modules/daycare', function () {
         return view('modules.daycare');
-    })->name('modules.daycare');
+    })->middleware('check.module.access:daycare')->name('modules.daycare');
+    
 
     // House/Pet-Sitting Management
     Route::get('/modules/house-sitting', function () {
         return view('modules.house');
-    })->name('modules.house');
+    })->middleware('check.module.access:house')->name('modules.house');
 });
 
 // Public front-end routes

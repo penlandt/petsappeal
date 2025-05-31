@@ -27,4 +27,20 @@ public function locations()
     return $this->hasMany(Location::class);
 }
 
+public function hasModuleAccess(string $module): bool
+{
+    return $this->moduleAccess()->where('module', $module)->exists();
+}
+
+public function moduleAccess()
+{
+    return $this->hasMany(\App\Models\CompanyModuleAccess::class);
+}
+
+public function hasModule(string $module): bool
+{
+    return $this->moduleAccess()->where('module', $module)->exists();
+}
+
+
 }

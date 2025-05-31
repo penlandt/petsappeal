@@ -1,10 +1,13 @@
 <x-app-layout>
-    <x-slot name="header">
+<x-slot name="header">
+    <div class="flex items-center justify-between">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             Boarding Reservations Calendar
         </h2>
         @include('modules.boarding.partials.secondary-menu')
-    </x-slot>
+    </div>
+</x-slot>
+
 
     <div class="py-6 px-4 sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">

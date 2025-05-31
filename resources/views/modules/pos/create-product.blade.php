@@ -35,6 +35,13 @@
                 @error('price') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
+            <div class="mt-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="taxable" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" checked>
+                    <span class="ml-2 text-gray-700 dark:text-gray-300">Taxable</span>
+                </label>
+            </div>
+
             <div class="mb-4">
                 <label for="cost" class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Cost</label>
                 <input id="cost" name="cost" type="number" step="0.01" min="0" value="{{ old('cost') }}" required

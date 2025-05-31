@@ -55,25 +55,6 @@
                         </x-dropdown>
                     </div>
 
-                    <!-- Reports Dropdown -->
-                    <div class="hidden sm:ml-10 sm:flex sm:items-center">
-                        <x-dropdown align="left" width="48">
-                            <x-slot name="trigger">
-                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 hover:text-gray-700 dark:hover:text-white focus:outline-none transition">
-                                    <div>Reports</div>
-                                    <div class="ml-1">
-                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </x-slot>
-                            <x-slot name="content">
-                                <x-dropdown-link :href="route('reports.recurring-conflicts')">Recur Appt Conflicts</x-dropdown-link>
-                            </x-slot>
-                        </x-dropdown>
-                    </div>
-
                     <!-- Tools Dropdown -->
                     <div class="hidden sm:ml-10 sm:flex sm:items-center">
                         <x-dropdown align="left" width="48">
@@ -161,15 +142,103 @@
                 @endauth
             </div>
 
-            <!-- Hamburger -->
-            <div class="-mr-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 focus:text-gray-500 transition">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{ 'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{ 'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+<!-- Hamburger Button -->
+<div class="-mr-2 flex items-center sm:hidden">
+    <button @click="open = !open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-200 hover:text-gray-500 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition">
+        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+            <path :class="{ 'hidden': open, 'inline-flex': !open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"/>
+            <path :class="{ 'hidden': !open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
+</div>
+
+<!-- Responsive Navigation Menu -->
+<div :class="{ 'block': open, 'hidden': !open }" class="sm:hidden">
+    @auth
+        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-700 space-y-4">
+
+            <!-- Company -->
+            <div x-data="{ openCompany: false }">
+                <button @click="openCompany = !openCompany" class="w-full text-left px-4 py-2 font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    Company
                 </button>
+                <div x-show="openCompany" class="pl-6 space-y-1">
+                    <x-responsive-nav-link :href="route('companies.index')">Company Info</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('clients.index')">Clients</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('pets.index')">Pets</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('services.index')">Services</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('locations.index')">Locations</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('staff.index')">Staff</x-responsive-nav-link>
+                </div>
+            </div>
+
+            <!-- Modules -->
+            <div x-data="{ openModules: false }">
+                <button @click="openModules = !openModules" class="w-full text-left px-4 py-2 font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    Modules
+                </button>
+                <div x-show="openModules" class="pl-6 space-y-1">
+                    <x-responsive-nav-link :href="route('pos.index')">Point of Sale</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('schedule.index')">Grooming</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('boarding.reservations.index')">Boarding</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('modules.daycare')">Daycare</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('modules.house')">House/Pet Sitting</x-responsive-nav-link>
+                </div>
+            </div>
+
+            <!-- Tools -->
+            <div x-data="{ openTools: false }">
+                <button @click="openTools = !openTools" class="w-full text-left px-4 py-2 font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    Tools
+                </button>
+                <div x-show="openTools" class="pl-6 space-y-1">
+                    <x-responsive-nav-link :href="route('import_export.index')">Import / Export</x-responsive-nav-link>
+                </div>
+            </div>
+
+            <!-- Admin -->
+            @if(Auth::user()->is_admin)
+                <div x-data="{ openAdmin: false }">
+                    <button @click="openAdmin = !openAdmin" class="w-full text-left px-4 py-2 font-semibold text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        Admin
+                    </button>
+                    <div x-show="openAdmin" class="pl-6 space-y-1">
+                        <x-responsive-nav-link :href="route('admin.users')">Manage User Accounts</x-responsive-nav-link>
+                    </div>
+                </div>
+            @endif
+
+            <!-- User -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                @if (session()->has('impersonator_id'))
+                    <x-responsive-nav-link :href="route('admin.stop-impersonating')" class="text-yellow-500">
+                        Stop Impersonating
+                    </x-responsive-nav-link>
+                @endif
+                <x-responsive-nav-link :href="route('profile.edit')">Profile</x-responsive-nav-link>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
+                        Log Out
+                    </x-responsive-nav-link>
+                </form>
             </div>
         </div>
+    @else
+        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-700">
+            <x-responsive-nav-link :href="route('public.about')">About</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('public.pricing')">Pricing</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('public.contact')">Contact</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('login')">Login</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('register')">Register</x-responsive-nav-link>
+        </div>
+    @endauth
+</div>
+
+            
+
+
     </div>
 </nav>

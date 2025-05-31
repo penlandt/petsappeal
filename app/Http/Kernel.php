@@ -66,5 +66,8 @@ class Kernel extends HttpKernel
         'ensure.location.selected' => \App\Http\Middleware\EnsureSelectedLocation::class,
         \App\Http\Middleware\StoreLocationInSession::class,
         \App\Http\Middleware\EnsureSelectedLocation::class,
+        'module.access' => \App\Http\Middleware\EnsureCompanyHasModuleAccess::class,
+        'can.access.module' => \App\Http\Middleware\CheckModuleAccess::class,
+        'check.module.access' => \App\Http\Middleware\CheckModuleAccess::class,
     ];
 }
