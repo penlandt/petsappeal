@@ -65,5 +65,6 @@ class Kernel extends HttpKernel
         'has.company' => \App\Http\Middleware\EnsureUserHasCompany::class,
         'ensure.location.selected' => \App\Http\Middleware\EnsureSelectedLocation::class,
         \App\Http\Middleware\StoreLocationInSession::class,
+        \App\Http\Middleware\EnsureSelectedLocation::class,
     ];
 }

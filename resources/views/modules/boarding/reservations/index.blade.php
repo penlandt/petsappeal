@@ -20,7 +20,8 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const userLocationId = {!! json_encode(session('boarding_location_id', null)) ?? 'null' !!};
+        const userLocationId = {{ auth()->user()->selected_location_id ?? 'null' }};
+
         const calendarEl = document.getElementById('calendar');
 
         const resources = [

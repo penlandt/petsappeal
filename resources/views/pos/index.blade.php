@@ -9,9 +9,9 @@
     </x-slot>
 
     <div class="py-6 px-4 sm:px-6 lg:px-8">
-        @php
-            $selectedLocationId = session('selected_location_id');
-        @endphp
+    @php
+        $selectedLocationId = auth()->user()->selected_location_id;
+    @endphp
 
         @if (!$selectedLocationId)
             <div class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-xl mx-auto">

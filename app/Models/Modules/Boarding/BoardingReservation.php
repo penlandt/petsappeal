@@ -33,5 +33,17 @@ class BoardingReservation extends Model
     {
         return $this->belongsToMany(\App\Models\Pet::class, 'boarding_reservation_pet');
     }
-    
+
+    public function location()
+{
+    return $this->hasOneThrough(
+        \App\Models\Location::class,
+        \App\Models\Modules\Boarding\BoardingUnit::class,
+        'id',            // Foreign key on BoardingUnit
+        'id',            // Foreign key on Location
+        'boarding_unit_id', // Local key on Reservation
+        'location_id'    // Local key on BoardingUnit
+    );
+}
+
 }

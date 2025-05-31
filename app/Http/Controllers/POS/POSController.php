@@ -14,7 +14,8 @@ class POSController extends Controller
     $user = auth()->user();
     $companyId = $user->company_id;
 
-    $selectedLocationId = session('selected_location_id');
+    $selectedLocationId = auth()->user()->selected_location_id;
+
 
     if ($selectedLocationId) {
         $location = \App\Models\Location::findOrFail($selectedLocationId);
@@ -50,7 +51,7 @@ public function checkout(Request $request)
 {
     $user = auth()->user();
     $companyId = $user->company_id;
-    $locationId = session('selected_location_id');
+    $selectedLocationId = auth()->user()->selected_location_id;
 
     $validated = $request->validate([
         'items' => 'required|array|min:1',

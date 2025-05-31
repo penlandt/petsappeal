@@ -16,6 +16,7 @@ use App\Http\Controllers\Modules\Boarding\BoardingUnitController;
 use App\Http\Controllers\Modules\Boarding\BoardingReservationController;
 use App\Http\Controllers\Modules\Boarding\BoardingLocationController;
 use App\Models\Modules\Boarding\BoardingReservation;
+use App\Http\Controllers\LocationSelectionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +56,8 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::resource('locations', LocationController::class)->only(['index', 'create', 'store']);
     Route::get('/locations/{location}/edit', [LocationController::class, 'edit'])->name('locations.edit');
     Route::put('/locations/{location}', [LocationController::class, 'update'])->name('locations.update');
+    Route::get('/select-location', [LocationSelectionController::class, 'show'])->name('select-location');
+    Route::post('/select-location', [LocationSelectionController::class, 'store'])->name('select-location.store');
 
     // Staff Management
     Route::get('/staff', [\App\Http\Controllers\StaffController::class, 'index'])->name('staff.index');

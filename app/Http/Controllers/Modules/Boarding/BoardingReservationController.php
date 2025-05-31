@@ -126,14 +126,22 @@ public function store(Request $request)
     $events = [];
 
     foreach ($reservations as $reservation) {
+        $location = $reservation->location;
+    
+        $checkInTime = $location?->check_in_time ?? '13:00:00';   // fallback to 1pm
+        $checkOutTime = $location?->check_out_time ?? '11:00:00'; // fallback to 11am
+    
         $events[] = [
             'id' => $reservation->id,
             'resourceId' => $reservation->boarding_unit_id,
-            'title' => $reservation->client ? $reservation->client->first_name . ' ' . $reservation->client->last_name : 'Unnamed Client',
-            'start' => $reservation->check_in_date . 'T15:00:00',
-            'end' => $reservation->check_out_date . 'T11:00:00',
+            'title' => $reservation->client
+                ? $reservation->client->first_name . ' ' . $reservation->client->last_name
+                : 'Unnamed Client',
+            'start' => $reservation->check_in_date . 'T' . $checkInTime,
+            'end' => $reservation->check_out_date . 'T' . $checkOutTime,
         ];
     }
+    
 
     return response()->json($events);
 }
