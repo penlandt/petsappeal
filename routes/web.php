@@ -12,6 +12,10 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\POS\POSController;
 use App\Http\Controllers\POS\ProductController;
+use App\Http\Controllers\Modules\Boarding\BoardingUnitController;
+use App\Http\Controllers\Modules\Boarding\BoardingReservationController;
+use App\Http\Controllers\Modules\Boarding\BoardingLocationController;
+use App\Models\Modules\Boarding\BoardingReservation;
 
 /*
 |--------------------------------------------------------------------------
@@ -176,6 +180,52 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/modules/boarding', function () {
         return view('modules.boarding');
     })->name('modules.boarding');
+    
+    Route::get('/boarding/units/create', [BoardingUnitController::class, 'create'])->name('boarding.units.create');
+
+
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/boarding/units', [BoardingUnitController::class, 'index'])->name('boarding.units.index');
+    });
+
+    Route::post('/boarding/units', [BoardingUnitController::class, 'store'])->name('boarding.units.store');
+
+    Route::get('/boarding/units/{id}/edit', [BoardingUnitController::class, 'edit'])->name('boarding.units.edit');
+
+    Route::put('/boarding/units/{id}', [BoardingUnitController::class, 'update'])->name('boarding.units.update');
+
+    Route::delete('/boarding/units/{id}', [BoardingUnitController::class, 'destroy'])->name('boarding.units.destroy');
+
+    Route::get('/boarding/reservations', [BoardingReservationController::class, 'index'])->name('boarding.reservations.index');
+
+    Route::get('/boarding/reservations/create', [BoardingReservationController::class, 'create'])->name('boarding.reservations.create');
+
+    Route::post('/boarding/reservations', [BoardingReservationController::class, 'store'])->name('boarding.reservations.store');
+
+    Route::get('/boarding/select-location', [BoardingLocationController::class, 'selectLocation'])
+    ->name('boarding.location.select')
+    ->middleware('auth');
+
+    Route::post('/boarding/set-location', [BoardingLocationController::class, 'setLocation'])
+    ->name('boarding.location.set')
+    ->middleware('auth');
+
+    Route::post('/boarding/fetch-pet-notes', [\App\Http\Controllers\Modules\Boarding\BoardingReservationController::class, 'getPetNotes'])
+    ->name('boarding.fetch-pet-notes');
+
+    Route::post('/set-location', function (Illuminate\Http\Request $request) {
+        $request->session()->put('selected_location_id', $request->location_id);
+        return response()->json(['success' => true]);
+    })->middleware(['auth']);
+    
+    Route::get('/boarding/reservations/json', [\App\Http\Controllers\Modules\Boarding\BoardingReservationController::class, 'json'])->name('boarding.reservations.json');
+
+    Route::get('/boarding/reservations/{reservation}/edit', [BoardingReservationController::class, 'edit'])->name('boarding.reservations.edit');
+
+    Route::put('/boarding/reservations/{reservation}', [BoardingReservationController::class, 'update'])->name('boarding.reservations.update');
+
+    Route::delete('/boarding/reservations/{reservation}', [BoardingReservationController::class, 'destroy'])
+    ->name('boarding.reservations.destroy');
 
     // Daycare Management
     Route::get('/modules/daycare', function () {

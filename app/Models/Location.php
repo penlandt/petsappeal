@@ -22,6 +22,9 @@ class Location extends Model
         'company_id',
         'product_tax_rate',
         'service_tax_rate',
+        'boarding_check_in_time',
+        'boarding_check_out_time',
+        'boarding_chg_per_addl_occpt',
     ];
     
 

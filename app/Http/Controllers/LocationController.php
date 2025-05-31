@@ -29,10 +29,10 @@ class LocationController extends Controller
     public function store(Request $request)
     {
         $data = $request->all();
-    
+
         $data['inactive'] = $request->has('inactive');
         $data['company_id'] = auth()->user()->company->id;
-    
+
         $validated = validator($data, [
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
@@ -44,19 +44,21 @@ class LocationController extends Controller
             'email' => 'nullable|email|max:255',
             'product_tax_rate' => 'nullable|numeric|min:0|max:100',
             'service_tax_rate' => 'nullable|numeric|min:0|max:100',
+            'boarding_check_in_time' => 'nullable',
+            'boarding_check_out_time' => 'nullable',
+            'boarding_chg_per_addl_occpt' => 'nullable|numeric|min:0|max:100',
             'inactive' => 'boolean',
             'company_id' => 'required|exists:companies,id',
         ])->validate();
-    
-        \App\Models\Location::create($validated);
-    
+        
+
+        Location::create($validated);
+
         return redirect()->route('locations.index')->with('success', 'Location created successfully.');
     }
-    
 
     public function edit(Location $location)
     {
-        // Make sure the location belongs to the logged-in user's company
         if ($location->company_id !== auth()->user()->company_id) {
             abort(403);
         }
@@ -65,40 +67,46 @@ class LocationController extends Controller
     }
 
     public function update(Request $request, Location $location)
-{
-    if ($location->company_id !== auth()->user()->company_id) {
-        abort(403);
+    {
+        if ($location->company_id !== auth()->user()->company_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|size:2',
+            'postal_code' => 'required|string|max:20',
+            'timezone' => 'required|string|timezone',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'product_tax_rate' => 'nullable|numeric|min:0|max:100',
+            'service_tax_rate' => 'nullable|numeric|min:0|max:100',
+            'boarding_check_in_time' => 'nullable',
+            'boarding_check_out_time' => 'nullable',
+            'boarding_chg_per_addl_occpt' => 'nullable|numeric|min:0|max:100',
+            'inactive' => 'nullable|boolean',
+        ]);
+        
+
+        $location->update([
+            'name' => $validated['name'],
+            'address' => $validated['address'],
+            'city' => $validated['city'],
+            'state' => $validated['state'],
+            'postal_code' => $validated['postal_code'],
+            'timezone' => $validated['timezone'],
+            'phone' => $validated['phone'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'product_tax_rate' => $validated['product_tax_rate'] ?? null,
+            'service_tax_rate' => $validated['service_tax_rate'] ?? null,
+            'boarding_check_in_time' => $validated['boarding_check_in_time'] ?? null,
+            'boarding_check_out_time' => $validated['boarding_check_out_time'] ?? null,
+            'boarding_chg_per_addl_occpt' => $validated['boarding_chg_per_addl_occpt'] ?? null,
+            'inactive' => $request->has('inactive') ? 1 : 0,
+        ]);
+
+        return redirect()->route('locations.index')->with('success', 'Location updated successfully.');
     }
-
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'address' => 'required|string|max:255',
-        'city' => 'required|string|max:100',
-        'state' => 'required|string|size:2',
-        'postal_code' => 'required|string|max:20',
-        'timezone' => 'required|string|timezone',
-        'phone' => 'nullable|string|max:50',
-        'email' => 'nullable|email|max:255',
-        'product_tax_rate' => 'nullable|numeric|min:0|max:100',
-        'service_tax_rate' => 'nullable|numeric|min:0|max:100',
-        'inactive' => 'nullable|boolean',
-    ]);
-
-    $location->update([
-        'name' => $validated['name'],
-        'address' => $validated['address'],
-        'city' => $validated['city'],
-        'state' => $validated['state'],
-        'postal_code' => $validated['postal_code'],
-        'timezone' => $validated['timezone'],
-        'phone' => $validated['phone'] ?? null,
-        'email' => $validated['email'] ?? null,
-        'product_tax_rate' => $validated['product_tax_rate'] ?? null,
-        'service_tax_rate' => $validated['service_tax_rate'] ?? null,
-        'inactive' => $request->has('inactive') ? 1 : 0,
-    ]);
-
-    return redirect()->route('locations.index')->with('success', 'Location updated successfully.');
-}
-
 }

@@ -94,6 +94,38 @@
                     </div>
                 </div>
 
+                <div class="mb-4">
+                    <div class="flex flex-col sm:flex-row sm:space-x-4">
+                        <div class="w-full sm:w-1/2">
+                            <label for="boarding_check_in_time" class="block font-medium text-sm text-gray-700 dark:text-gray-300">Boarding Check-In Time</label>
+                            <input type="time" name="boarding_check_in_time" id="boarding_check_in_time"
+                                class="mt-1 block w-full rounded-md shadow-sm bg-white text-black dark:bg-gray-800 dark:text-white"
+                                value="{{ old('boarding_check_in_time', $location->boarding_check_in_time) }}">
+                        </div>
+
+                        <div class="w-full sm:w-1/2 mt-4 sm:mt-0">
+                            <label for="boarding_check_out_time" class="block font-medium text-sm text-gray-700 dark:text-gray-300">Boarding Check-Out Time</label>
+                            <input type="time" name="boarding_check_out_time" id="boarding_check_out_time"
+                                class="mt-1 block w-full rounded-md shadow-sm bg-white text-black dark:bg-gray-800 dark:text-white"
+                                value="{{ old('boarding_check_out_time', $location->boarding_check_out_time) }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="boarding_chg_per_addl_occpt" class="block text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Boarding Charge per Add’l Occupant (%)
+                        <span class="ml-1 text-gray-400 cursor-pointer" title="By default no extra charge is assessed for more than one occupant of a boarding unit. If you would like to charge more per additional occupant, please enter the percentage of the full boarding charge here.">
+                            &#9432;
+                        </span>
+                    </label>
+                    <input type="number" step="0.01" min="0" max="100" name="boarding_chg_per_addl_occpt" id="boarding_chg_per_addl_occpt"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white text-black dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        value="{{ old('boarding_chg_per_addl_occpt', isset($location) ? $location->boarding_chg_per_addl_occpt : '') }}">
+                </div>
+
+
+
 
 
 

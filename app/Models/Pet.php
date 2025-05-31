@@ -25,4 +25,10 @@ class Pet extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+    public function boardingReservations()
+{
+    return $this->belongsToMany(\App\Models\Modules\Boarding\BoardingReservation::class, 'boarding_reservation_pet');
+}
+
 }
