@@ -12,8 +12,8 @@ class CheckModuleAccess
     {
         $user = auth()->user();
 
-        if (!$user || !$user->company || !$user->company->hasModuleAccess($module)) {
-            return redirect()->route('dashboard')->with('error', 'You do not have access to this module.');
+        if (!$user || !$user->company || !$user->company->hasModule($module)) {
+            abort(403, 'You do not have access to this module. Please upgrade to gain access');
         }
 
         return $next($request);
