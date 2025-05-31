@@ -14,6 +14,8 @@ class CompanyModuleAccess extends Model
         'module',
     ];
 
+    protected $table = 'company_module_access';
+
     public function company()
     {
         return $this->belongsTo(Company::class);
