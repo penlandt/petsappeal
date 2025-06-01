@@ -152,7 +152,11 @@ class ImportExportController extends Controller
     Log::info('Import file received', ['filename' => $file->getClientOriginalName()]);
 
     $handle = fopen($file->getRealPath(), 'r');
-    $header = array_filter(fgetcsv($handle)); // Filter out any empty headers
+    $rawHeader = fgetcsv($handle);
+    $header = array_map(fn($h) => strtolower(trim(preg_replace('/\x{FEFF}/u', '', $h))), $rawHeader);
+ // Normalize headers
+    Log::info('CSV header parsed', ['header' => $header]);
+    
 
     Log::info('CSV header parsed', ['header' => $header]);
 
