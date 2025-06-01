@@ -18,6 +18,7 @@ use App\Http\Controllers\Modules\Boarding\BoardingLocationController;
 use App\Models\Modules\Boarding\BoardingReservation;
 use App\Http\Controllers\LocationSelectionController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\PetController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,9 +46,14 @@ Route::middleware(['auth', 'has.company'])->group(function () {
 
 
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
+    Route::post('/clients/ajax-store', [\App\Http\Controllers\ClientController::class, 'ajaxStore'])->name('clients.ajax-store');
+
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
     Route::post('/pets', [\App\Http\Controllers\PetController::class, 'store'])->name('pets.store');
+    Route::post('/pets/ajax-store', [PetController::class, 'ajaxStore'])->name('pets.ajax-store');
+
+
     Route::get('/pets/{pet}/edit', [\App\Http\Controllers\PetController::class, 'edit'])->name('pets.edit');
     Route::get('/pets', [\App\Http\Controllers\PetController::class, 'index'])->name('pets.index');
     Route::put('/pets/{pet}', [\App\Http\Controllers\PetController::class, 'update'])->name('pets.update');

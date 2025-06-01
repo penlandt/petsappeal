@@ -51,7 +51,7 @@ public function checkout(Request $request)
 {
     $user = auth()->user();
     $companyId = $user->company_id;
-    $selectedLocationId = auth()->user()->selected_location_id;
+    $locationId = $user->selected_location_id;
 
     $validated = $request->validate([
         'items' => 'required|array|min:1',
@@ -119,6 +119,7 @@ public function checkout(Request $request)
         ], 500);
     }
 }
+
 
 public function storeProduct(Request $request)
 {

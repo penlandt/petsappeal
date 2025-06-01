@@ -49,23 +49,27 @@ class ServiceController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'duration' => 'required|integer|min:1',
-            'price' => 'required|numeric|min:0',
-            'inactive' => 'nullable|boolean',
-        ]);
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'duration' => 'required|integer|min:1',
+        'price' => 'required|numeric|min:0',
+    ]);
 
-        $request->user()->company->services()->create([
-            'name' => $validated['name'],
-            'duration' => $validated['duration'],
-            'price' => $validated['price'],
-            'inactive' => $request->has('inactive'),
-        ]);
+    $validated['company_id'] = auth()->user()->company_id;
 
-        return redirect()->route('services.index')->with('success', 'Service created successfully.');
+    $service = \App\Models\Service::create($validated);
+
+    // If the request expects JSON (AJAX from modal), return the new service
+    if ($request->expectsJson()) {
+        return response()->json($service);
     }
+
+    // Otherwise (normal form), redirect as usual
+    return redirect()->route('services.index')
+                     ->with('success', 'Service created successfully!');
+}
+
 
     /**
      * Display the specified resource.

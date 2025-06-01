@@ -32,27 +32,31 @@ class PetController extends Controller
 
 
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'name' => 'required|string|max:255',
-            'species' => 'nullable|string|max:255',
-            'breed' => 'nullable|string|max:255',
-            'birthdate' => 'nullable|date',
-            'color' => 'nullable|string|max:255',
-            'gender' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'inactive' => 'nullable|boolean',
-        ]);
+{
+    $data = $request->validate([
+        'client_id' => 'required|exists:clients,id',
+        'name' => 'required|string|max:255',
+        'species' => 'nullable|string|max:255',
+        'breed' => 'nullable|string|max:255',
+        'birthdate' => 'nullable|date',
+        'color' => 'nullable|string|max:255',
+        'gender' => 'nullable|string|max:255',
+        'notes' => 'nullable|string',
+        'inactive' => 'nullable|boolean',
+    ]);
 
-        $data['inactive'] = $request->has('inactive'); // checkbox handling
+    $data['inactive'] = $request->has('inactive');
 
-        \App\Models\Pet::create($data);
+    $pet = \App\Models\Pet::create($data);
 
-        return redirect()->route('pets.index')
-                 ->with('success', 'Pet added successfully!');
-
+    if ($request->expectsJson()) {
+        return response()->json($pet);
     }
+
+    return redirect()->route('pets.index')
+        ->with('success', 'Pet added successfully!');
+}
+
 
     public function edit($id)
     {
@@ -91,4 +95,47 @@ class PetController extends Controller
         ->route('pets.index')
         ->with('success', 'Pet updated successfully!');
     }
+
+    public function ajaxStore(Request $request)
+{
+    try {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'species' => 'required|string|max:255',
+            'breed' => 'nullable|string|max:255',
+            'color' => 'nullable|string|max:255',
+            'birthdate' => 'nullable|date',
+            'sex' => 'required|in:Male,Female,Unknown',
+            'weight' => 'nullable|numeric',
+            'client_id' => 'required|exists:clients,id',
+        ]);
+
+        $user = auth()->user();
+
+        $pet = new Pet();
+        $pet->client_id = $request->input('client_id');
+        $pet->name = $request->input('name');
+        $pet->species = $request->input('species');
+        $pet->breed = $request->input('breed');
+        $pet->color = $request->input('color');
+        $pet->birthdate = $request->input('birthdate');
+        $pet->gender = $request->input('sex'); // still use 'sex' from the form
+        $pet->save();
+
+        return response()->json([
+            'success' => true,
+            'pet' => [
+                'id' => $pet->id,
+                'name' => $pet->name,
+            ],
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
+   
 }

@@ -29,24 +29,30 @@ class ClientController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:2',
-            'postal_code' => 'nullable|string|max:20',
-        ]);
+{
+    $validated = $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'phone' => 'nullable|string|max:25',
+        'email' => 'nullable|email|max:255',
+        'address' => 'nullable|string|max:255',
+        'city' => 'nullable|string|max:100',
+        'state' => 'nullable|string|max:100',
+        'postal_code' => 'nullable|string|max:20',
+    ]);
 
-        $validated['company_id'] = auth()->user()->company_id;
+    $validated['company_id'] = auth()->user()->company_id;
 
-        \App\Models\Client::create($validated);
+    $client = Client::create($validated);
 
-        return redirect()->route('clients.index')->with('success', 'Client added successfully!');
+    // If this was an AJAX request, return JSON
+    if ($request->ajax()) {
+        return response()->json($client);
     }
+
+    return redirect()->route('clients.index')->with('success', 'Client created successfully.');
+}
+
 
     /**
      * Display the specified resource.
@@ -103,4 +109,32 @@ class ClientController extends Controller
     {
         //
     }
+
+    public function ajaxStore(Request $request)
+    {
+        $user = auth()->user();
+    
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:2',
+            'postal_code' => 'nullable|string|max:20',
+        ]);
+    
+        $client = new \App\Models\Client($validated);
+        $client->company_id = $user->company_id;
+        $client->save();
+    
+        return response()->json([
+            'id' => $client->id,
+            'first_name' => $client->first_name,
+            'last_name' => $client->last_name,
+            'phone' => $client->phone,
+        ]);
+    }
+    
 }

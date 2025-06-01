@@ -114,21 +114,43 @@
             <input type="hidden" name="location_id" value="{{ $selectedLocationId }}">
 
             <div class="mb-4">
-                <label for="client_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client</label>
-                <select id="client_id" name="client_id" class="..." style="background-color: #fff; color: #000;">
-                    <option value="">-- Select a client --</option>
-                    @foreach ($clients as $client)
-                        <option value="{{ $client->id }}">
-                            {{ $client->first_name }} {{ $client->last_name }} ({{ $client->phone }})
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+    <label for="client_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client</label>
+    <div class="flex gap-2">
+        <select id="client_id" name="client_id"
+                class="flex-1 border border-gray-300 rounded p-2"
+                style="background-color: #fff; color: #000;">
+            <option value="">-- Select a client --</option>
+            @foreach ($clients as $client)
+                <option value="{{ $client->id }}">
+                    {{ $client->first_name }} {{ $client->last_name }} ({{ $client->phone }})
+                </option>
+            @endforeach
+        </select>
+        <button type="button"
+                onclick="document.getElementById('newClientModal').classList.remove('hidden');"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold px-3 rounded">
+            +
+        </button>
+    </div>
+</div>
+
 
             <div class="mb-4">
-                <label for="pet_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Pet</label>
-                <select id="pet_id" name="pet_id" class="w-full border border-gray-300 rounded p-2" style="background-color: #fff; color: #000;"></select>
-            </div>
+    <label for="pet_id" class="block font-medium text-sm text-gray-700 dark:text-gray-300">Pet</label>
+    <div class="flex space-x-2">
+        <select id="pet_id" name="pet_id" required class="block w-full rounded-md shadow-sm"
+            style="background-color: #fff; color: #000;">
+            <option value="">Select a pet</option>
+            <!-- Options loaded dynamically based on client selection -->
+        </select>
+        <button type="button"
+        id="addNewPetBtn"
+        onclick="document.getElementById('newPetModal').classList.remove('hidden');"
+        class="px-3 py-1 bg-blue-500 text-white rounded text-sm">+</button>
+
+    </div>
+</div>
+
 
             <div class="mb-4">
                 <label for="service_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Service</label>
@@ -178,8 +200,30 @@
 </div>
 
 <!-- New Client Modal -->
-<div id="newClientModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-xl z-50 relative">
+<div id="newClientModal"
+     class="hidden fixed z-[9999] bg-black bg-opacity-60"
+     style="
+         top: 50%;
+         left: 50%;
+         transform: translate(-50%, -50%);
+         margin: 0;
+         padding: 0;
+         width: 100vw;
+         height: 100vh;
+     ">
+
+    <div class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-xl p-4"
+         style="
+             position: absolute;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             width: 100%;
+             max-width: 600px;
+             min-width: 400px;
+             max-height: 90vh;
+             overflow-y: auto;
+         ">
         <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Add New Client</h3>
         <form id="newClientForm">
             <div class="mb-4">
@@ -202,6 +246,35 @@
                 <input type="email" id="email" name="email" class="w-full border border-gray-300 rounded p-2" style="background-color: #fff; color: #000;">
             </div>
 
+            <div class="mb-4">
+                <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Street Address</label>
+                <input type="text" id="address" name="address" class="w-full border border-gray-300 rounded p-2" style="background-color: #fff; color: #000;">
+            </div>
+
+            <div class="mb-4">
+                <label for="city" class="block text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
+                <input type="text" id="city" name="city" class="w-full border border-gray-300 rounded p-2" style="background-color: #fff; color: #000;">
+            </div>
+
+            <div class="mb-4">
+                <label for="state" class="block text-sm font-medium text-gray-700 dark:text-gray-300">State</label>
+                <select id="state" name="state" class="w-full border border-gray-300 rounded p-2" style="background-color: #fff; color: #000;">
+                    <option value="">-- Select a state --</option>
+                    @foreach ([
+                        'AL','AK','AZ','AR','CA','CO','CT','DC','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA',
+                        'ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK',
+                        'OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'
+                    ] as $abbr)
+                        <option value="{{ $abbr }}">{{ $abbr }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="postal_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postal Code</label>
+                <input type="text" id="postal_code" name="postal_code" class="w-full border border-gray-300 rounded p-2" style="background-color: #fff; color: #000;">
+            </div>
+
             <div class="flex justify-end">
                 <button type="button" id="cancelNewClientBtn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">Cancel</button>
                 <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save Client</button>
@@ -209,6 +282,103 @@
         </form>
     </div>
 </div>
+
+<!-- Pet Modal -->
+<div id="newPetModal"
+     class="hidden fixed z-[9999] bg-black bg-opacity-60"
+     style="
+         top: 50%;
+         left: 50%;
+         transform: translate(-50%, -50%);
+         margin: 0;
+         padding: 0;
+         width: 100vw;
+         height: 100vh;
+     ">
+
+    <div class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-xl p-4"
+         style="
+             position: absolute;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             width: 100%;
+             max-width: 600px;
+             min-width: 400px;
+             max-height: 90vh;
+             overflow-y: auto;
+         ">
+        <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Add New Pet</h3>
+        <form id="addNewPetForm" method="POST">
+            <input type="hidden" name="client_id" id="new_pet_client_id" />
+
+            <div class="mb-4">
+                <label for="pet_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Pet Name</label>
+                <input type="text" id="pet_name" name="name" class="w-full border border-gray-300 rounded p-2"
+                       style="background-color: #fff; color: #000;">
+            </div>
+
+            <div class="mb-4">
+                <label for="species" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Species</label>
+                <input type="text" id="species" name="species" class="w-full border border-gray-300 rounded p-2"
+                       style="background-color: #fff; color: #000;">
+            </div>
+
+            <div class="mb-4">
+                <label for="breed" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Breed</label>
+                <input type="text" id="breed" name="breed" class="w-full border border-gray-300 rounded p-2"
+                       style="background-color: #fff; color: #000;">
+            </div>
+
+            <div class="mb-4">
+                <label for="color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color</label>
+                <input type="text" id="color" name="color" class="w-full border border-gray-300 rounded p-2"
+                       style="background-color: #fff; color: #000;">
+            </div>
+
+            <div class="mb-4">
+    <label for="sex" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sex</label>
+    <select id="sex" name="sex" class="w-full border border-gray-300 rounded p-2"
+            style="background-color: #fff; color: #000;" required>
+        <option value="">-- Select sex --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Unknown">Unknown</option>
+    </select>
+</div>
+
+<div class="mb-4">
+    <label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weight (lbs)</label>
+    <input type="number" step="0.01" id="weight" name="weight" class="w-full border border-gray-300 rounded p-2"
+           style="background-color: #fff; color: #000;">
+</div>
+
+
+            <div class="mb-4">
+                <label for="birthday" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Birthday</label>
+                <input type="date" id="birthday" name="birthday" class="w-full border border-gray-300 rounded p-2"
+                       style="background-color: #fff; color: #000;">
+            </div>
+
+            <div class="mb-4">
+                <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                <textarea id="notes" name="notes" rows="3" class="w-full border border-gray-300 rounded p-2"
+                          style="background-color: #fff; color: #000;"></textarea>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" id="cancelNewPetBtn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Save Pet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 
 <!-- Edit Appointment Modal -->
 <div id="editAppointmentModal"
@@ -964,7 +1134,188 @@
     }
     </script>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const newClientModal = document.getElementById('newClientModal');
+        const cancelNewClientBtn = document.getElementById('cancelNewClientBtn');
+        const appointmentModal = document.getElementById('appointmentModal');
+
+        cancelNewClientBtn.addEventListener('click', function () {
+            newClientModal.classList.add('hidden');
+            appointmentModal.style.display = 'flex'; // Re-show the appointment modal
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const newClientForm = document.getElementById('newClientForm');
+        const newClientModal = document.getElementById('newClientModal');
+        const appointmentModal = document.getElementById('appointmentModal');
+        const clientSelect = document.getElementById('client_id');
+
+        newClientForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(newClientForm);
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "{{ route('clients.store') }}", true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    const client = JSON.parse(xhr.responseText);
+
+                    // Update TomSelect dropdown
+                    const tom = clientSelect.tomselect;
+                    tom.addOption({
+                        value: client.id,
+                        text: `${client.first_name} ${client.last_name} (${client.phone})`
+                    });
+                    tom.refreshOptions(false);
+                    tom.setValue(client.id);
+
+                    // Hide modal and show appointment modal again
+                    newClientModal.classList.add('hidden');
+                    appointmentModal.style.display = 'flex';
+
+                    // Reset form
+                    newClientForm.reset();
+                } else {
+                    alert('Error saving client.');
+                }
+            };
+
+            xhr.onerror = function () {
+                alert('AJAX request failed.');
+            };
+
+            xhr.send(formData);
+        });
+    });
+</script>
+
+<script>
+document.getElementById('addNewPetBtn')?.addEventListener('click', function () {
+    const clientId = document.getElementById('client_id').value;
+    if (!clientId) {
+        alert('Please select a client first.');
+        return;
+    }
+    document.getElementById('new_pet_client_id').value = clientId;
+
+    document.getElementById('newPetModal').classList.remove('hidden');
+});
+
+document.getElementById('cancelNewPetBtn')?.addEventListener('click', function () {
+    document.getElementById('newPetModal').classList.add('hidden');
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('addNewPetForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch("{{ route('pets.ajax-store') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('newPetModal').style.display = 'none';
+                document.getElementById('appointmentModal').style.display = 'flex';
+
+                const petSelect = document.getElementById('pet_id');
+                if (petSelect) {
+                    const option = document.createElement('option');
+                    option.value = data.pet.id;
+                    option.text = data.pet.name;
+                    petSelect.appendChild(option);
+                    petSelect.value = data.pet.id;
+                    petSelect.dispatchEvent(new Event('change'));
+                }
+
+                form.reset();
+            } else {
+                alert("Error: " + (data.message || "Unknown error"));
+            }
+        } catch (error) {
+            console.error('AJAX Save Error:', error);
+            alert('Failed to save pet. See console for details.');
+        }
+    });
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const petForm = document.getElementById('newPetForm');
+    const petModal = document.getElementById('newPetModal');
+
+    if (petForm) {
+        petForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(petForm);
+            fetch("{{ route('pets.store') }}", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                // Add the new pet to the select dropdown
+                const petSelect = document.getElementById('pet_id');
+                const option = new Option(data.name, data.id, true, true);
+                petSelect.appendChild(option);
+                petSelect.value = data.id;
+
+                // Add pet notes to the appointment notes field
+                if (data.notes) {
+                    document.getElementById('notes').value = data.notes;
+                }
+
+                // Close the modal
+                petModal.classList.add('hidden');
+                petForm.reset();
+            })
+            .catch(error => {
+                console.error("Error saving pet:", error);
+                alert("There was an error saving the pet.");
+            });
+        });
+    }
+
+    // Cancel button handler
+    document.getElementById('cancelNewPetBtn').addEventListener('click', function () {
+        petModal.classList.add('hidden');
+    });
+});
+</script>
+
+
 @endpush
 @endif
+
+<!-- Route Debug: {{ route('pets.ajax-store') }} -->
 
 </x-app-layout>
