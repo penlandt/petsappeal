@@ -37,7 +37,7 @@
                 </div>
                 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="name">Name</label>
+                    <label for="name" class="block text-gray-900 dark:text-gray-100">Name</label>
                     <input type="text" id="name" name="name" value="{{ old('name', $pet->name) }}"
                            required
                            style="background-color: #fff; color: #000;"
@@ -45,42 +45,42 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="species">Species</label>
+                    <label for="species" class="block text-gray-900 dark:text-gray-100">Species</label>
                     <input type="text" id="species" name="species" value="{{ old('species', $pet->species) }}"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="breed">Breed</label>
+                    <label for="breed" class="block text-gray-900 dark:text-gray-100">Breed</label>
                     <input type="text" id="breed" name="breed" value="{{ old('breed', $pet->breed) }}"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="birthdate">Birthdate</label>
+                    <label for="birthdate" class="block text-gray-900 dark:text-gray-100">Birthdate</label>
                     <input type="date" id="birthdate" name="birthdate" value="{{ old('birthdate', $pet->birthdate) }}"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="color">Color</label>
+                    <label for="color" class="block text-gray-900 dark:text-gray-100">Color</label>
                     <input type="text" id="color" name="color" value="{{ old('color', $pet->color) }}"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="gender">Gender</label>
+                    <label for="gender" class="block text-gray-900 dark:text-gray-100">Gender</label>
                     <input type="text" id="gender" name="gender" value="{{ old('gender', $pet->gender) }}"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="notes">Notes</label>
+                    <label for="notes" class="block text-gray-900 dark:text-gray-100">Notes</label>
                     <textarea id="notes" name="notes" rows="3"
                               style="background-color: #fff; color: #000;"
                               class="w-full mt-1 rounded border-gray-300 px-3 py-1.5">{{ old('notes', $pet->notes) }}</textarea>
@@ -89,7 +89,7 @@
                 <div class="mb-4">
                     <label class="inline-flex items-center text-gray-900 dark:text-gray-100">
                         <input type="checkbox" name="inactive" value="1"
-                               style="background-color: #fff; color: #000; width: 1.1rem; height: 1.1rem; border: 1px solid #999;"
+                               style="accent-color: #2563eb;"
                                {{ old('inactive', $pet->inactive) ? 'checked' : '' }}>
                         <span class="ml-2">Mark as Inactive</span>
                     </label>
@@ -97,7 +97,7 @@
 
                 <div class="flex justify-end gap-4">
                     <a href="{{ route('pets.index') }}"
-                    class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500">
+                       class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500">
                         Cancel
                     </a>
 
@@ -106,23 +106,21 @@
                         Update Pet
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet" />
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        new TomSelect('#client_id', {
-            create: false,
-            allowEmptyOption: true,
-            maxOptions: 500,
-            placeholder: 'Select a client...',
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            new TomSelect('#client_id', {
+                create: false,
+                allowEmptyOption: true,
+                maxOptions: 500,
+                placeholder: 'Select a client...',
+            });
         });
-    });
-</script>
-
+    </script>
 </x-app-layout>

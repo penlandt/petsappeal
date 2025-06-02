@@ -11,7 +11,7 @@
                 @csrf
 
                 <div class="mb-4">
-                    <label for="client_id" class="block text-sm font-medium mb-1">Select Owner</label>
+                    <label for="client_id" class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Select Owner</label>
                     <select id="client_id" name="client_id"
                             required
                             style="background-color: #fff; color: #000;"
@@ -26,7 +26,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="name">Name</label>
+                    <label for="name" class="block text-gray-900 dark:text-gray-100">Name</label>
                     <input type="text" id="name" name="name"
                            required
                            style="background-color: #fff; color: #000;"
@@ -34,42 +34,42 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="species">Species</label>
+                    <label for="species" class="block text-gray-900 dark:text-gray-100">Species</label>
                     <input type="text" id="species" name="species"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="breed">Breed</label>
+                    <label for="breed" class="block text-gray-900 dark:text-gray-100">Breed</label>
                     <input type="text" id="breed" name="breed"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="birthdate">Birthdate</label>
+                    <label for="birthdate" class="block text-gray-900 dark:text-gray-100">Birthdate</label>
                     <input type="date" id="birthdate" name="birthdate"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="color">Color</label>
+                    <label for="color" class="block text-gray-900 dark:text-gray-100">Color</label>
                     <input type="text" id="color" name="color"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="gender">Gender</label>
+                    <label for="gender" class="block text-gray-900 dark:text-gray-100">Gender</label>
                     <input type="text" id="gender" name="gender"
                            style="background-color: #fff; color: #000;"
                            class="w-full mt-1 rounded border-gray-300 px-3 py-1.5" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-900 dark:text-gray-100" for="notes">Notes</label>
+                    <label for="notes" class="block text-gray-900 dark:text-gray-100">Notes</label>
                     <textarea id="notes" name="notes" rows="3"
                               style="background-color: #fff; color: #000;"
                               class="w-full mt-1 rounded border-gray-300 px-3 py-1.5"></textarea>
@@ -86,7 +86,7 @@
 
                 <div class="flex justify-end gap-4">
                     <a href="{{ route('pets.index') }}"
-                    class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500">
+                       class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500">
                         Cancel
                     </a>
 

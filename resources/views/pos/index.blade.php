@@ -211,10 +211,17 @@
 
 
 @if ($selectedLocationId)
+<!-- TomSelect CSS -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+
+<!-- TomSelect JS -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
 <script>
 const productTaxRate = @json($productTaxRate ?? 0);
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let paymentEntries = [];
+
 
 // Global functions (accessible from buttons, modals, etc.)
 window.addToCart = function(productId, name, price) {
@@ -437,6 +444,8 @@ function submitPayments() {
         return;
     }
 
+    const clientElement = document.getElementById("client-select");
+
     fetch("/pos/checkout", {
         method: "POST",
         headers: {
@@ -446,7 +455,9 @@ function submitPayments() {
         body: JSON.stringify({
             items: cart,
             payments: paymentEntries,
-            client_id: document.getElementById('client_id')?.value || null
+            client_id: (typeof clientSelect !== 'undefined' && clientSelect.items?.[0]) ? clientSelect.items[0] : null
+
+
         })
 
     })
@@ -593,6 +604,20 @@ if (window.TomSelect) {
         create: false
     });
 }
+
+let clientSelect;
+
+document.addEventListener("DOMContentLoaded", () => {
+    const selectElement = document.getElementById("client_id");
+    if (selectElement && !selectElement.tomselect) {
+        clientSelect = new TomSelect(selectElement, {
+            create: false,
+            sortField: { field: "text", direction: "asc" },
+        });
+    } else {
+        clientSelect = selectElement.tomselect;
+    }
+});
 
 </script>
 @endif

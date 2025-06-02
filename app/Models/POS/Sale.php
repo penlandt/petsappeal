@@ -14,6 +14,7 @@ class Sale extends Model
     protected $fillable = [
         'company_id',
         'location_id',
+        'client_id',
         'subtotal',
         'tax',
         'total',
@@ -28,4 +29,10 @@ class Sale extends Model
     {
         return $this->hasMany(Payment::class, 'sale_id');
     }
+
+    public function client()
+    {
+        return $this->belongsTo(\App\Models\Client::class);
+    }
+    
 }
