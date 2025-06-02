@@ -40,6 +40,20 @@
         @else
             <div class="flex flex-col lg:flex-row gap-6">
                 <div class="w-full lg:w-2/3">
+                <div class="mb-4">
+                    <label for="client_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Select Client (optional)
+                    </label>
+                    <select id="client_id" name="client_id" autocomplete="off"
+                        class="tom-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white">
+                        <option value="">— No Client —</option>
+                        @foreach ($clients as $client)
+                            <option value="{{ $client->id }}">{{ $client->first_name }} {{ $client->last_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+
                 <div class="flex justify-between items-center mb-4">
                     <input type="text" id="product-search"
                         class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
@@ -220,13 +234,20 @@ window.addToCart = function(productId, name, price) {
     } else {
         const isTaxable = arguments.length > 3 ? arguments[3] : true; // default true
         cart.push({ id: productId, name, price, quantity, taxable: isTaxable });
-
     }
 
     saveCartToLocalStorage();
     renderCart();
     console.log("Cart after adding:", cart);
+
+    // ✅ Clear the search box after adding
+    const searchInput = document.getElementById('product-search');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input')); // Triggers the search to re-clear results
+    }
 };
+
 
 window.removeFromCart = function(index) {
     cart.splice(index, 1);
@@ -422,7 +443,12 @@ function submitPayments() {
             "Content-Type": "application/json",
             "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
         },
-        body: JSON.stringify({ items: cart, payments: paymentEntries })
+        body: JSON.stringify({
+            items: cart,
+            payments: paymentEntries,
+            client_id: document.getElementById('client_id')?.value || null
+        })
+
     })
     .then(async response => {
         const text = await response.text();
@@ -559,6 +585,14 @@ document.getElementById('addProductForm')?.addEventListener('submit', async func
         alert('An error occurred.');
     }
 });
+
+if (window.TomSelect) {
+    new TomSelect('#client_id', {
+        allowEmptyOption: true,
+        placeholder: 'Select a client (optional)',
+        create: false
+    });
+}
 
 </script>
 @endif
