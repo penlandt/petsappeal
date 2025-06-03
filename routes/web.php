@@ -164,6 +164,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/pos/sales/{sale}/receipt', [ReceiptController::class, 'show'])
     ->middleware(['auth'])
     ->name('pos.receipt');
+    Route::post('/pos/return', [\App\Http\Controllers\POS\POSController::class, 'processReturn'])->name('pos.return');
 });
 
     // Profile Management

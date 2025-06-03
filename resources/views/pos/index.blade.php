@@ -117,6 +117,43 @@
     </div>
 </div>
 
+<!-- Return Modal -->
+<div id="returnModal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Return Item</h2>
+        <form id="returnForm">
+            <input type="hidden" id="returnItemIndex">
+            <div class="mb-4">
+                <label for="returnQuantity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity to Return</label>
+                <input type="number" id="returnQuantity" min="1" step="1"
+                    class="mt-1 w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" required>
+            </div>
+            <div class="mb-4">
+                <label for="refundMethod" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refund Method</label>
+                <select id="refundMethod"
+                    class="mt-1 w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white">
+                    <option value="Cash">Cash</option>
+                    <option value="Credit">Credit</option>
+                    <option value="Store Credit">Store Credit</option>
+                    <option value="None">None (No Refund)</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="returnPrice" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refund Price (per item)</label>
+                <input type="number" id="returnPrice" min="0" step="0.01"
+                    class="mt-1 w-full border-gray-300 rounded shadow-sm dark:bg-gray-700 dark:text-white" required>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeReturnModal()"
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Cancel</button>
+                <button type="submit"
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Confirm Return</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <!-- Add Product Modal -->
 <div id="addProductModal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-xl">
@@ -256,7 +293,13 @@ function renderCart() {
         tr.innerHTML = `
             <td class="px-4 py-2 text-gray-900 dark:text-white">
                 ${item.name}${viewLink}
+                <br>
+                <button onclick="startReturn(${index})"
+                    class="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 underline">
+                    Return
+                </button>
             </td>
+
             <td class="px-4 py-2 text-gray-900 dark:text-white">${item.quantity.toFixed(2)}</td>
             <td class="px-4 py-2 text-gray-900 dark:text-white">
                 <input type="number" step="0.01" min="0" value="${item.price}"
@@ -275,6 +318,87 @@ function renderCart() {
 
     updateTotals();
 }
+
+function startReturn(index) {
+    const item = cart[index];
+    if (!item) return;
+
+    document.getElementById('returnItemIndex').value = index;
+    document.getElementById('returnQuantity').value = 1;
+    document.getElementById('returnQuantity').max = item.quantity;
+    document.getElementById('returnPrice').value = item.price ?? 0;
+
+    document.getElementById('returnModal').classList.remove('hidden');
+    document.getElementById('returnModal').classList.add('flex');
+}
+
+function closeReturnModal() {
+    const modal = document.getElementById('returnModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+document.getElementById('returnForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const index = parseInt(document.getElementById('returnItemIndex').value);
+    const quantity = parseInt(document.getElementById('returnQuantity').value);
+    const method = document.getElementById('refundMethod').value;
+
+    const item = cart[index];
+    if (!item || quantity < 1 || quantity > item.quantity) {
+        alert("Invalid quantity.");
+        return;
+    }
+
+    const confirmed = confirm(`Return ${quantity} of ${item.name} via ${method}?`);
+    if (!confirmed) return;
+
+    // Update cart
+    if (item.quantity > quantity) {
+        item.quantity -= quantity;
+    } else {
+        cart.splice(index, 1);
+    }
+    saveCartToLocalStorage();
+    renderCart();
+
+    closeReturnModal();
+
+    const price = parseFloat(document.getElementById('returnPrice').value) || 0;
+    const taxRate = productTaxRate || 0;
+    const taxAmount = (item.taxable ? price * quantity * (taxRate / 100) : 0).toFixed(2);
+
+    // Send to server
+    try {
+        const response = await fetch('/pos/return', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            
+            body: JSON.stringify({
+                product_id: item.id,
+                quantity: quantity,
+                refund_method: method,
+                client_id: clientSelect?.getValue?.() || document.getElementById('client_id')?.value || null,
+                price: price,
+                tax_amount: taxAmount
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert("Return processed.");
+        } else {
+            alert("Return saved locally, but not recorded on server.");
+        }
+    } catch (err) {
+        console.error("Return failed:", err);
+        alert("Return saved locally, but error contacting server.");
+    }
+});
 
 
 

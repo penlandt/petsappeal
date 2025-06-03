@@ -246,4 +246,55 @@ class POSController extends Controller
 
         return response()->json($cartItems);
     }
+
+    public function processReturn(Request $request)
+{
+    $request->validate([
+        'product_id'     => 'required',
+        'quantity'       => 'required|integer|min:1',
+        'refund_method'  => 'required|string|max:50',
+        'client_id'      => 'nullable|exists:clients,id',
+        'price' => 'required|numeric|min:0',
+        'tax_amount' => 'required|numeric|min:0',
+    ]);
+
+    $productId = $request->input('product_id');
+    $quantity = $request->input('quantity');
+    $price = $request->input('price');
+    $taxAmount = $request->input('tax_amount');
+    $refundMethod = $request->input('refund_method');
+    $clientId = $request->input('client_id');
+    $locationId = auth()->user()->selected_location_id;
+
+    if (!is_numeric($productId)) {
+        return response()->json(['success' => false, 'error' => 'Invalid product ID.']);
+    }
+
+    $product = \App\Models\Product::find($productId);
+    if (!$product) {
+        return response()->json(['success' => false, 'error' => 'Product not found.'], 404);
+    }
+
+    // 1. Increase inventory
+    $product->quantity += $quantity;
+    $product->save();
+
+    // 2. Save return record
+    \DB::table('pos_returns')->insert([
+        'client_id'     => $clientId,
+        'product_id'    => $product->id,
+        'quantity'      => $quantity,
+        'price'         => $price,
+        'tax_amount'    => $taxAmount,
+        'refund_method' => $refundMethod,
+        'location_id'   => $locationId,
+        'created_at'    => now(),
+        'updated_at'    => now(),
+    ]);
+    
+    
+
+    return response()->json(['success' => true]);
+}
+    
 }
