@@ -12,11 +12,14 @@ class BoardingReservation extends Model
     protected $table = 'boarding_reservations';
 
     protected $fillable = [
-        'boarding_unit_id',
+        'location_id',
         'client_id',
+        'boarding_unit_id',
         'check_in_date',
         'check_out_date',
         'price_total',
+        'notes',
+        'status',
     ];
 
     public function boardingUnit()

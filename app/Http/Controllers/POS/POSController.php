@@ -124,10 +124,15 @@ class POSController extends Controller
                 'quantity' => $item['quantity'],
                 'line_total' => $item['price'] * $item['quantity'],
             ]);
-        
-            // If the item is linked to an invoice, mark that invoice as Paid
+
+            // If the item is linked to an invoice, mark that invoice as Paid and update amount_paid
             if (!empty($item['invoice_id'])) {
-                \App\Models\Modules\Invoices\Invoice::where('id', $item['invoice_id'])->update(['status' => 'Paid']);
+                $invoice = \App\Models\Modules\Invoices\Invoice::find($item['invoice_id']);
+                if ($invoice && $invoice->status !== 'Paid') {
+                    $invoice->status = 'Paid';
+                    $invoice->amount_paid = $invoice->total_amount;
+                    $invoice->save();
+                }
             }
         }
 
@@ -154,8 +159,6 @@ class POSController extends Controller
         ], 500);
     }
 }
-
-
 
     public function storeProduct(Request $request)
     {

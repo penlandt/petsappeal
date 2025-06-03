@@ -42,7 +42,8 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+<body class="font-sans antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100" data-session-lifetime="{{ config('session.lifetime') }}">
+
     <!-- Spinner Overlay -->
     <div id="loading-overlay">
         <img src="{{ asset('images/petsappeal-logo-square.png') }}" alt="Loading..." />

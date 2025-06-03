@@ -64,20 +64,65 @@ public function store(Request $request)
     $user = auth()->user();
     $locationId = $user->selected_location_id;
 
-    $reservation = new \App\Models\Modules\Boarding\BoardingReservation();
-    $reservation->location_id = $locationId;
-    $reservation->client_id = $request->client_id;
-    $reservation->boarding_unit_id = $request->boarding_unit_id;
-    $reservation->check_in_date = $request->check_in_date;
-    $reservation->check_out_date = $request->check_out_date;
-    $reservation->price_total = $request->price_total;
-    $reservation->notes = $request->notes ?? '';
-    $reservation->save();
+    \DB::beginTransaction();
 
-    // Attach pets to the reservation
-    $reservation->pets()->attach($request->pets);
+    try {
+        $reservation = new \App\Models\Modules\Boarding\BoardingReservation();
+        $reservation->location_id = $locationId;
+        $reservation->client_id = $request->client_id;
+        $reservation->boarding_unit_id = $request->boarding_unit_id;
+        $reservation->check_in_date = $request->check_in_date;
+        $reservation->check_out_date = $request->check_out_date;
+        $reservation->price_total = $request->price_total;
+        $reservation->notes = $request->notes ?? '';
+        $reservation->save();
 
-    return redirect()->route('boarding.reservations.index')->with('success', 'Boarding reservation created successfully.');
+        $reservation->pets()->attach($request->pets);
+
+        // Calculate tax
+        $location = \App\Models\Location::findOrFail($locationId);
+        $serviceTaxRate = floatval($location->service_tax_rate ?? 0);
+        $priceTotal = floatval($reservation->price_total);
+        $taxAmount = round($priceTotal * ($serviceTaxRate / 100), 2);
+        $invoiceTotal = $priceTotal + $taxAmount;
+
+        // Create Invoice
+        $invoice = new \App\Models\Modules\Invoices\Invoice();
+        $invoice->client_id = $request->client_id;
+        $invoice->location_id = $locationId;
+        $invoice->invoice_date = now()->toDateString();
+        $invoice->due_date = now()->toDateString();
+        $invoice->total_amount = $invoiceTotal;
+        $invoice->amount_paid = 0;
+        $invoice->status = 'Unpaid';
+        $invoice->save();
+
+        // Create InvoiceItem
+        $description = 'Boarding (' .
+            \Carbon\Carbon::parse($request->check_in_date)->format('m/d/Y') .
+            ' - ' .
+            \Carbon\Carbon::parse($request->check_out_date)->format('m/d/Y') .
+            ')';
+
+        $invoiceItem = new \App\Models\Modules\Invoices\InvoiceItem();
+        $invoiceItem->invoice_id = $invoice->id;
+        $invoiceItem->item_type = 'boarding';
+        $invoiceItem->item_id = $reservation->id;
+        $invoiceItem->description = $description;
+        $invoiceItem->quantity = 1;
+        $invoiceItem->unit_price = $priceTotal;
+        $invoiceItem->total_price = $priceTotal;
+        $invoiceItem->tax_amount = $taxAmount;
+        $invoiceItem->save();
+
+        \DB::commit();
+
+        return redirect()->route('boarding.reservations.index')->with('success', 'Boarding reservation created successfully.');
+    } catch (\Throwable $e) {
+        \DB::rollBack();
+        \Log::error('Failed to create boarding reservation and invoice: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'An error occurred while saving the boarding reservation.');
+    }
 }
 
     public function getClientPets($clientId)
@@ -121,30 +166,30 @@ public function store(Request $request)
         ->whereHas('boardingUnit', function ($query) use ($locationId) {
             $query->where('location_id', $locationId);
         })
+        ->whereNotIn('status', ['Cancelled', 'No-Show'])
         ->get();
 
     $events = [];
 
     foreach ($reservations as $reservation) {
-        $location = $reservation->location;
-    
-        $checkInTime = $location?->check_in_time ?? '13:00:00';   // fallback to 1pm
-        $checkOutTime = $location?->check_out_time ?? '11:00:00'; // fallback to 11am
-    
+        $startDate = \Carbon\Carbon::parse($reservation->check_in_date);
+        $endDate = \Carbon\Carbon::parse($reservation->check_out_date)->subDay(); // <== subtract 1 day
+
         $events[] = [
             'id' => $reservation->id,
             'resourceId' => $reservation->boarding_unit_id,
             'title' => $reservation->client
                 ? $reservation->client->first_name . ' ' . $reservation->client->last_name
                 : 'Unnamed Client',
-            'start' => $reservation->check_in_date . 'T' . $checkInTime,
-            'end' => $reservation->check_out_date . 'T' . $checkOutTime,
+            'start' => $startDate->format('Y-m-d'),
+            'end' => $endDate->addDay()->format('Y-m-d'), // FullCalendar expects exclusive end date
+            'allDay' => true,
         ];
     }
-    
 
     return response()->json($events);
 }
+
 
 public function edit($id)
 {
@@ -171,6 +216,8 @@ public function edit($id)
 
 public function update(Request $request, BoardingReservation $reservation)
 {
+    \Log::info('Boarding status received', ['status' => $request->status]);
+    
     $request->validate([
         'client_id' => 'required|exists:clients,id',
         'boarding_unit_id' => 'required|exists:boarding_units,id',
@@ -180,6 +227,7 @@ public function update(Request $request, BoardingReservation $reservation)
         'pets.*' => 'exists:pets,id',
         'price_total' => 'required|numeric',
         'notes' => 'nullable|string',
+        'status' => 'required|in:Booked,Confirmed,Cancelled,No-Show,Checked In,Checked Out',
     ]);
 
     $user = auth()->user();
@@ -197,12 +245,32 @@ public function update(Request $request, BoardingReservation $reservation)
         'check_out_date' => $request->check_out_date,
         'price_total' => $request->price_total,
         'notes' => $request->notes ?? '',
+        'status' => $request->status,
     ]);
+
+    // Void invoice if reservation is cancelled
+    if ($request->status === 'Cancelled') {
+        $invoiceItem = \App\Models\Modules\Invoices\InvoiceItem::where('item_type', 'boarding')
+            ->where('item_id', $reservation->id)
+            ->first();
+
+        if ($invoiceItem) {
+            $invoice = $invoiceItem->invoice;
+
+            if ($invoice && $invoice->status !== 'Paid') {
+                $invoice->status = 'Voided';
+                $invoice->total_amount = 0;
+                $invoice->amount_paid = 0;
+                $invoice->save();
+            }
+        }
+    }
 
     $reservation->pets()->sync($request->pets);
 
     return redirect()->route('boarding.reservations.index')->with('success', 'Reservation updated successfully.');
 }
+
     
 public function destroy(BoardingReservation $reservation)
 {
@@ -217,6 +285,41 @@ public function destroy(BoardingReservation $reservation)
 
     return redirect()->route('boarding.reservations.index')
         ->with('success', 'Boarding reservation deleted successfully.');
+}
+
+public function cancel($id)
+{
+    try {
+        \DB::beginTransaction();
+
+        $reservation = \App\Models\Modules\Boarding\BoardingReservation::findOrFail($id);
+        $reservation->status = 'Cancelled';
+        $reservation->save();
+
+        // Find invoice item linked to this reservation
+        $invoiceItem = \App\Models\Modules\Invoices\InvoiceItem::where('item_type', 'boarding')
+            ->where('item_id', $reservation->id)
+            ->first();
+
+        if ($invoiceItem) {
+            $invoice = $invoiceItem->invoice;
+
+            if ($invoice && $invoice->status !== 'Paid') {
+                $invoice->status = 'Voided';
+                $invoice->total_amount = 0;
+                $invoice->amount_paid = 0;
+                $invoice->save();
+            }
+        }
+
+        \DB::commit();
+
+        return redirect()->route('boarding.reservations.index')->with('success', 'Reservation cancelled and invoice voided.');
+    } catch (\Throwable $e) {
+        \DB::rollBack();
+        \Log::error('Failed to cancel boarding reservation: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'An error occurred while cancelling the reservation.');
+    }
 }
 
 }

@@ -196,7 +196,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     
         Route::get('/boarding/select-location', [BoardingLocationController::class, 'selectLocation'])->name('boarding.location.select');
         Route::post('/boarding/set-location', [BoardingLocationController::class, 'setLocation'])->name('boarding.location.set');
-    
+        Route::post('/boarding/reservations/{reservation}/cancel', [BoardingReservationController::class, 'cancel'])->name('boarding.reservations.cancel');
     });
 
     

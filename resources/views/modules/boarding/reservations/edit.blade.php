@@ -77,6 +77,15 @@
                               class="mt-1 block w-full rounded-md shadow-sm" style="background-color: #fff; color: #000;">{{ $reservation->notes }}</textarea>
                 </div>
 
+                <div class="mb-4">
+                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Status</label>
+                    <select name="status" id="status" class="mt-1 block w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        @foreach(['Booked', 'Confirmed', 'Cancelled', 'No-Show', 'Checked In', 'Checked Out'] as $option)
+                            <option value="{{ $option }}" @if(old('status', $reservation->status) === $option) selected @endif>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="flex justify-between items-center mt-6">
                     <a href="{{ route('boarding.reservations.index') }}"
                        class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
@@ -88,17 +97,6 @@
                         Update Reservation
                     </button>
                 </div>
-            </form>
-
-            <form method="POST" action="{{ route('boarding.reservations.destroy', $reservation->id) }}"
-                  class="mt-4 text-right"
-                  onsubmit="return confirm('Are you sure you want to delete this reservation?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-                    Delete
-                </button>
             </form>
         </div>
     </div>
