@@ -21,4 +21,15 @@ class Product extends Model
         'quantity',
         'inactive',
     ];
+
+    public function inventories()
+    {
+        return $this->hasMany(\App\Models\ProductInventory::class);
+    }
+    
+    public function inventoryForLocation($locationId)
+    {
+        return $this->inventories()->where('location_id', $locationId)->first();
+    }
+    
 }

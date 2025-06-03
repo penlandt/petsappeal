@@ -217,7 +217,7 @@ public function edit($id)
 public function update(Request $request, BoardingReservation $reservation)
 {
     \Log::info('Boarding status received', ['status' => $request->status]);
-    
+
     $request->validate([
         'client_id' => 'required|exists:clients,id',
         'boarding_unit_id' => 'required|exists:boarding_units,id',
@@ -238,6 +238,11 @@ public function update(Request $request, BoardingReservation $reservation)
         abort(403, 'Unauthorized');
     }
 
+    // Track original dates
+    $originalCheckIn = $reservation->check_in_date;
+    $originalCheckOut = $reservation->check_out_date;
+
+    // Update reservation
     $reservation->update([
         'client_id' => $request->client_id,
         'boarding_unit_id' => $request->boarding_unit_id,
@@ -248,7 +253,7 @@ public function update(Request $request, BoardingReservation $reservation)
         'status' => $request->status,
     ]);
 
-    // Void invoice if reservation is cancelled
+    // Cancel invoice if reservation is cancelled
     if ($request->status === 'Cancelled') {
         $invoiceItem = \App\Models\Modules\Invoices\InvoiceItem::where('item_type', 'boarding')
             ->where('item_id', $reservation->id)
@@ -264,12 +269,47 @@ public function update(Request $request, BoardingReservation $reservation)
                 $invoice->save();
             }
         }
+    } else {
+        // Recalculate invoice if dates changed
+        if (
+            $originalCheckIn !== $request->check_in_date ||
+            $originalCheckOut !== $request->check_out_date
+        ) {
+            $invoiceItem = \App\Models\Modules\Invoices\InvoiceItem::where('item_type', 'boarding')
+                ->where('item_id', $reservation->id)
+                ->first();
+
+            if ($invoiceItem) {
+                $boardingUnit = $reservation->boardingUnit;
+                $ratePerNight = $boardingUnit->price_per_night;
+
+                $checkIn = \Carbon\Carbon::parse($request->check_in_date);
+                $checkOut = \Carbon\Carbon::parse($request->check_out_date);
+                $nights = $checkOut->diffInDays($checkIn);
+
+                $newTotal = $nights * $ratePerNight;
+
+                // Update invoice item
+                $invoiceItem->quantity = $nights;
+                $invoiceItem->price = $ratePerNight;
+                $invoiceItem->total_price = $newTotal;
+                $invoiceItem->save();
+
+                // Update total on the invoice
+                $invoice = $invoiceItem->invoice;
+                $invoice->total_amount = \App\Models\Modules\Invoices\InvoiceItem::where('invoice_id', $invoice->id)
+                    ->sum(\DB::raw('total_price + tax_amount'));
+                $invoice->save();
+            }
+        }
     }
 
+    // Sync pets
     $reservation->pets()->sync($request->pets);
 
     return redirect()->route('boarding.reservations.index')->with('success', 'Reservation updated successfully.');
 }
+
 
     
 public function destroy(BoardingReservation $reservation)

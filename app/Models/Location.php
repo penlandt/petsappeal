@@ -32,4 +32,10 @@ class Location extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function inventory()
+{
+    return $this->hasMany(\App\Models\ProductInventory::class);
+}
+
 }
