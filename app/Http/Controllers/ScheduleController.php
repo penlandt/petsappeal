@@ -53,8 +53,6 @@ class ScheduleController extends Controller
         $selectedDate = $request->input('date', now()->toDateString());
         $dayOfWeek = Carbon::parse($selectedDate)->format('l');
 
-        \Log::info("Selected date: $selectedDate | Day of week: $dayOfWeek");
-
         $clients = Client::where('company_id', $companyId)->orderBy('last_name')->get();
         $services = Service::where('company_id', $companyId)->orderBy('name')->get();
 

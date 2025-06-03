@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Client;
 use App\Models\Service;
 use App\Models\Appointment;
+use App\Models\Modules\Invoices\Invoice;
+use App\Models\Modules\Invoices\InvoiceItem;
+use Carbon\Carbon;
 
 class AppointmentController extends Controller
 {
@@ -69,114 +72,104 @@ class AppointmentController extends Controller
     }
 
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'location_id' => 'required|exists:locations,id',
-        'staff_id' => 'required|exists:staff,id',
-        'pet_id' => 'required|exists:pets,id',
-        'service_id' => 'required|exists:services,id',
-        'price' => 'required|numeric|min:0',
-        'notes' => 'nullable|string',
-        'appointment_date' => 'required|date',
-        'start_time' => 'required|date_format:H:i',
-    ]);
+    {
+        \Log::info('Appointment request payload:', $request->all());
 
-    $start = \Carbon\Carbon::parse("{$validated['appointment_date']} {$validated['start_time']}");
-    $service = \App\Models\Service::findOrFail($validated['service_id']);
-    $end = $start->copy()->addMinutes($service->duration);
-
-    $recurrenceType = $request->input('recurrence_type'); // 'weekly' or 'monthly'
-    $recurrenceInterval = (int) $request->input('recurrence_interval'); // Number of weeks or months
-    $recurrenceGroupId = $recurrenceType ? \Illuminate\Support\Str::uuid()->toString() : null;
-
-    if ($recurrenceType && $recurrenceInterval > 0) {
-        \App\Models\AppointmentRecurrenceRule::create([
-            'recurrence_group_id' => $recurrenceGroupId,
-            'location_id' => $validated['location_id'],
-            'staff_id' => $validated['staff_id'],
-            'pet_id' => $validated['pet_id'],
-            'service_id' => $validated['service_id'],
-            'price' => $validated['price'],
-            'repeat_type' => $recurrenceType,
-            'repeat_interval' => $recurrenceInterval,
-            'start_date' => $start->toDateString(),
-            'start_time' => $start->toTimeString(),
-            'notes' => $validated['notes'] ?? null,
+        
+        $validated = $request->validate([
+            'client_id'     => 'required|exists:clients,id',
+            'pet_id'        => 'required|exists:pets,id',
+            'service_id'    => 'required|exists:services,id',
+            'staff_id'      => 'required|exists:staff,id',
+            'start_time'    => 'required|date_format:H:i',
+            'appointment_date' => 'required|date',
+            'notes'         => 'nullable|string',
         ]);
+    
+        $user = auth()->user();
+        $locationId = $user->selected_location_id;
+    
+        $service = Service::findOrFail($validated['service_id']);
+    
+        // Combine date and time into full datetime
+        $start = Carbon::parse($validated['appointment_date'] . ' ' . $validated['start_time'], $user->time_zone ?? config('app.timezone'));
+
+        $end = (clone $start)->addMinutes($service->duration ?? 30);
+    
+        // Create the appointment
+        $appt = Appointment::create([
+            'company_id'    => $user->company_id,
+            'location_id'   => $locationId,
+            'client_id'     => $validated['client_id'],
+            'pet_id'        => $validated['pet_id'],
+            'service_id'    => $validated['service_id'],
+            'staff_id'      => $validated['staff_id'],
+            'start'         => $start,
+            'end'           => $end,
+            'start_time'    => $start,
+            'notes'         => $validated['notes'],
+            'status'        => 'Booked',
+            'price'         => $service->price,
+        ]);
+        
+        $appt->refresh(); // ✅ This guarantees the ID is loaded
+        
+        \Log::info('Created appointment object:', $appt->toArray());
+
+    
+        // Create invoice
+        $user = auth()->user();
+        $location = \App\Models\Location::find($user->selected_location_id);
+        $taxRate = $location?->service_tax_rate ?? 0;
+
+        // Step 1: Create the invoice with placeholder total
+        $invoice = Invoice::create([
+            'location_id'    => $locationId,
+            'client_id'      => $validated['client_id'],
+            'invoice_date'   => now()->toDateString(),
+            'total_amount'   => 0,
+            'amount_paid'    => 0,
+            'status'         => 'Unpaid',
+        ]);
+
+        // Step 2: Calculate and save invoice item
+        $unit_price = $service->price;
+        $quantity = 1;
+        $total_price = $unit_price * $quantity;
+        $tax_amount = $total_price * ($taxRate / 100);
+
+        \Log::info('Invoice item values', [
+            'invoice_id'   => $invoice->id,
+            'item_id'      => $appt->appointment_id,
+            'unit_price'   => $unit_price,
+            'quantity'     => $quantity,
+            'total_price'  => $total_price,
+            'tax_amount'   => $tax_amount,
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id'     => $invoice->id,
+            'item_id'        => $appt->appointment_id,
+            'item_type'      => 'appointment',
+            'description'    => $service->name,
+            'quantity'       => $quantity,
+            'unit_price'     => $unit_price,
+            'total_price'    => $total_price,
+            'tax_amount'     => $tax_amount,
+        ]);
+
+        // Step 3: Recalculate invoice total from all related items
+        $invoiceTotal = \App\Models\Modules\Invoices\InvoiceItem::where('invoice_id', $invoice->id)
+            ->sum(\DB::raw('total_price + tax_amount'));
+
+        \DB::table('invoices')
+            ->where('id', $invoice->id)
+            ->update(['total_amount' => (float) $invoiceTotal]);
+                        
+        return redirect()->route('schedule.index')->with('success', 'Appointment saved successfully.');
     }
-
-    $cutoffDate = now()->addMonths(6);
-    $currentStart = $start->copy();
-    $occurrence = 0;
-    $skipped = [];
-
-    while (true) {
-        if ($occurrence > 0) {
-            if ($recurrenceType === 'weekly') {
-                $currentStart->addWeeks($recurrenceInterval);
-            } elseif ($recurrenceType === 'monthly') {
-                $currentStart->addMonths($recurrenceInterval);
-            }
-
-            if ($currentStart->greaterThan($cutoffDate)) {
-                break;
-            }
-        }
-
-        $dayOfWeek = strtolower($currentStart->format('l'));
-        $startTimeStr = $currentStart->format('H:i:s');
-        $dateStr = $currentStart->toDateString();
-
-        $availability = \App\Models\StaffAvailability::where('staff_id', $validated['staff_id'])
-            ->where('day_of_week', $dayOfWeek)
-            ->where('start_time', '<=', $startTimeStr)
-            ->where('end_time', '>', $startTimeStr)
-            ->first();
-
-        $isException = \App\Models\StaffAvailabilityException::where('staff_id', $validated['staff_id'])
-            ->whereDate('start_date', '<=', $dateStr)
-            ->whereDate('end_date', '>=', $dateStr)
-            ->exists();
-
-        if (!$availability || $isException) {
-            $skipped[] = $currentStart->format('M j, Y \a\t g:i A');
-            $occurrence++;
-            continue;
-        }
-
-        $appt = new \App\Models\Appointment();
-        $appt->location_id = $validated['location_id'];
-        $appt->staff_id = $validated['staff_id'];
-        $appt->pet_id = $validated['pet_id'];
-        $appt->service_id = $validated['service_id'];
-        $appt->price = $validated['price'];
-        $appt->notes = $validated['notes'] ?? null;
-        $appt->start_time = $currentStart->copy();
-        $appt->recurrence_group_id = $recurrenceGroupId;
-        $appt->status = 'Booked';
-        $appt->save();
-
-        $occurrence++;
-
-        if (!$recurrenceType || $recurrenceInterval < 1) {
-            break;
-        }
-    }
-
-    $message = 'Appointment(s) created!';
-    if (count($skipped)) {
-        $message .= ' The following dates were skipped due to staff unavailability:';
-        foreach ($skipped as $s) {
-            $message .= "\n- {$s}";
-        }
-    }
-
-    return redirect()->route('schedule.index', [
-        'date' => $request->input('date'),
-        'location_id' => $request->input('location_id'),
-    ])->with('success', $message);
-}
-
+    
+       
     public function allAppointments()
     {
         $appointments = \App\Models\Appointment::with(['service', 'pet', 'staff', 'location'])
@@ -234,44 +227,56 @@ class AppointmentController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        \Log::info('Received update payload:', $request->all());
+{
+    \Log::info('Received update payload:', $request->all());
 
-        $applyToSeries = $request->input('apply_to_series'); // 'single' or 'future'
+    $applyToSeries = $request->input('apply_to_series'); // 'single' or 'future'
 
-        try {
-            $validated = $request->validate([
-                'pet_id' => 'required|exists:pets,id',
-                'service_id' => 'required|exists:services,id',
-                'price' => 'required|numeric|min:0',
-                'notes' => 'nullable|string',
-                'status' => 'required|in:Booked,Confirmed,Cancelled,No-Show,Checked In,Checked Out',
+    try {
+        $validated = $request->validate([
+            'pet_id' => 'required|exists:pets,id',
+            'service_id' => 'required|exists:services,id',
+            'price' => 'required|numeric|min:0',
+            'notes' => 'nullable|string',
+            'status' => 'required|in:Booked,Confirmed,Cancelled,No-Show,Checked In,Checked Out',
 
-                'appointment_date' => 'required|date',
-                'start_time' => 'required|date_format:H:i',
-                'staff_id' => 'required|exists:staff,id',
-            ]);
+            'appointment_date' => 'required|date',
+            'start_time' => 'required|date_format:H:i',
+            'staff_id' => 'required|exists:staff,id',
+        ]);
 
-            $appointment = Appointment::findOrFail($id);
+        $appointment = Appointment::findOrFail($id);
 
-            $start = \Carbon\Carbon::parse("{$validated['appointment_date']} {$validated['start_time']}");
-            $appointment->start_time = $start;
-            $appointment->staff_id = $validated['staff_id'];
+        $start = \Carbon\Carbon::parse("{$validated['appointment_date']} {$validated['start_time']}");
+        $appointment->start_time = $start;
+        $appointment->staff_id = $validated['staff_id'];
 
-            unset($validated['appointment_date'], $validated['start_time']);
+        unset($validated['appointment_date'], $validated['start_time']);
 
-            if ($applyToSeries === 'future' && $appointment->recurrence_group_id) {
-                Appointment::where('recurrence_group_id', $appointment->recurrence_group_id)
-                    ->where('start_time', '>=', $appointment->start_time)
-                    ->update($validated);
-            } else {
-                $appointment->update($validated);
-            }
-
-            return response()->json(['message' => 'Appointment updated successfully']);
-        } catch (\Throwable $e) {
-            \Log::error('Failed to update appointment: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update appointment.'], 500);
+        if ($applyToSeries === 'future' && $appointment->recurrence_group_id) {
+            Appointment::where('recurrence_group_id', $appointment->recurrence_group_id)
+                ->where('start_time', '>=', $appointment->start_time)
+                ->update($validated);
+        } else {
+            $appointment->update($validated);
         }
+
+        // 💥 If status is Cancelled, cancel related invoice
+        if ($validated['status'] === 'Cancelled') {
+            $invoiceItem = InvoiceItem::where('appointment_id', $appointment->id)->first();
+            if ($invoiceItem && $invoiceItem->invoice) {
+                $invoice = $invoiceItem->invoice;
+                $invoice->status = 'Voided';
+                $invoice->save();
+            }
+        }
+
+
+        return response()->json(['message' => 'Appointment updated successfully']);
+    } catch (\Throwable $e) {
+        \Log::error('Failed to update appointment: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to update appointment.'], 500);
     }
+}
+
 }

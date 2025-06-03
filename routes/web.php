@@ -69,6 +69,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::put('/locations/{location}', [LocationController::class, 'update'])->name('locations.update');
     Route::get('/select-location', [LocationSelectionController::class, 'show'])->name('select-location');
     Route::post('/select-location', [LocationSelectionController::class, 'store'])->name('select-location.store');
+    Route::get('/change-location', [LocationSelectionController::class, 'show'])->name('change-location');
 
     // Staff Management
     Route::get('/staff', [\App\Http\Controllers\StaffController::class, 'index'])->name('staff.index');
@@ -80,7 +81,8 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::post('/availability-exceptions', [\App\Http\Controllers\AvailabilityExceptionController::class, 'store'])->name('availability-exceptions.store');
 
     // Schedule Management
-    Route::middleware(['check.module.access:grooming'])->group(function () {
+    Route::middleware(['auth', 'has.company', 'ensure.location.selected', 'check.module.access:grooming'])->group(function () {
+
         Route::get('/modules/grooming/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
         Route::get('/api/appointment-form-data', [AppointmentController::class, 'formData'])->name('appointments.form-data');
         Route::get('/api/clients/search', [AppointmentController::class, 'searchClients']);
@@ -130,7 +132,8 @@ Route::middleware(['auth', 'has.company'])->group(function () {
 
     // 🆕 Point of Sale
     // 🆕 Point of Sale
-Route::middleware(['auth', 'has.company', 'check.module.access:pos'])->group(function () {
+    Route::middleware(['auth', 'has.company', 'ensure.location.selected', 'check.module.access:pos'])->group(function () {
+
     Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
 
     Route::get('/pos/products', [ProductController::class, 'index'])->name('pos.products');
@@ -146,6 +149,7 @@ Route::middleware(['auth', 'has.company', 'check.module.access:pos'])->group(fun
     Route::get('/pos/api/products', [ProductController::class, 'apiProducts'])->name('pos.api.products');
     Route::get('/pos/api/products/search', [ProductController::class, 'search'])->name('pos.products.search');
     Route::post('/pos/api/products', [POSController::class, 'storeProduct']);
+    Route::get('/pos/client/{client}/unpaid-invoices', [POSController::class, 'getUnpaidInvoices'])->name('pos.unpaid-invoices');
 });
 
     // Profile Management
@@ -167,7 +171,8 @@ Route::middleware(['auth', 'has.company', 'check.module.access:pos'])->group(fun
         ->name('reports.recurring-conflicts');
 
     // Boarding Management
-    Route::middleware(['check.module.access:boarding'])->group(function () {
+    Route::middleware(['auth', 'has.company', 'ensure.location.selected', 'check.module.access:boarding'])->group(function () {
+
         Route::get('/modules/boarding', function () {
             return view('modules.boarding');
         })->name('modules.boarding');
@@ -191,19 +196,25 @@ Route::middleware(['auth', 'has.company', 'check.module.access:pos'])->group(fun
     
         Route::get('/boarding/select-location', [BoardingLocationController::class, 'selectLocation'])->name('boarding.location.select');
         Route::post('/boarding/set-location', [BoardingLocationController::class, 'setLocation'])->name('boarding.location.set');
+    
     });
+
     
 
-    // Daycare Management
+// Daycare Management
+Route::middleware(['auth', 'has.company', 'ensure.location.selected', 'check.module.access:daycare'])->group(function () {
     Route::get('/modules/daycare', function () {
         return view('modules.daycare');
-    })->middleware('check.module.access:daycare')->name('modules.daycare');
-    
+    })->name('modules.daycare');
+});
 
-    // House/Pet-Sitting Management
+// House/Pet-Sitting Management
+Route::middleware(['auth', 'has.company', 'ensure.location.selected', 'check.module.access:house'])->group(function () {
     Route::get('/modules/house-sitting', function () {
         return view('modules.house');
-    })->middleware('check.module.access:house')->name('modules.house');
+    })->name('modules.house');
+});
+
 });
 
 // Public front-end routes

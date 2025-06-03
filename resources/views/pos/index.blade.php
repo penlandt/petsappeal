@@ -9,35 +9,8 @@
     </x-slot>
 
     <div class="py-6 px-4 sm:px-6 lg:px-8">
-    @php
-        $selectedLocationId = auth()->user()->selected_location_id;
-    @endphp
-
-        @if (!$selectedLocationId)
-            <div class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-xl mx-auto">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Your Location</h3>
-
-                <form method="POST" action="{{ route('pos.set-location') }}">
-                    @csrf
-                    <div class="mb-4">
-                        <label for="location_id" class="block text-gray-700 dark:text-gray-300 mb-2">Location</label>
-                        <select name="location_id" id="location_id"
-                            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white">
-                            @foreach ($locations as $location)
-                                <option value="{{ $location->id }}">
-                                    {{ $location->name }} ({{ $location->city }}, {{ $location->state }} {{ $location->postal_code }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Continue
-                    </button>
-                </form>
-            </div>
-        @else
+    
+    
             <div class="flex flex-col lg:flex-row gap-6">
                 <div class="w-full lg:w-2/3">
                 <div class="mb-4">
@@ -114,7 +87,7 @@
 
                 </div>
             </div>
-        @endif
+        
     </div>
 
 <!-- Payment Modal -->
@@ -210,7 +183,6 @@
 </div>
 
 
-@if ($selectedLocationId)
 <!-- TomSelect CSS -->
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
 
@@ -361,7 +333,8 @@ function renderPaymentEntries() {
     container.innerHTML = '';
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * (productTaxRate / 100);
+    const taxableAmount = cart.reduce((sum, item) => item.taxable ? sum + (item.price * item.quantity) : sum, 0);
+    const tax = taxableAmount * (productTaxRate / 100);
     const total = subtotal + tax;
     const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
     const balance = totalPaid - total;
@@ -436,7 +409,8 @@ function submitPayments() {
 
     const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * (productTaxRate / 100);
+    const taxableAmount = cart.reduce((sum, item) => item.taxable ? sum + (item.price * item.quantity) : sum, 0);
+    const tax = taxableAmount * (productTaxRate / 100);
     const total = subtotal + tax;
 
     if (totalPaid < total) {
@@ -444,7 +418,7 @@ function submitPayments() {
         return;
     }
 
-    const clientElement = document.getElementById("client-select");
+    const clientId = clientSelect?.getValue?.() || document.getElementById('client_id')?.value || null;
 
     fetch("/pos/checkout", {
         method: "POST",
@@ -455,11 +429,8 @@ function submitPayments() {
         body: JSON.stringify({
             items: cart,
             payments: paymentEntries,
-            client_id: (typeof clientSelect !== 'undefined' && clientSelect.items?.[0]) ? clientSelect.items[0] : null
-
-
+            client_id: clientId
         })
-
     })
     .then(async response => {
         const text = await response.text();
@@ -470,6 +441,9 @@ function submitPayments() {
                 cart = [];
                 localStorage.removeItem('cart');
                 renderCart();
+                if (typeof clientSelect?.clear === 'function') {
+                    clientSelect.clear(); // ✅ Reset TomSelect to default state
+                }
                 closePaymentModal();
             } else {
                 alert("Checkout failed: " + (data.error || "Unknown error"));
@@ -484,6 +458,7 @@ function submitPayments() {
         alert("An error occurred during checkout.");
     });
 }
+
 
 // DOM-specific code
 document.addEventListener('DOMContentLoaded', () => {
@@ -597,29 +572,63 @@ document.getElementById('addProductForm')?.addEventListener('submit', async func
     }
 });
 
-if (window.TomSelect) {
-    new TomSelect('#client_id', {
-        allowEmptyOption: true,
-        placeholder: 'Select a client (optional)',
-        create: false
-    });
-}
-
 let clientSelect;
 
 document.addEventListener("DOMContentLoaded", () => {
     const selectElement = document.getElementById("client_id");
-    if (selectElement && !selectElement.tomselect) {
+    if (selectElement) {
+        // Destroy existing TomSelect if it exists
+        if (selectElement.tomselect) {
+            selectElement.tomselect.destroy();
+        }
+
         clientSelect = new TomSelect(selectElement, {
+            allowEmptyOption: true,
+            placeholder: 'Select a client (optional)',
             create: false,
-            sortField: { field: "text", direction: "asc" },
+            sortField: { field: "text", direction: "asc" }
         });
-    } else {
-        clientSelect = selectElement.tomselect;
+    }
+
+    document.getElementById('add-payment-btn')?.addEventListener('click', addPaymentEntry);
+    renderCart();
+});
+
+
+document.getElementById('client_id').addEventListener('change', async function () {
+    const clientId = this.value;
+    if (!clientId) return;
+
+    try {
+        const res = await fetch(`/pos/client/${clientId}/unpaid-invoices`);
+        if (!res.ok) throw new Error("Failed to fetch unpaid invoices.");
+        const items = await res.json();
+
+        items.forEach(item => {
+            const existing = cart.find(c => c.id === `invoice-${item.invoice_item_id}`);
+            if (!existing) {
+                cart.push({
+                    id: `invoice-${item.invoice_item_id}`,
+                    name: item.name,
+                    price: parseFloat(item.price),
+                    quantity: item.quantity,
+                    taxable: false,
+                    source: 'invoice',
+                    invoice_id: item.invoice_id,
+                    invoice_item_id: item.invoice_item_id
+                });
+            }
+        });
+
+        saveCartToLocalStorage();
+        renderCart();
+    } catch (err) {
+        console.error("Error loading unpaid invoices:", err);
+        alert("Could not load unpaid invoices.");
     }
 });
 
+
 </script>
-@endif
 
 </x-app-layout>

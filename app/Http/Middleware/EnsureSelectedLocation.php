@@ -11,6 +11,13 @@ class EnsureSelectedLocation
 {
     public function handle(Request $request, Closure $next)
     {
+
+        \Log::info('EnsureSelectedLocation middleware hit', [
+            'user_id' => optional(Auth::user())->id,
+            'selected_location_id' => optional(Auth::user())->selected_location_id,
+            'url' => $request->path(),
+        ]);
+        
         $user = Auth::user();
 
         if ($user) {
@@ -23,10 +30,9 @@ class EnsureSelectedLocation
             // If user has no selected location, or it’s no longer valid, or multiple locations are available
             if (
                 is_null($user->selected_location_id) ||
-                !in_array($user->selected_location_id, $activeLocations) ||
-                count($activeLocations) > 1
+                !in_array($user->selected_location_id, $activeLocations)
             ) {
-                if (!$request->is('select-location') && !$request->is('logout')) {
+                if (!($request->is('select-location') && $request->isMethod('get')) && !$request->is('logout')) {
                     return redirect()->route('select-location')->with('error', 'Please select your location.');
                 }
             }

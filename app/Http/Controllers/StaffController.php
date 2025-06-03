@@ -113,77 +113,85 @@ class StaffController extends Controller
     }
 
     public function edit($id)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        $staff = Staff::whereHas('location', function ($q) use ($user) {
-                $q->where('company_id', $user->company_id);
-            })->with('availabilities', 'availabilityExceptions')
-            ->findOrFail($id);
+    $staff = Staff::whereHas('location', function ($q) use ($user) {
+            $q->where('company_id', $user->company_id);
+        })->with('availabilities', 'availabilityExceptions')
+        ->findOrFail($id);
 
-        $locations = Location::where('company_id', $user->company_id)
-            ->where('inactive', false)
-            ->orderBy('name')
-            ->get();
+    $locations = Location::where('company_id', $user->company_id)
+        ->where('inactive', false)
+        ->orderBy('name')
+        ->get();
 
-        return view('staff.edit', compact('staff', 'locations'));
-    }
+    $states = [
+        'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas',
+        'CA' => 'California', 'CO' => 'Colorado', 'CT' => 'Connecticut', 'DE' => 'Delaware',
+        'DC' => 'District of Columbia', 'FL' => 'Florida', 'GA' => 'Georgia',
+        'HI' => 'Hawaii', 'ID' => 'Idaho', 'IL' => 'Illinois', 'IN' => 'Indiana',
+        'IA' => 'Iowa', 'KS' => 'Kansas', 'KY' => 'Kentucky', 'LA' => 'Louisiana',
+        'ME' => 'Maine', 'MD' => 'Maryland', 'MA' => 'Massachusetts', 'MI' => 'Michigan',
+        'MN' => 'Minnesota', 'MS' => 'Mississippi', 'MO' => 'Missouri', 'MT' => 'Montana',
+        'NE' => 'Nebraska', 'NV' => 'Nevada', 'NH' => 'New Hampshire', 'NJ' => 'New Jersey',
+        'NM' => 'New Mexico', 'NY' => 'New York', 'NC' => 'North Carolina', 'ND' => 'North Dakota',
+        'OH' => 'Ohio', 'OK' => 'Oklahoma', 'OR' => 'Oregon', 'PA' => 'Pennsylvania',
+        'RI' => 'Rhode Island', 'SC' => 'South Carolina', 'SD' => 'South Dakota',
+        'TN' => 'Tennessee', 'TX' => 'Texas', 'UT' => 'Utah', 'VT' => 'Vermont',
+        'VA' => 'Virginia', 'WA' => 'Washington', 'WV' => 'West Virginia',
+        'WI' => 'Wisconsin', 'WY' => 'Wyoming',
+    ];
 
-    public function update(Request $request, $id)
-    {
-        $user = auth()->user();
+    return view('staff.edit', compact('staff', 'locations', 'states'));
+}
 
-        $staff = Staff::whereHas('location', function ($q) use ($user) {
-                $q->where('company_id', $user->company_id);
-            })->findOrFail($id);
 
-        $request->validate([
-            'type' => 'required|in:Employee,Independent Contractor',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'job_title' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:2',
-            'postal_code' => 'nullable|string|max:10',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'location_id' => 'required|exists:locations,id',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'notes' => 'nullable|string|max:1000',
-        ]);
+public function update(Request $request, $id)
+{
+    $user = auth()->user();
 
-        $staff->update($request->all());
+    $staff = Staff::whereHas('location', function ($q) use ($user) {
+        $q->where('company_id', $user->company_id);
+    })->findOrFail($id);
 
-        return redirect()->route('staff.index');
-    }
+    $request->validate([
+        'type' => 'required|in:Employee,Independent Contractor',
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'job_title' => 'nullable|string|max:255',
+        'address' => 'nullable|string|max:255',
+        'city' => 'nullable|string|max:255',
+        'state' => 'nullable|string|max:2',
+        'postal_code' => 'nullable|string|max:10',
+        'phone' => 'nullable|string|max:20',
+        'email' => 'nullable|email|max:255',
+        'location_id' => 'required|exists:locations,id',
+        'start_date' => 'nullable|date',
+        'end_date' => 'nullable|date|after_or_equal:start_date',
+        'notes' => 'nullable|string|max:1000',
+    ]);
 
-    public function updateAvailability(Request $request, $id)
-    {
-        $user = auth()->user();
+    $staff->update($request->all());
 
-        $staff = Staff::whereHas('location', function ($q) use ($user) {
-                $q->where('company_id', $user->company_id);
-            })->findOrFail($id);
+    // 💡 Merge availability handling here:
+    \App\Models\StaffAvailability::where('staff_id', $staff->id)->delete();
 
-        StaffAvailability::where('staff_id', $staff->id)->delete();
-
-        foreach ($request->input('availability', []) as $day => $slots) {
-            foreach ($slots as $slot) {
-                if (!empty($slot['start']) && !empty($slot['end'])) {
-                    StaffAvailability::create([
-                        'staff_id' => $staff->id,
-                        'day_of_week' => $day,
-                        'start_time' => $slot['start'],
-                        'end_time' => $slot['end'],
-                    ]);
-                }
+    foreach ($request->input('availability', []) as $day => $slots) {
+        foreach ($slots as $slot) {
+            if (!empty($slot['start']) && !empty($slot['end'])) {
+                \App\Models\StaffAvailability::create([
+                    'staff_id' => $staff->id,
+                    'day_of_week' => $day,
+                    'start_time' => $slot['start'],
+                    'end_time' => $slot['end'],
+                ]);
             }
         }
-
-        return redirect()->route('staff.edit', $staff->id);
     }
+
+    return redirect()->route('staff.index');
+}
 
     public function storeAvailabilityException(Request $request)
     {

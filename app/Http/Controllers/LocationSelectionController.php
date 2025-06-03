@@ -22,22 +22,31 @@ class LocationSelectionController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'location_id' => 'required|exists:locations,id',
-        ]);
+{
+    $request->validate([
+        'location_id' => 'required|exists:locations,id',
+    ]);
 
-        $user = Auth::user();
+    $user = Auth::user();
 
-        // Make sure the selected location belongs to the same company
-        $location = Location::where('id', $request->location_id)
-            ->where('company_id', $user->company_id)
-            ->where('inactive', false)
-            ->firstOrFail();
+    $location = Location::where('id', $request->location_id)
+        ->where('company_id', $user->company_id)
+        ->where('inactive', false)
+        ->firstOrFail();
 
-        $user->selected_location_id = $location->id;
-        $user->save();
+    $user->selected_location_id = $location->id;
+    $user->save();
 
-        return redirect()->intended('/dashboard')->with('success', 'Location selected successfully.');
-    }
+    // ✅ Reload updated user into auth system
+    Auth::setUser($user->fresh());
+
+    \Log::info('Selected location saved:', [
+        'user_id' => $user->id,
+        'selected_location_id' => $user->selected_location_id,
+    ]);
+
+    return redirect()->intended('/dashboard')->with('success', 'Location selected successfully.');
+}
+
+
 }

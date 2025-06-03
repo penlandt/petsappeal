@@ -122,42 +122,43 @@
                 </div>
 
                 <div class="overflow-x-auto mt-8">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Weekly Availability</h3>
-                    <table class="w-full text-left text-sm">
-                        <thead>
-                            <tr>
-                                <th class="py-2 text-gray-900 dark:text-gray-100">Day</th>
-                                <th class="py-2 text-gray-900 dark:text-gray-100">Start Time</th>
-                                <th class="py-2 text-gray-900 dark:text-gray-100">End Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($daysOfWeek as $day)
-                                @php
-                                    $startVal = old("availability.$day.start_time", $availabilityByDay[$day]->start_time ?? '08:00');
-                                    $endVal = old("availability.$day.end_time", $availabilityByDay[$day]->end_time ?? '17:00');
-                                @endphp
-                                <tr>
-                                    <td class="py-2 text-gray-900 dark:text-gray-100">{{ $day }}</td>
-                                    <td class="py-2">
-                                        <select name="availability[{{ $day }}][start_time]" class="rounded border-gray-300 dark:border-gray-700" style="background-color: #fff; color: #000;">
-                                            @foreach ($timeOptions as $time)
-                                                <option value="{{ $time }}" {{ $startVal === $time ? 'selected' : '' }}>{{ $time }}</option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td class="py-2">
-                                        <select name="availability[{{ $day }}][end_time]" class="rounded border-gray-300 dark:border-gray-700" style="background-color: #fff; color: #000;">
-                                            @foreach ($timeOptions as $time)
-                                                <option value="{{ $time }}" {{ $endVal === $time ? 'selected' : '' }}>{{ $time }}</option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                </tr>
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Weekly Availability</h3>
+    <table class="w-full text-left text-sm">
+        <thead>
+            <tr>
+                <th class="py-2 text-gray-900 dark:text-gray-100">Day</th>
+                <th class="py-2 text-gray-900 dark:text-gray-100">Start Time</th>
+                <th class="py-2 text-gray-900 dark:text-gray-100">End Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($daysOfWeek as $day)
+                @php
+                    $startVal = old("availability.$day.start_time", $availabilityByDay[$day]->start_time ?? '08:00');
+                    $endVal = old("availability.$day.end_time", $availabilityByDay[$day]->end_time ?? '17:00');
+                @endphp
+                <tr>
+                    <td class="py-2 text-gray-900 dark:text-gray-100">{{ $day }}</td>
+                    <td class="py-2">
+                        <select name="availability[{{ $day }}][0][start]" class="rounded border-gray-300 dark:border-gray-700" style="background-color: #fff; color: #000;">
+                            @foreach ($timeOptions as $time)
+                                <option value="{{ $time }}" {{ $startVal === $time ? 'selected' : '' }}>{{ $time }}</option>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        </select>
+                    </td>
+                    <td class="py-2">
+                        <select name="availability[{{ $day }}][0][end]" class="rounded border-gray-300 dark:border-gray-700" style="background-color: #fff; color: #000;">
+                            @foreach ($timeOptions as $time)
+                                <option value="{{ $time }}" {{ $endVal === $time ? 'selected' : '' }}>{{ $time }}</option>
+                            @endforeach
+                        </select>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+
 
                 <div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">

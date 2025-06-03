@@ -154,7 +154,7 @@
 
             <div class="mb-4">
                 <label for="service_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Service</label>
-                <select id="service_id" name="service_id" class="..." style="background-color: #fff; color: #000;">
+                <select id="service_id" name="service_id" style="background-color: #fff; color: #000;">
                     <option value="">-- Select a service --</option>
                     @foreach ($services as $service)
                         <option value="{{ $service->id }}">
@@ -466,7 +466,14 @@
                 <label for="edit_service_id" class="block text-sm font-medium mb-1">Service</label>
                 <select id="edit_service_id" name="service_id"
                         class="w-full border rounded p-1"
-                        style="background-color: #fff; color: #000;"></select>
+                        style="background-color: #fff; color: #000;">
+                    @foreach ($services as $service)
+                        <option value="{{ $service->id }}">
+                            {{ $service->name }} ({{ $service->duration }} mins @ ${{ number_format($service->price, 2) }})
+                        </option>
+                    @endforeach
+                </select>
+
             </div>
 
             <div class="mb-2">
@@ -835,21 +842,17 @@
                         const servicePlaceholder = new Option('-- Select a service --', '');
                         rawServiceSelect.appendChild(servicePlaceholder);
 
-                        // These should already be available to you (preloaded in the DOM)
-                        const serviceOptions = [
-                            { id: 1, label: 'Full Service Grooming (Large, Full-Coat) - $125.00' },
-                            { id: 2, label: 'Bath & Brush Plus (Large, Full-Coat) - $75.00' },
-                            { id: 3, label: 'Nail Clipping (Large) - $25.00' },
-                            { id: 4, label: 'Teeth Brushing (Large) - $15.00' },
-                            { id: 5, label: 'Nail Clipping (Bird, Medium) - $15.99' }
-                        ];
+                        @foreach ($services as $service)
+                            const option{{ $service->id }} = new Option(
+                                "{{ $service->name }} ({{ $service->duration }} mins @ ${{ number_format($service->price, 2) }})",
+                                "{{ $service->id }}",
+                                false,
+                                appt.service_id == {{ $service->id }}
+                            );
+                            rawServiceSelect.appendChild(option{{ $service->id }});
+                        @endforeach
 
-                        // Populate dropdown
-                        serviceOptions.forEach(service => {
-                            const option = new Option(service.label, service.id);
-                            rawServiceSelect.appendChild(option);
-                        });
-
+                        
                         // Initialize TomSelect
                         window.editServiceSelect = new TomSelect('#edit_service_id', {
                             create: false,
@@ -1006,14 +1009,17 @@
                     window.serviceSelect.destroy();
                 }
 
-                window.serviceSelect = new TomSelect('#service_id', {
-                    create: false,
-                    placeholder: '-- Select a service --',
-                    sortField: {
-                        field: "text",
-                        direction: "asc"
-                    }
-                });
+                setTimeout(() => {
+                    window.serviceSelect = new TomSelect('#service_id', {
+                        create: false,
+                        placeholder: '-- Select a service --',
+                        sortField: {
+                            field: "text",
+                            direction: "asc"
+                        }
+                    });
+                }, 200); // Wait for modal to fully render
+
 
                 document.querySelector('#service_id').addEventListener('change', function () {
                     const selectedServiceId = this.value;
@@ -1310,8 +1316,23 @@ document.addEventListener('DOMContentLoaded', function () {
         petModal.classList.add('hidden');
     });
 });
+
 </script>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.serviceSelect) {
+            window.serviceSelect = new TomSelect('#service_id', {
+                create: false,
+                placeholder: '-- Select a service --',
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                }
+            });
+        }
+    });
+</script>
 
 @endpush
 @endif
