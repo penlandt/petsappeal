@@ -19,6 +19,9 @@ use App\Models\Modules\Boarding\BoardingReservation;
 use App\Http\Controllers\LocationSelectionController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\PetController;
+use App\Http\Controllers\Modules\Invoices\InvoicePrintController;
+use App\Http\Controllers\ClientHistoryController;
+use App\Http\Controllers\POS\ReceiptController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,7 +50,9 @@ Route::middleware(['auth', 'has.company'])->group(function () {
 
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
     Route::post('/clients/ajax-store', [\App\Http\Controllers\ClientController::class, 'ajaxStore'])->name('clients.ajax-store');
-
+    Route::get('/clients/{client}/history', [ClientHistoryController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('clients.history');
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
     Route::post('/pets', [\App\Http\Controllers\PetController::class, 'store'])->name('pets.store');
@@ -150,6 +155,12 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/pos/api/products/search', [ProductController::class, 'search'])->name('pos.products.search');
     Route::post('/pos/api/products', [POSController::class, 'storeProduct']);
     Route::get('/pos/client/{client}/unpaid-invoices', [POSController::class, 'getUnpaidInvoices'])->name('pos.unpaid-invoices');
+    Route::get('/invoices/{invoice}/print', [InvoicePrintController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('invoices.print');
+    Route::get('/pos/sales/{sale}/receipt', [ReceiptController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('pos.receipt');
 });
 
     // Profile Management

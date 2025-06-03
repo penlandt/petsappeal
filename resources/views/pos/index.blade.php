@@ -242,11 +242,19 @@ function renderCart() {
     console.log('renderCart was called');
     const cartItems = document.getElementById('cart-items');
     cartItems.innerHTML = '';
+
     cart.forEach((item, index) => {
         const total = item.price * item.quantity;
+        const isInvoice = item.source === 'invoice';
+        const viewLink = isInvoice
+            ? `<br><a href="/invoices/${item.invoice_id}/print" target="_blank" class="text-blue-600 dark:text-blue-400 underline text-sm">view</a>`
+            : '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="px-4 py-2 text-gray-900 dark:text-white">${item.name}</td>
+            <td class="px-4 py-2 text-gray-900 dark:text-white">
+                ${item.name}${viewLink}
+            </td>
             <td class="px-4 py-2 text-gray-900 dark:text-white">${item.quantity.toFixed(2)}</td>
             <td class="px-4 py-2 text-gray-900 dark:text-white">
                 <input type="number" step="0.01" min="0" value="${item.price}"
@@ -261,8 +269,8 @@ function renderCart() {
         `;
         cartItems.appendChild(tr);
         console.log(tr.innerHTML);
-
     });
+
     updateTotals();
 }
 
@@ -458,7 +466,6 @@ function submitPayments() {
         alert("An error occurred during checkout.");
     });
 }
-
 
 // DOM-specific code
 document.addEventListener('DOMContentLoaded', () => {

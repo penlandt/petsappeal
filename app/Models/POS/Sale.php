@@ -35,4 +35,10 @@ class Sale extends Model
         return $this->belongsTo(\App\Models\Client::class);
     }
     
+    public function location()
+    {
+        return $this->belongsTo(\App\Models\Location::class);
+    }
+    
+
 }

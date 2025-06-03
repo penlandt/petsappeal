@@ -30,4 +30,10 @@ class Client extends Model
     {
         return $this->hasMany(Pet::class);
     }
+
+    public function invoices()
+    {
+        return $this->hasMany(\App\Models\Modules\Invoices\Invoice::class);
+    }
+    
 }

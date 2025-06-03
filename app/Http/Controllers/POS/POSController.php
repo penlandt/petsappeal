@@ -196,7 +196,7 @@ class POSController extends Controller
     $user = auth()->user();
     $locationId = $user->selected_location_id;
 
-    \Log::info('Fetching unpaid invoices', [
+    \Log::info("Fetching unpaid invoices", [
         'client_id' => $clientId,
         'location_id' => $locationId,
     ]);
@@ -207,7 +207,7 @@ class POSController extends Controller
         ->where('status', 'Unpaid')
         ->get();
 
-    \Log::info('Unpaid invoices found', [
+    \Log::info("Unpaid invoices found", [
         'count' => $invoices->count(),
         'ids' => $invoices->pluck('id'),
     ]);
@@ -215,11 +215,21 @@ class POSController extends Controller
     $cartItems = [];
 
     foreach ($invoices as $invoice) {
-        \Log::info('Preparing cart item', ['invoice_id' => $invoice->id]);
+        $type = 'Invoice';
+        if ($invoice->items->contains('item_type', 'App\\Models\\Modules\\Appointments\\Appointment')) {
+            $type = 'Grooming Invoice';
+        } elseif ($invoice->items->contains('item_type', 'App\\Models\\Modules\\Boarding\\BoardingReservation')) {
+            $type = 'Boarding Invoice';
+        }
+
+        \Log::info("Preparing cart item", [
+            'invoice_id' => $invoice->id,
+            'label' => $type
+        ]);
 
         $cartItems[] = [
             'id' => 'invoice-' . $invoice->id,
-            'name' => 'Unpaid Invoice #' . $invoice->id,
+            'name' => "{$type} #{$invoice->id}",
             'price' => $invoice->total_amount,
             'quantity' => 1,
             'source' => 'invoice',
@@ -229,5 +239,4 @@ class POSController extends Controller
 
     return response()->json($cartItems);
 }
-
 }

@@ -19,11 +19,11 @@
                     class="px-3 py-2 w-full md:w-1/3 border border-gray-300 rounded dark:bg-gray-700 dark:text-white dark:border-gray-600"
                     onkeyup="filterClients()">
 
-                    <a href="{{ route('clients.create') }}"
+                <a href="{{ route('clients.create') }}"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 h-10 flex items-center justify-center rounded whitespace-nowrap"
                     style="min-width: 150px;">
-                        + New Client
-                    </a>
+                    + New Client
+                </a>
             </div>
 
             <table class="w-full text-left text-sm mt-4" id="clientTable">
@@ -46,10 +46,14 @@
                             </td>
                             <td class="py-0.5">{{ $client->email ?? '-' }}</td>
                             <td class="py-0.5">{{ $client->phone ?? '-' }}</td>
-                            <td class="py-0.5">
+                            <td class="py-0.5 space-x-4">
                                 <a href="{{ route('clients.edit', $client) }}"
                                     class="text-blue-600 dark:text-blue-400 hover:underline">
                                     Edit
+                                </a>
+                                <a href="{{ route('clients.history', $client) }}"
+                                class="text-blue-600 dark:text-blue-400 hover:underline">
+                                History
                                 </a>
                             </td>
                         </tr>
