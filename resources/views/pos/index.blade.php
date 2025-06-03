@@ -5,6 +5,8 @@
                 Point of Sale
             </h2>
             @include('pos.partials.secondary-menu')
+
+            
         </div>
     </x-slot>
 

@@ -22,6 +22,7 @@ use App\Http\Controllers\PetController;
 use App\Http\Controllers\Modules\Invoices\InvoicePrintController;
 use App\Http\Controllers\ClientHistoryController;
 use App\Http\Controllers\POS\ReceiptController;
+use App\Http\Controllers\InventoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,6 +114,8 @@ Route::middleware(['auth', 'has.company'])->group(function () {
 
     Route::get('/export/products', [\App\Http\Controllers\ImportExportController::class, 'exportProducts'])->name('export.products');
     Route::post('/import/products', [ImportExportController::class, 'importProducts'])->name('import.products');
+    Route::get('/inventory/count-sheet/{location}', [InventoryController::class, 'showCountSheet'])->name('inventory.countSheet');
+    Route::post('/inventory/reconcile', [InventoryController::class, 'reconcile'])->name('inventory.reconcile');
 
 
     // Admin Management
