@@ -602,21 +602,25 @@ document.getElementById('client_id').addEventListener('change', async function (
     try {
         const res = await fetch(`/pos/client/${clientId}/unpaid-invoices`);
         if (!res.ok) throw new Error("Failed to fetch unpaid invoices.");
-        const items = await res.json();
+        const text = await res.text();
+        console.log('Raw unpaid invoice response:', text);
+        const items = JSON.parse(text);
 
         items.forEach(item => {
-            const existing = cart.find(c => c.id === `invoice-${item.invoice_item_id}`);
+            const existing = cart.find(c => c.id === `invoice-${item.invoice_id}`);
+
             if (!existing) {
                 cart.push({
-                    id: `invoice-${item.invoice_item_id}`,
+                    id: `invoice-${item.invoice_id}`,  // was invoice_item_id
                     name: item.name,
                     price: parseFloat(item.price),
                     quantity: item.quantity,
                     taxable: false,
                     source: 'invoice',
                     invoice_id: item.invoice_id,
-                    invoice_item_id: item.invoice_item_id
+                    invoice_item_id: item.invoice_item_id  // keep this if you plan to use it elsewhere
                 });
+
             }
         });
 

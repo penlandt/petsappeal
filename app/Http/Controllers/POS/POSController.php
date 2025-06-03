@@ -196,15 +196,27 @@ class POSController extends Controller
     $user = auth()->user();
     $locationId = $user->selected_location_id;
 
+    \Log::info('Fetching unpaid invoices', [
+        'client_id' => $clientId,
+        'location_id' => $locationId,
+    ]);
+
     $invoices = \App\Models\Modules\Invoices\Invoice::with('items')
         ->where('location_id', $locationId)
         ->where('client_id', $clientId)
         ->where('status', 'Unpaid')
         ->get();
 
+    \Log::info('Unpaid invoices found', [
+        'count' => $invoices->count(),
+        'ids' => $invoices->pluck('id'),
+    ]);
+
     $cartItems = [];
 
     foreach ($invoices as $invoice) {
+        \Log::info('Preparing cart item', ['invoice_id' => $invoice->id]);
+
         $cartItems[] = [
             'id' => 'invoice-' . $invoice->id,
             'name' => 'Unpaid Invoice #' . $invoice->id,
@@ -217,5 +229,5 @@ class POSController extends Controller
 
     return response()->json($cartItems);
 }
-  
+
 }
