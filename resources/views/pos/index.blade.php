@@ -20,7 +20,8 @@
                         Select Client (optional)
                     </label>
                     <div class="flex items-center space-x-2">
-                        <select id="client_id" name="client_id" class="tom-select w-full" autocomplete="off" required>
+                        <select id="client_id" name="client_id" class="tom-select w-full" autocomplete="off" required placeholder="Select a client (optional)">
+
                             <!-- Options will be populated dynamically -->
                         </select>
                         <button id="addNewClientBtn" type="button"
@@ -722,12 +723,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Populate the <select> with options
             selectElement.innerHTML = ''; // clear existing options
+
+            // Add a blank option
+            const blankOption = document.createElement('option');
+            blankOption.value = '';
+            blankOption.text = 'Select a client (optional)';
+            blankOption.disabled = true;
+            blankOption.selected = true;
+            selectElement.appendChild(blankOption);
+
+            // Add client options
             clients.forEach(client => {
                 const option = document.createElement('option');
                 option.value = String(client.id);
                 option.text = `${client.first_name} ${client.last_name}`;
                 selectElement.appendChild(option);
             });
+
 
             // Initialize TomSelect
             if (selectElement.tomselect) {
