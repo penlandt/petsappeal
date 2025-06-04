@@ -55,6 +55,8 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/clients/{client}/history', [ClientHistoryController::class, 'show'])
     ->middleware(['auth'])
     ->name('clients.history');
+    Route::post('/clients', [App\Http\Controllers\ClientController::class, 'store'])->name('clients.store');
+
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
     Route::post('/pets', [\App\Http\Controllers\PetController::class, 'store'])->name('pets.store');

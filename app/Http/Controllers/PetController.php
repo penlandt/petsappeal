@@ -33,29 +33,38 @@ class PetController extends Controller
 
     public function store(Request $request)
 {
-    $data = $request->validate([
-        'client_id' => 'required|exists:clients,id',
-        'name' => 'required|string|max:255',
-        'species' => 'nullable|string|max:255',
-        'breed' => 'nullable|string|max:255',
-        'birthdate' => 'nullable|date',
-        'color' => 'nullable|string|max:255',
-        'gender' => 'nullable|string|max:255',
-        'notes' => 'nullable|string',
-        'inactive' => 'nullable|boolean',
-    ]);
+    try {
+        $data = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'name' => 'required|string|max:255',
+            'species' => 'nullable|string|max:255',
+            'breed' => 'nullable|string|max:255',
+            'birthdate' => 'nullable|date',
+            'color' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
+            'inactive' => 'nullable|boolean',
+        ]);
 
-    $data['inactive'] = $request->has('inactive');
+        $data['inactive'] = $request->has('inactive');
 
-    $pet = \App\Models\Pet::create($data);
+        $pet = \App\Models\Pet::create($data);
 
-    if ($request->expectsJson()) {
-        return response()->json($pet);
+        if ($request->expectsJson()) {
+            return response()->json($pet);
+        }
+
+        return redirect()->route('pets.index')
+            ->with('success', 'Pet added successfully!');
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        \Log::error('Pet validation failed', $e->errors());
+        return response()->json(['errors' => $e->errors()], 422);
+    } catch (\Throwable $e) {
+        \Log::error('Pet creation failed', ['message' => $e->getMessage()]);
+        return response()->json(['message' => 'Failed to create pet.'], 500);
     }
-
-    return redirect()->route('pets.index')
-        ->with('success', 'Pet added successfully!');
 }
+
 
 
     public function edit($id)
