@@ -9,7 +9,13 @@ use App\Models\Location;
 class Company extends Model
 {
     use HasFactory;
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name',
+        'email',
+        'phone',
+        'website',
+        'notes',
+    ];
 
 
 public function clients()

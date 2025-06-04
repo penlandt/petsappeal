@@ -41,6 +41,7 @@ Route::get('/dashboard', function () {
 // Company creation (accessible before company exists)
 Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
 Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
+Route::put('/companies/{company}', [App\Http\Controllers\CompanyController::class, 'update'])->name('companies.update');
 
 // All other routes require login and a company
 Route::middleware(['auth', 'has.company'])->group(function () {

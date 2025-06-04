@@ -62,22 +62,23 @@ class CompanyController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:2',
-            'postal_code' => 'required|string|max:10',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-        ]);
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'nullable|email|max:255',
+        'phone' => 'nullable|string|max:20',
+        'website' => 'nullable|string|max:255',
+        'notes' => 'nullable|string|max:1000',
+    ]);
 
-        $company = Company::findOrFail($id);
-        $company->update($request->all());
+    $company = Company::findOrFail($id);
+    $company->update($request->only([
+        'name', 'email', 'phone', 'website', 'notes'
+    ]));
 
-        return redirect()->route('companies.index')->with('success', 'Company updated.');
-    }
+    return redirect()->route('companies.index')->with('success', 'Company updated.');
+}
+
 
     public function destroy($id)
     {
