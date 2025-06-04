@@ -147,11 +147,13 @@ class ClientController extends Controller
         ->map(function ($client) {
             return [
                 'id' => $client->id,
-                'text' => $client->first_name . ' ' . $client->last_name,
+                'first_name' => $client->first_name,
+                'last_name' => $client->last_name,
             ];
         });
 
     return response()->json($clients);
 }
+
 
 }

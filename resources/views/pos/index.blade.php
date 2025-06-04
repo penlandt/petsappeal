@@ -711,25 +711,46 @@ document.getElementById('addProductForm')?.addEventListener('submit', async func
 
 let clientSelect;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const selectElement = document.getElementById("client_id");
-    if (selectElement) {
-        // Destroy existing TomSelect if it exists
-        if (selectElement.tomselect) {
-            selectElement.tomselect.destroy();
-        }
 
-        clientSelect = new TomSelect(selectElement, {
-            allowEmptyOption: true,
-            placeholder: 'Select a client (optional)',
-            create: false,
-            sortField: { field: "text", direction: "asc" }
-        });
+    if (selectElement) {
+        try {
+            // Fetch the full client list from the server
+            const response = await fetch(clientsJsonUrl);
+            const clients = await response.json();
+
+            // Populate the <select> with options
+            selectElement.innerHTML = ''; // clear existing options
+            clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = String(client.id);
+                option.text = `${client.first_name} ${client.last_name}`;
+                selectElement.appendChild(option);
+            });
+
+            // Initialize TomSelect
+            if (selectElement.tomselect) {
+                selectElement.tomselect.destroy();
+            }
+
+            clientSelect = new TomSelect(selectElement, {
+                allowEmptyOption: true,
+                placeholder: 'Select a client (optional)',
+                create: false,
+                sortField: { field: "text", direction: "asc" }
+            });
+
+        } catch (err) {
+            console.error('Failed to load clients:', err);
+            alert('Error loading client list.');
+        }
     }
 
     document.getElementById('add-payment-btn')?.addEventListener('click', addPaymentEntry);
     renderCart();
 });
+
 
 
 document.getElementById('client_id').addEventListener('change', async function () {
