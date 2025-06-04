@@ -291,7 +291,7 @@ public function update(Request $request, BoardingReservation $reservation)
 
                 // Update invoice item
                 $invoiceItem->quantity = $nights;
-                $invoiceItem->price = $ratePerNight;
+                $invoiceItem->unit_price = $ratePerNight;
                 $invoiceItem->total_price = $newTotal;
                 $invoiceItem->save();
 
