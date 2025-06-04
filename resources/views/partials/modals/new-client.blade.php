@@ -24,7 +24,8 @@
              overflow-y: auto;
          ">
         <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Add New Client</h3>
-        <form id="newClientForm" action="{{ route('clients.store') }}">
+        <form id="newClientForm" method="POST" action="{{ route('clients.store') }}">
+    @csrf
             <div class="mb-4">
                 <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
                 <input type="text" id="first_name" name="first_name" class="w-full border border-gray-300 rounded p-2" style="background-color: #fff; color: #000;">
@@ -75,10 +76,10 @@
             </div>
 
             <div class="flex justify-end">
-                <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded modal-cancel-button">
+                <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                        data-close="newClientModal">
                     Cancel
                 </button>
-
                 <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save Client</button>
             </div>
         </form>

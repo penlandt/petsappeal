@@ -83,10 +83,10 @@
             </div>
 
             <div class="flex justify-end">
-                <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded modal-cancel-button">
+                <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                        data-close="newPetModal">
                     Cancel
                 </button>
-
                 <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Save Pet
                 </button>

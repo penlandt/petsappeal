@@ -349,24 +349,24 @@ document.addEventListener('DOMContentLoaded', function () {
             loadPets(selectedClientId);
         }
     });
-
-    // Close modals when Cancel buttons are clicked
-    document.querySelectorAll('.modal-cancel-button').forEach(button => {
-        button.addEventListener('click', function () {
-            const modal = this.closest('.fixed');
-            if (modal) modal.classList.add('hidden');
-        });
-    });
 });
 
 // When the "+" button to add a new pet is clicked, populate the client_id in the form
-document.querySelector('button[onclick*="newPetModal"]')?.addEventListener('click', function () {
-    const selectedClientId = clientSelect.getValue();
-    const input = document.getElementById('new_pet_client_id');
-    if (input) {
-        input.value = selectedClientId || '';
-    }
+document.querySelectorAll('#newClientModal .cancel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('newClientModal').classList.add('hidden');
+        document.getElementById('newClientModal').classList.remove('flex');
+    });
 });
+
+// Cancel button for New Pet Modal
+document.querySelectorAll('#newPetModal .cancel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('newPetModal').classList.add('hidden');
+        document.getElementById('newPetModal').classList.remove('flex');
+    });
+});
+
 
 </script>
 @endpush

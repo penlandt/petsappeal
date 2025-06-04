@@ -19,13 +19,16 @@
                     <label for="client_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Select Client (optional)
                     </label>
-                    <select id="client_id" name="client_id" autocomplete="off"
-                        class="tom-select mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white">
-                        <option value="">— No Client —</option>
-                        @foreach ($clients as $client)
-                            <option value="{{ $client->id }}">{{ $client->first_name }} {{ $client->last_name }}</option>
-                        @endforeach
-                    </select>
+                    <div class="flex items-center space-x-2">
+                        <select id="client_id" name="client_id" class="tom-select w-full" autocomplete="off" required>
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                        <button id="addNewClientBtn" type="button"
+                            class="bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-2 rounded"
+                            title="Add New Client">
+                            +
+                        </button>
+                    </div>
                 </div>
 
 
@@ -232,6 +235,7 @@
 const productTaxRate = @json($productTaxRate ?? 0);
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let paymentEntries = [];
+const clientsJsonUrl = @json(route('clients.json'));
 
 
 // Global functions (accessible from buttons, modals, etc.)
@@ -765,7 +769,87 @@ document.getElementById('client_id').addEventListener('change', async function (
     }
 });
 
-
 </script>
+
+<script>
+let currentClientSelect = null;
+
+// =======================
+// Modal Form Handler
+// =======================
+function handleModalForm(modalId, formId, callback) {
+    const modal = document.getElementById(modalId);
+    const form = document.getElementById(formId);
+    if (!modal || !form) return;
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+            method: form.method,
+            headers: {
+    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+    'X-Requested-With': 'XMLHttpRequest'
+},
+            body: formData,
+        });
+        const data = await response.json();
+        if (response.ok) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (typeof callback === 'function') {
+                callback(data);
+            }
+        } else {
+            alert('Error saving client.');
+        }
+    });
+}
+
+// =======================
+// New Client Modal Logic
+// =======================
+document.getElementById('addNewClientBtn')?.addEventListener('click', function () {
+    const modal = document.getElementById('newClientModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    currentClientSelect = clientSelect;
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    handleModalForm('newClientModal', 'newClientForm', async function (data) {
+    if (data && data.client) {
+        const newClient = data.client;
+
+        console.log('🟢 New client created:', newClient);
+        console.log('⏳ Refreshing clientSelect...');
+
+        if (clientSelect) {
+            const option = {
+                value: String(newClient.id),
+                text: newClient.first_name + ' ' + newClient.last_name
+            };
+
+            clientSelect.addOption(option);
+            clientSelect.addItem(option.value);
+            console.log('✅ New client added and selected:', option);
+
+        }
+    }
+});
+
+document.querySelectorAll('#newClientModal .cancel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('newClientModal').classList.add('hidden');
+        document.getElementById('newClientModal').classList.remove('flex');
+    });
+});
+
+});
+</script>
+
+@include('partials.modals.new-client')
 
 </x-app-layout>

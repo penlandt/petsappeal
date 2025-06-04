@@ -43,6 +43,8 @@ Route::get('/companies/create', [CompanyController::class, 'create'])->name('com
 Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
 Route::put('/companies/{company}', [App\Http\Controllers\CompanyController::class, 'update'])->name('companies.update');
 
+Route::get('/clients/json', [\App\Http\Controllers\ClientController::class, 'json'])->name('clients.json');
+
 // All other routes require login and a company
 Route::middleware(['auth', 'has.company'])->group(function () {
     Route::resource('companies', CompanyController::class)->except(['create', 'store']);
@@ -56,7 +58,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     ->middleware(['auth'])
     ->name('clients.history');
     Route::post('/clients', [App\Http\Controllers\ClientController::class, 'store'])->name('clients.store');
-
+    
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
     Route::post('/pets', [\App\Http\Controllers\PetController::class, 'store'])->name('pets.store');

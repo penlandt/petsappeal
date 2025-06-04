@@ -47,7 +47,7 @@ class ClientController extends Controller
 
     // If this was an AJAX request, return JSON
     if ($request->ajax()) {
-        return response()->json($client);
+        return response()->json(['client' => $client]);
     }
 
     return redirect()->route('clients.index')->with('success', 'Client created successfully.');
@@ -136,5 +136,22 @@ class ClientController extends Controller
             'phone' => $client->phone,
         ]);
     }
-    
+
+    public function json()
+{
+    $companyId = auth()->user()->company_id;
+
+    $clients = \App\Models\Client::where('company_id', $companyId)
+        ->orderBy('last_name')
+        ->get()
+        ->map(function ($client) {
+            return [
+                'id' => $client->id,
+                'text' => $client->first_name . ' ' . $client->last_name,
+            ];
+        });
+
+    return response()->json($clients);
+}
+
 }
