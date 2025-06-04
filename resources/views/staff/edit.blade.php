@@ -13,7 +13,6 @@
                 @method('PUT')
 
                 @php
-                    $locationIsMissing = !$locations->contains('id', $staff->location_id);
                     $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
                     $timeOptions = ['OFF'];
                     for ($hour = 0; $hour < 24; $hour++) {
@@ -26,26 +25,6 @@
                 @endphp
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    @if ($locationIsMissing)
-                        <div class="mb-2 text-yellow-500 font-semibold col-span-full">
-                            ⚠️ This staff member is assigned to an inactive location and cannot be reassigned until you activate that location or select a new one.
-                        </div>
-                    @endif
-
-                    <div>
-                        <label for="location_id" class="block font-medium text-gray-700 dark:text-gray-300">Location</label>
-                        <select id="location_id" name="location_id" required
-                                style="background-color: #fff; color: #000;"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600">
-                            <option value="">-- Select a Location --</option>
-                            @foreach ($locations as $location)
-                                <option value="{{ $location->id }}" @if ((int) $location->id === (int) ($staff->location_id ?? -1)) selected @endif>
-                                    {{ $location->name }} — {{ $location->city }}, {{ $location->state }} {{ $location->postal_code }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-900 dark:text-gray-100">Type</label>
                         <select name="type" required style="background-color: #fff; color: #000;" class="w-full rounded border-gray-300 dark:border-gray-700">
@@ -133,21 +112,26 @@
         </thead>
         <tbody>
             @foreach ($daysOfWeek as $day)
-                @php
-                    $startVal = old("availability.$day.start_time", $availabilityByDay[$day]->start_time ?? '08:00');
-                    $endVal = old("availability.$day.end_time", $availabilityByDay[$day]->end_time ?? '17:00');
-                @endphp
+            @php
+                $startVal = old("availability.$day.start_time", $availabilityByDay[$day]->start_time ?? '08:00');
+                $endVal = old("availability.$day.end_time", $availabilityByDay[$day]->end_time ?? '17:00');
+
+                if ($startVal === $endVal) {
+                    $startVal = $endVal = 'OFF';
+                }
+            @endphp
+
                 <tr>
                     <td class="py-2 text-gray-900 dark:text-gray-100">{{ $day }}</td>
                     <td class="py-2">
-                        <select name="availability[{{ $day }}][0][start]" class="rounded border-gray-300 dark:border-gray-700" style="background-color: #fff; color: #000;">
+                        <select name="availability[{{ $day }}][start_time]" style="background-color: #fff; color: #000;" class="rounded border-gray-300 dark:border-gray-700">
                             @foreach ($timeOptions as $time)
                                 <option value="{{ $time }}" {{ $startVal === $time ? 'selected' : '' }}>{{ $time }}</option>
                             @endforeach
                         </select>
                     </td>
                     <td class="py-2">
-                        <select name="availability[{{ $day }}][0][end]" class="rounded border-gray-300 dark:border-gray-700" style="background-color: #fff; color: #000;">
+                        <select name="availability[{{ $day }}][end_time]" style="background-color: #fff; color: #000;" class="rounded border-gray-300 dark:border-gray-700">
                             @foreach ($timeOptions as $time)
                                 <option value="{{ $time }}" {{ $endVal === $time ? 'selected' : '' }}>{{ $time }}</option>
                             @endforeach
@@ -281,4 +265,24 @@
             @endif
         </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll('table tbody tr');
+
+        rows.forEach(row => {
+            const startSelect = row.querySelector('select[name^="availability"][name$="[start_time]"]');
+            const endSelect = row.querySelector('select[name^="availability"][name$="[end_time]"]');
+
+            if (startSelect && endSelect) {
+                startSelect.addEventListener('change', function () {
+                    if (this.value === 'OFF') {
+                        endSelect.value = 'OFF';
+                    }
+                });
+            }
+        });
+    });
+</script>
+
 </x-app-layout>

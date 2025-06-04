@@ -10,21 +10,6 @@
             <form method="POST" action="{{ route('staff.store') }}" class="space-y-6">
                 @csrf
 
-                <div class="mt-4">
-                    <label for="location_id" class="block font-medium text-gray-700 dark:text-gray-300">Location</label>
-                    <select id="location_id" name="location_id" required
-                        style="background-color: #fff; color: #000;"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600">
-                        <option value="">-- Select a Location --</option>
-                        @foreach ($locations as $location)
-                            <option value="{{ $location->id }}"
-                                {{ old('location_id') == $location->id ? 'selected' : '' }}>
-                                {{ $location->name }} — {{ $location->city }}, {{ $location->state }} {{ $location->postal_code }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-900 dark:text-gray-100">Type</label>

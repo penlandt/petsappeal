@@ -31,13 +31,14 @@ class ScheduleController extends Controller
 
         $locationIds = $locations->pluck('id')->toArray();
 
-        $staff = Staff::whereIn('location_id', $locationIds)
+        $staff = Staff::where('company_id', $companyId)
             ->where(function ($query) {
                 $query->whereNull('end_date')
-                      ->orWhere('end_date', '>=', now()->toDateString());
+                    ->orWhere('end_date', '>=', now()->toDateString());
             })
             ->orderBy('last_name')
             ->get();
+
 
         // If missing location or staff, skip calendar setup
         if ($locations->isEmpty() || $staff->isEmpty()) {

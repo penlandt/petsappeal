@@ -4,7 +4,6 @@
             <th class="text-left font-semibold px-2 py-1">Name</th>
             <th class="text-left font-semibold px-2 py-1">Job Title</th>
             <th class="text-left font-semibold px-2 py-1">Type</th>
-            <th class="text-left font-semibold px-2 py-1">Location</th>
             <th class="text-left font-semibold px-2 py-1">Phone</th>
             <th class="text-left font-semibold px-2 py-1">Email</th>
             <th class="text-left font-semibold px-2 py-1">Start Date</th>
@@ -18,12 +17,6 @@
                 <td class="px-2 py-0.5">{{ $member->first_name }} {{ $member->last_name }}</td>
                 <td class="px-2 py-0.5">{{ $member->job_title }}</td>
                 <td class="px-2 py-0.5">{{ $member->type }}</td>
-                <td class="px-2 py-0.5">
-                    {{ optional($member->location)->name }}
-                    @if($member->location)
-                        ({{ $member->location->city }}, {{ $member->location->state }}, {{ $member->location->postal_code }})
-                    @endif
-                </td>
                 <td class="px-2 py-0.5">{{ $member->phone }}</td>
                 <td class="px-2 py-0.5">{{ $member->email }}</td>
                 <td class="px-2 py-0.5">{{ $member->start_date }}</td>

@@ -17,10 +17,7 @@ class StaffController extends Controller
         $showPast = $request->query('showPast') === '1';
         $filter = $request->query('filter');
 
-        $query = Staff::with('location')
-            ->whereHas('location', function ($q) use ($user) {
-                $q->where('company_id', $user->company_id);
-            });
+        $query = Staff::where('company_id', $user->company_id);
 
         if (!$showPast) {
             $query->where(function ($q) {
@@ -85,46 +82,73 @@ class StaffController extends Controller
 }
 
 
-    public function store(Request $request)
-    {
-        $user = auth()->user();
-
-        $request->validate([
-            'type' => 'required|in:Employee,Independent Contractor',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'job_title' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:2',
-            'postal_code' => 'nullable|string|max:10',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'location_id' => 'required|exists:locations,id',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        $staff = new Staff($request->all());
-        $staff->save();
-
-        return redirect()->route('staff.index');
-    }
-
-    public function edit($id)
+public function store(Request $request)
 {
     $user = auth()->user();
 
-    $staff = Staff::whereHas('location', function ($q) use ($user) {
-            $q->where('company_id', $user->company_id);
-        })->with('availabilities', 'availabilityExceptions')
+    $request->validate([
+        'type'        => 'required|in:Employee,Independent Contractor',
+        'first_name'  => 'required|string|max:255',
+        'last_name'   => 'required|string|max:255',
+        'job_title'   => 'nullable|string|max:255',
+        'address'     => 'nullable|string|max:255',
+        'city'        => 'nullable|string|max:255',
+        'state'       => 'nullable|string|max:2',
+        'postal_code' => 'nullable|string|max:10',
+        'phone'       => 'nullable|string|max:20',
+        'email'       => 'nullable|email|max:255',
+        'start_date'  => 'nullable|date',
+        'end_date'    => 'nullable|date|after_or_equal:start_date',
+        'notes'       => 'nullable|string|max:1000',
+        'availability' => 'array',
+    ]);
+
+    // Save staff
+    $staff = new Staff();
+    $staff->company_id  = $user->company_id;
+    $staff->type        = $request->input('type');
+    $staff->first_name  = $request->input('first_name');
+    $staff->last_name   = $request->input('last_name');
+    $staff->job_title   = $request->input('job_title');
+    $staff->address     = $request->input('address');
+    $staff->city        = $request->input('city');
+    $staff->state       = $request->input('state');
+    $staff->postal_code = $request->input('postal_code');
+    $staff->phone       = $request->input('phone');
+    $staff->email       = $request->input('email');
+    $staff->start_date  = $request->input('start_date');
+    $staff->end_date    = $request->input('end_date');
+    $staff->notes       = $request->input('notes');
+    $staff->save();
+
+    // Save availability
+    $availability = $request->input('availability', []);
+    foreach ($availability as $day => $times) {
+        $start = ($times['start_time'] === 'OFF') ? '00:00:00' : $times['start_time'];
+        $end   = ($times['end_time'] === 'OFF')   ? '00:00:00' : $times['end_time'];
+
+        StaffAvailability::create([
+            'staff_id'    => $staff->id,
+            'day_of_week' => $day,
+            'start_time'  => $start,
+            'end_time'    => $end,
+        ]);
+    }
+
+    return redirect()->route('staff.index');
+}
+
+
+
+public function edit($id)
+{
+    $user = auth()->user();
+
+    $staff = Staff::where('company_id', $user->company_id)
+        ->with('availabilities', 'availabilityExceptions')
         ->findOrFail($id);
 
-    $locations = Location::where('company_id', $user->company_id)
-        ->where('inactive', false)
-        ->orderBy('name')
-        ->get();
+    $locations = Location::where('company_id', $user->company_id)->get();
 
     $states = [
         'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas',
@@ -143,55 +167,65 @@ class StaffController extends Controller
         'WI' => 'Wisconsin', 'WY' => 'Wyoming',
     ];
 
-    return view('staff.edit', compact('staff', 'locations', 'states'));
+    return view('staff.edit', compact('staff', 'states', 'locations'));
 }
+
 
 
 public function update(Request $request, $id)
 {
     $user = auth()->user();
 
-    $staff = Staff::whereHas('location', function ($q) use ($user) {
-        $q->where('company_id', $user->company_id);
-    })->findOrFail($id);
+    $staff = Staff::where('company_id', $user->company_id)->findOrFail($id);
 
     $request->validate([
-        'type' => 'required|in:Employee,Independent Contractor',
-        'first_name' => 'required|string|max:255',
-        'last_name' => 'required|string|max:255',
-        'job_title' => 'nullable|string|max:255',
-        'address' => 'nullable|string|max:255',
-        'city' => 'nullable|string|max:255',
-        'state' => 'nullable|string|max:2',
+        'type'        => 'required|in:Employee,Independent Contractor',
+        'first_name'  => 'required|string|max:255',
+        'last_name'   => 'required|string|max:255',
+        'job_title'   => 'nullable|string|max:255',
+        'address'     => 'nullable|string|max:255',
+        'city'        => 'nullable|string|max:255',
+        'state'       => 'nullable|string|max:2',
         'postal_code' => 'nullable|string|max:10',
-        'phone' => 'nullable|string|max:20',
-        'email' => 'nullable|email|max:255',
-        'location_id' => 'required|exists:locations,id',
-        'start_date' => 'nullable|date',
-        'end_date' => 'nullable|date|after_or_equal:start_date',
-        'notes' => 'nullable|string|max:1000',
+        'phone'       => 'nullable|string|max:20',
+        'email'       => 'nullable|email|max:255',
+        'start_date'  => 'nullable|date',
+        'end_date'    => 'nullable|date|after_or_equal:start_date',
+        'notes'       => 'nullable|string|max:1000',
+        'availability' => 'array',
     ]);
 
-    $staff->update($request->all());
+    $staff->update($request->only([
+        'type', 'first_name', 'last_name', 'job_title',
+        'address', 'city', 'state', 'postal_code',
+        'phone', 'email', 'start_date', 'end_date', 'notes'
+    ]));
 
-    // 💡 Merge availability handling here:
-    \App\Models\StaffAvailability::where('staff_id', $staff->id)->delete();
+    // Clear old availability
+    StaffAvailability::where('staff_id', $staff->id)->delete();
 
-    foreach ($request->input('availability', []) as $day => $slots) {
-        foreach ($slots as $slot) {
-            if (!empty($slot['start']) && !empty($slot['end'])) {
-                \App\Models\StaffAvailability::create([
-                    'staff_id' => $staff->id,
-                    'day_of_week' => $day,
-                    'start_time' => $slot['start'],
-                    'end_time' => $slot['end'],
-                ]);
-            }
+    // Re-insert availability
+    foreach ($request->input('availability', []) as $day => $times) {
+        if (
+            isset($times['start_time']) &&
+            isset($times['end_time'])
+        ) {
+            $start = ($times['start_time'] === 'OFF') ? '00:00:00' : $times['start_time'];
+            $end   = ($times['end_time'] === 'OFF') ? '00:00:00' : $times['end_time'];
+
+            StaffAvailability::create([
+                'staff_id'    => $staff->id,
+                'day_of_week' => $day,
+                'start_time'  => $start,
+                'end_time'    => $end,
+            ]);
         }
     }
 
     return redirect()->route('staff.index');
 }
+
+
 
     public function storeAvailabilityException(Request $request)
     {
