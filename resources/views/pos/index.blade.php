@@ -552,7 +552,8 @@ function submitPayments() {
     const tax = taxableAmount * (productTaxRate / 100);
     const total = subtotal + tax;
 
-    if (totalPaid < total) {
+    const epsilon = 0.01;
+    if (Math.abs(totalPaid - total) > epsilon) {
         alert(`Total due is $${total.toFixed(2)}. You have only entered $${totalPaid.toFixed(2)}.`);
         return;
     }
