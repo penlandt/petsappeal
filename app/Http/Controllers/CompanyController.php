@@ -21,33 +21,25 @@ class CompanyController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:2',
-            'postal_code' => 'required|string|max:10',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-        ]);
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'nullable|email|max:255',
+        'phone' => 'nullable|string|max:20',
+        'website' => 'nullable|string|max:255',
+        'notes' => 'nullable|string',
+    ]);
 
-        $company = Company::create([
-            'name' => $request->name,
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'postal_code' => $request->postal_code,
-            'phone' => $request->phone,
-            'email' => $request->email,
-        ]);
+    $company = new Company();
+    $company->name = $request->name;
+    $company->email = $request->email;
+    $company->phone = $request->phone;
+    $company->website = $request->website;
+    $company->notes = $request->notes;
+    $company->save();
 
-        $user = Auth::user();
-        $user->company_id = $company->id;
-        $user->save();
-
-        return redirect()->route('dashboard')->with('success', 'Company created and linked to your account.');
-    }
+    return redirect()->route('companies.index')->with('success', 'Company created successfully.');
+}
 
     public function show($id)
     {
