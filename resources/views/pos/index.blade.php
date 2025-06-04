@@ -553,7 +553,7 @@ function submitPayments() {
     const total = subtotal + tax;
 
     const epsilon = 0.01;
-    if (Math.abs(totalPaid - total) > epsilon) {
+    if (totalPaid + epsilon < total) {
         alert(`Total due is $${total.toFixed(2)}. You have only entered $${totalPaid.toFixed(2)}.`);
         return;
     }
