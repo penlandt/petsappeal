@@ -14,7 +14,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $locationId = $user->selected_location_id;
 
-        $upcomingAppointments = \App\Models\Appointment::with(['client', 'pet', 'service', 'staff'])
+        $upcomingAppointments = \App\Models\Appointment::with(['pet.client', 'service', 'staff'])
             ->where('location_id', $locationId)
             ->whereDate('start_time', '>=', Carbon::today())
             ->orderBy('start_time')
