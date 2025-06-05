@@ -19,7 +19,7 @@
                         <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                             @foreach($upcomingAppointments as $appt)
                                 <li class="py-2 text-sm text-gray-800 dark:text-gray-200">
-                                    <strong>{{ $appt->start_time->format('Y-m-d g:i A') }}</strong><br>
+                                <strong>{{ \Carbon\Carbon::parse($appt->start_time)->format('Y-m-d g:i A') }}</strong><br>
                                     {{ $appt->client->first_name }} {{ $appt->client->last_name }} —
                                     {{ $appt->pet->name }} —
                                     {{ $appt->service->name }}
