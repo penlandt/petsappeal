@@ -20,7 +20,8 @@
                             @foreach($upcomingAppointments as $appt)
                                 <li class="py-2 text-sm text-gray-800 dark:text-gray-200">
                                 <strong>{{ \Carbon\Carbon::parse($appt->start_time)->format('Y-m-d g:i A') }}</strong><br>
-                                    {{ $appt->client->first_name }} {{ $appt->client->last_name }} —
+                                {{ $appt->pet->client->first_name }} {{ $appt->pet->client->last_name }}
+                                —
                                     {{ $appt->pet->name }} —
                                     {{ $appt->service->name }}
                                     @if($appt->staff)
