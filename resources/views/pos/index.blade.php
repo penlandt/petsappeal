@@ -24,6 +24,16 @@
 
                             <!-- Options will be populated dynamically -->
                         </select>
+                        {{-- Loyalty Balance Display (hidden by default) --}}
+                    <div id="loyalty-balance" class="hidden text-sm text-green-600 dark:text-green-400 ml-2">
+                        Available Discount: <span id="loyalty-discount" class="font-semibold">$0.00</span>
+                    </div>
+
+                    {{-- Loyalty Apply Checkbox (hidden by default) --}}
+                    <div id="apply-loyalty-wrapper" class="hidden flex items-center ml-2">
+                        <input type="checkbox" id="apply-loyalty" class="mr-1" checked>
+                        <label for="apply-loyalty" class="text-sm text-gray-800 dark:text-gray-200">Apply Loyalty Discount</label>
+                    </div>
                         <button id="addNewClientBtn" type="button"
                             class="bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-2 rounded"
                             title="Add New Client">
@@ -70,6 +80,12 @@
                 <div class="w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded shadow p-4">
                     <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Order Summary</h3>
 
+                    <!-- Loyalty Discount Line (hidden by default) -->
+                    <div id="loyalty-discount-line" class="hidden flex justify-between mb-2 text-green-600 dark:text-green-400">
+                        <span>Discount from Loyalty Points:</span>
+                        <span id="loyalty-discount-amount" class="font-semibold">–$0.00</span>
+                    </div>
+                    
                     <div class="flex justify-between mb-2">
                         <span class="text-gray-700 dark:text-gray-300">Subtotal:</span>
                         <span id="subtotal" class="text-gray-900 dark:text-white">$0.00</span>
@@ -882,6 +898,40 @@ document.querySelectorAll('#newClientModal .cancel-btn').forEach(btn => {
 });
 
 });
+
+document.getElementById('client_id').addEventListener('change', async function () {
+    const clientId = this.value;
+
+    // Hide loyalty balance and apply checkbox by default
+    document.getElementById('loyalty-balance').classList.add('hidden');
+    document.getElementById('apply-loyalty-wrapper').classList.add('hidden');
+
+    if (!clientId) return;  // If no client is selected, do nothing
+
+    try {
+        // Fetch the client's loyalty points
+        const response = await fetch(`/pos/client/${clientId}/loyalty-points`);
+        const data = await response.json();
+
+        const points = parseFloat(data.points);
+
+        // If the client has positive points, show the discount section
+        if (points > 0) {
+            const discount = points * parseFloat(data.point_value || 0.05);  // Assuming point_value is fetched properly
+
+            // Display the available discount
+            document.getElementById('loyalty-discount').textContent = `$${discount.toFixed(2)}`;
+            document.getElementById('loyalty-balance').classList.remove('hidden');
+            document.getElementById('apply-loyalty-wrapper').classList.remove('hidden');
+        }
+
+    } catch (error) {
+        console.error("Error fetching loyalty points:", error);
+        document.getElementById('loyalty-balance').classList.add('hidden');
+        document.getElementById('apply-loyalty-wrapper').classList.add('hidden');
+    }
+});
+
 </script>
 
 @include('partials.modals.new-client')
