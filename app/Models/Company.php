@@ -48,5 +48,9 @@ public function hasModule(string $module): bool
     return $this->moduleAccess()->where('module', $module)->exists();
 }
 
+public function loyaltyProgram()
+{
+    return $this->hasOne(LoyaltyProgram::class);
+}
 
 }

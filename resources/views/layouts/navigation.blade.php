@@ -4,6 +4,12 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 @auth
+                    <!-- Dashboard Link -->
+                    <div class="hidden sm:ml-10 sm:flex sm:items-center">
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            Dashboard
+                        </x-nav-link>
+                    </div>
                     <!-- Company Dropdown -->
                     <div class="hidden sm:ml-10 sm:flex sm:items-center">
                         <x-dropdown align="left" width="48">
@@ -25,6 +31,7 @@
                                 <x-dropdown-link :href="route('services.index')">Services</x-dropdown-link>
                                 <x-dropdown-link :href="route('locations.index')">Locations</x-dropdown-link>
                                 <x-dropdown-link :href="route('staff.index')">Staff</x-dropdown-link>
+                                <x-dropdown-link :href="route('companies.loyalty-program.edit')">Loyalty Program</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -173,6 +180,7 @@
                     <x-responsive-nav-link :href="route('services.index')">Services</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('locations.index')">Locations</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('staff.index')">Staff</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('companies.loyalty-program.edit')">Loyalty Program</x-responsive-nav-link>
                 </div>
             </div>
 

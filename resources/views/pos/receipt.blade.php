@@ -58,6 +58,27 @@
             </div>
         @endif
 
+        @php
+            $earned = \App\Models\LoyaltyPointTransaction::where('sale_id', $sale->id)->where('type', 'earn')->sum('points');
+            $redeemed = \App\Models\LoyaltyPointTransaction::where('sale_id', $sale->id)->where('type', 'redeem')->sum('points');
+            $discount = 0;
+            if ($redeemed > 0 && $sale->company && $sale->company->loyaltyProgram) {
+                $discount = $redeemed * $sale->company->loyaltyProgram->dollar_value_per_point;
+            }
+        @endphp
+
+        @if ($earned > 0 || $redeemed > 0)
+            <div class="mt-6 text-sm text-gray-900 dark:text-gray-100">
+                @if ($earned > 0)
+                    <p><strong>Points Earned:</strong> {{ number_format($earned, 2) }}</p>
+                @endif
+                @if ($redeemed > 0)
+                    <p><strong>Points Redeemed:</strong> {{ number_format($redeemed, 2) }}</p>
+                    <p><strong>Loyalty Discount:</strong> -${{ number_format($discount, 2) }}</p>
+                @endif
+            </div>
+        @endif
+
         <div class="mt-8 text-center">
             <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 print:hidden">
                 Print Receipt

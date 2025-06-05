@@ -35,5 +35,32 @@ class Client extends Model
     {
         return $this->hasMany(\App\Models\Modules\Invoices\Invoice::class);
     }
-    
+
+    public function availableLoyaltyPoints()
+    {
+        return $this->loyaltyPointTransactions()
+            ->selectRaw('SUM(CASE WHEN type = "earn" THEN points ELSE -points END) as balance')
+            ->value('balance') ?? 0;
+    }
+
+    public function loyaltyPointTransactions()
+    {
+        return $this->hasMany(\App\Models\LoyaltyPointTransaction::class);
+    }
+
+    public function redeemablePointsFor(float $subtotal)
+{
+    $program = $this->company->loyaltyProgram;
+
+    if (!$program || $subtotal <= 0) {
+        return 0;
+    }
+
+    $maxDiscount = $subtotal * ($program->max_discount_percent / 100);
+    $maxPoints = floor($maxDiscount / $program->point_value);
+    $available = $this->availableLoyaltyPoints();
+
+    return min($available, $maxPoints);
+}
+
 }

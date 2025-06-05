@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Modules\Invoices\Invoice;
 use App\Models\ProductInventory;
+use App\Models\LoyaltyPointTransaction;
+
 
 class POSController extends Controller
 {
@@ -53,119 +55,193 @@ class POSController extends Controller
     }
 
     public function checkout(Request $request)
-    {
-        $user = auth()->user();
-        $companyId = $user->company_id;
-        $locationId = $user->selected_location_id;
+{
+    $user = auth()->user();
+    $companyId = $user->company_id;
+    $locationId = $user->selected_location_id;
 
-        $validated = $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'nullable|integer',
-            'items.*.name' => 'required|string',
-            'items.*.price' => 'required|numeric',
-            'items.*.quantity' => 'required|numeric',
-            'items.*.invoice_id' => 'nullable|integer',
-            'payments' => 'required|array|min:1',
-            'payments.*.method' => 'required|string',
-            'payments.*.amount' => 'required|numeric',
-            'payments.*.reference_number' => 'nullable|string',
-            'client_id' => 'nullable|exists:clients,id',
-        ]);
+    $validated = $request->validate([
+        'items' => 'required|array|min:1',
+        'items.*.product_id' => 'nullable|integer',
+        'items.*.name' => 'required|string',
+        'items.*.price' => 'required|numeric',
+        'items.*.quantity' => 'required|numeric',
+        'items.*.invoice_id' => 'nullable|integer',
+        'payments' => 'required|array|min:1',
+        'payments.*.method' => 'required|string',
+        'payments.*.amount' => 'required|numeric',
+        'payments.*.reference_number' => 'nullable|string',
+        'client_id' => 'nullable|exists:clients,id',
+        'redeem_points' => 'nullable|boolean',
+    ]);
 
-        $items = $validated['items'];
-        \Log::info('Cart items received:', $items);
+    $items = $validated['items'];
+    $payments = $validated['payments'];
+    $clientId = $validated['client_id'] ?? null;
+    $redeemPoints = $validated['redeem_points'] ?? false;
 
-        $payments = $validated['payments'];
-        $clientId = $validated['client_id'] ?? null;
+    \Log::info('Cart items received:', $items);
 
-        $location = \App\Models\Location::findOrFail($locationId);
+    $location = \App\Models\Location::findOrFail($locationId);
 
-        $taxableSubtotal = 0;
-        $nonTaxableSubtotal = 0;
+    $taxableSubtotal = 0;
+    $nonTaxableSubtotal = 0;
 
-        foreach ($items as $item) {
-            $lineTotal = $item['price'] * $item['quantity'];
+    foreach ($items as $item) {
+        $lineTotal = $item['price'] * $item['quantity'];
 
-            if (!empty($item['invoice_id'])) {
-                $nonTaxableSubtotal += $lineTotal;
-            } else {
-                $taxableSubtotal += $lineTotal;
-            }
-        }
-
-        $tax = round($taxableSubtotal * ($location->product_tax_rate / 100), 2);
-        $subtotal = $taxableSubtotal + $nonTaxableSubtotal;
-        $total = $subtotal + $tax;
-
-        $amountPaid = collect($payments)->sum('amount');
-        $changeOwed = max(0, $amountPaid - $total);
-
-        DB::beginTransaction();
-
-        try {
-            $sale = \App\Models\POS\Sale::create([
-                'company_id' => $companyId,
-                'location_id' => $locationId,
-                'client_id' => $clientId,
-                'subtotal' => $subtotal,
-                'tax' => $tax,
-                'total' => $total,
-            ]);
-
-            foreach ($items as $item) {
-                $sale->items()->create([
-                    'product_id' => $item['product_id'] ?? null,
-                    'name' => $item['name'],
-                    'price' => $item['price'],
-                    'quantity' => $item['quantity'],
-                    'line_total' => $item['price'] * $item['quantity'],
-                ]);
-
-                if (!empty($item['invoice_id'])) {
-                    $invoice = Invoice::find($item['invoice_id']);
-                    if ($invoice && $invoice->status !== 'Paid') {
-                        $invoice->status = 'Paid';
-                        $invoice->amount_paid = $invoice->total_amount;
-                        $invoice->save();
-                    }
-                }
-
-                // ✅ NEW: Adjust inventory at the sale location
-                if (!empty($item['product_id'])) {
-                    $inventory = ProductInventory::where('product_id', $item['product_id'])
-                        ->where('location_id', $locationId)
-                        ->first();
-
-                    if ($inventory) {
-                        $inventory->quantity -= $item['quantity'];
-                        $inventory->save();
-                    }
-                }
-            }
-
-            foreach ($payments as $payment) {
-                $sale->payments()->create([
-                    'method' => $payment['method'],
-                    'amount' => $payment['amount'],
-                    'reference_number' => $payment['reference_number'] ?? null,
-                ]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'sale_id' => $sale->id,
-                'change_owed' => number_format($changeOwed, 2)
-            ]);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'error' => 'Checkout failed: ' . $e->getMessage(),
-            ], 500);
+        if (!empty($item['invoice_id'])) {
+            $nonTaxableSubtotal += $lineTotal;
+        } else {
+            $taxableSubtotal += $lineTotal;
         }
     }
+
+    $tax = round($taxableSubtotal * ($location->product_tax_rate / 100), 2);
+    $subtotal = $taxableSubtotal + $nonTaxableSubtotal;
+    $total = $subtotal + $tax;
+    $originalTotal = $total;
+
+    $pointsRedeemed = 0;
+    $pointsValue = 0;
+
+    if ($clientId && $redeemPoints) {
+        $company = $user->company;
+        $program = $company->loyaltyProgram;
+
+        \Log::info('Loyalty Program:', ['program' => $program]);
+        
+        if ($program) {
+            $earned = \App\Models\LoyaltyPointTransaction::where('client_id', $clientId)
+                ->where('company_id', $company->id)
+                ->where('type', 'earn')
+                ->sum('points');
+
+            $redeemed = \App\Models\LoyaltyPointTransaction::where('client_id', $clientId)
+                ->where('company_id', $company->id)
+                ->where('type', 'redeem')
+                ->sum('points');
+
+            $available = $earned - $redeemed;
+
+            // Determine the max redeemable value based on the company's loyalty settings
+            $maxPercent = $program->max_percent_discount ?? 0;
+            $maxDiscount = round($subtotal * ($maxPercent / 100), 2);
+            $pointValue = $program->dollar_value_per_point;
+            $maxPointsToUse = floor($maxDiscount / $pointValue);
+
+            $pointsToUse = min($available, $maxPointsToUse);
+            $pointsValue = round($pointsToUse * $pointValue, 2);
+            $pointsRedeemed = $pointsToUse;
+
+            $total = round($total - $pointsValue, 2);
+
+        }
+    }
+
+    $amountPaid = collect($payments)->sum('amount');
+    $changeOwed = max(0, $amountPaid - $total);
+
+    DB::beginTransaction();
+
+    try {
+        $sale = \App\Models\POS\Sale::create([
+            'company_id' => $companyId,
+            'location_id' => $locationId,
+            'client_id' => $clientId,
+            'subtotal' => $subtotal,
+            'tax' => $tax,
+            'total' => $total,
+        ]);
+
+        foreach ($items as $item) {
+            $sale->items()->create([
+                'product_id' => $item['product_id'] ?? null,
+                'name' => $item['name'],
+                'price' => $item['price'],
+                'quantity' => $item['quantity'],
+                'line_total' => $item['price'] * $item['quantity'],
+            ]);
+
+            if (!empty($item['invoice_id'])) {
+                $invoice = Invoice::find($item['invoice_id']);
+                if ($invoice && $invoice->status !== 'Paid') {
+                    $invoice->status = 'Paid';
+                    $invoice->amount_paid = $invoice->total_amount;
+                    $invoice->save();
+                }
+            }
+
+            if (!empty($item['product_id'])) {
+                $inventory = ProductInventory::where('product_id', $item['product_id'])
+                    ->where('location_id', $locationId)
+                    ->first();
+
+                if ($inventory) {
+                    $inventory->quantity -= $item['quantity'];
+                    $inventory->save();
+                }
+            }
+        }
+
+        foreach ($payments as $payment) {
+            $sale->payments()->create([
+                'method' => $payment['method'],
+                'amount' => $payment['amount'],
+                'reference_number' => $payment['reference_number'] ?? null,
+            ]);
+        }
+
+        if ($clientId) {
+            $company = $user->company;
+            $program = $company->loyaltyProgram;
+
+            if ($program) {
+                // Earn new points on subtotal before tax and after redemption
+                $earnableAmount = $subtotal;
+                if ($redeemPoints) {
+                    $earnableAmount = max(0, $earnableAmount - $pointsValue);
+                }
+
+                $pointsEarned = round($earnableAmount * $program->points_per_dollar, 2);
+
+                \App\Models\LoyaltyPointTransaction::create([
+                    'client_id' => $clientId,
+                    'company_id' => $company->id,
+                    'points' => $pointsEarned,
+                    'type' => 'earn',
+                    'description' => 'Points earned for Sale #' . $sale->id,
+                    'created_at' => now(),
+                ]);
+
+                if ($redeemPoints && $pointsRedeemed > 0) {
+                    \App\Models\LoyaltyPointTransaction::create([
+                        'client_id' => $clientId,
+                        'company_id' => $company->id,
+                        'points' => $pointsRedeemed,
+                        'type' => 'redeem',
+                        'description' => 'Points redeemed for Sale #' . $sale->id,
+                        'created_at' => now(),
+                    ]);
+                }
+            }
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'sale_id' => $sale->id,
+            'change_owed' => number_format($changeOwed, 2)
+        ]);
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'error' => 'Checkout failed: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 
     public function storeProduct(Request $request)
     {
@@ -296,5 +372,20 @@ class POSController extends Controller
 
     return response()->json(['success' => true]);
 }
-    
+
+public function getClientPoints($clientId)
+{
+    $client = \App\Models\Client::findOrFail($clientId);
+    $user = auth()->user();
+
+    // Only allow access if the client belongs to the same company
+    if ($client->company_id !== $user->company_id) {
+        abort(403, 'Unauthorized');
+    }
+
+    return response()->json([
+        'points' => round($client->availableLoyaltyPoints(), 2),
+    ]);
+}
+
 }

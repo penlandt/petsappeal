@@ -50,23 +50,21 @@
     </div>
 
     <div class="min-h-screen">
-        <div style="height: 100vh; overflow: visible; position: relative;">
-            @include('layouts.navigation')
+        @include('layouts.navigation')
 
-            @if (isset($header))
-                <header class="bg-white dark:bg-gray-800 shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif
-
-            <main class="py-12 flex justify-center">
-                <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {{ $slot }}
+        @if (isset($header))
+            <header class="bg-white dark:bg-gray-800 shadow">
+                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    {{ $header }}
                 </div>
-            </main>
-        </div>
+            </header>
+        @endif
+
+        <main class="py-12">
+            <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {{ $slot }}
+            </div>
+        </main>
     </div>
 
     @stack('scripts')
@@ -99,8 +97,6 @@
         });
     </script>
 
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>

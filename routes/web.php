@@ -23,6 +23,7 @@ use App\Http\Controllers\Modules\Invoices\InvoicePrintController;
 use App\Http\Controllers\ClientHistoryController;
 use App\Http\Controllers\POS\ReceiptController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\CompanyLoyaltyProgramController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,14 +35,24 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'has.company'])->name('dashboard');
+use App\Http\Controllers\DashboardController;
+
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'has.company'])
+    ->name('dashboard');
+
 
 // Company creation (accessible before company exists)
 Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
 Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
 Route::put('/companies/{company}', [App\Http\Controllers\CompanyController::class, 'update'])->name('companies.update');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/companies/loyalty-program', [CompanyLoyaltyProgramController::class, 'edit'])
+        ->name('companies.loyalty-program.edit');
+
+    Route::post('/companies/loyalty-program', [CompanyLoyaltyProgramController::class, 'save'])
+        ->name('companies.loyalty-program.save');
+});
 
 Route::get('/clients/json', [\App\Http\Controllers\ClientController::class, 'json'])->name('clients.json');
 
@@ -58,6 +69,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     ->middleware(['auth'])
     ->name('clients.history');
     Route::post('/clients', [App\Http\Controllers\ClientController::class, 'store'])->name('clients.store');
+    Route::get('/pos/client/{client}/loyalty-points', [POSController::class, 'getClientPoints'])->name('pos.client.loyalty-points');
     
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
