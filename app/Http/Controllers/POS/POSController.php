@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Modules\Invoices\Invoice;
 use App\Models\ProductInventory;
 use App\Models\LoyaltyPointTransaction;
-
+use Illuminate\Support\Facades\Log;
 
 class POSController extends Controller
 {
@@ -73,15 +73,17 @@ class POSController extends Controller
         'payments.*.reference_number' => 'nullable|string',
         'client_id' => 'nullable|exists:clients,id',
         'redeem_points' => 'nullable|boolean',
+        'total_due' => 'required|numeric',
     ]);
 
+    $clientTotalDue = round($validated['total_due'], 2);
+
+    $total = round($validated['total_due'], 2);
     $items = $validated['items'];
     $payments = $validated['payments'];
     $clientId = $validated['client_id'] ?? null;
     $redeemPoints = $validated['redeem_points'] ?? false;
-
-    \Log::info('Cart items received:', $items);
-
+    $redeemPoints = filter_var($redeemPoints, FILTER_VALIDATE_BOOLEAN);
     $location = \App\Models\Location::findOrFail($locationId);
 
     $taxableSubtotal = 0;
@@ -109,8 +111,6 @@ class POSController extends Controller
         $company = $user->company;
         $program = $company->loyaltyProgram;
 
-        \Log::info('Loyalty Program:', ['program' => $program]);
-        
         if ($program) {
             $earned = \App\Models\LoyaltyPointTransaction::where('client_id', $clientId)
                 ->where('company_id', $company->id)
@@ -124,12 +124,27 @@ class POSController extends Controller
 
             $available = $earned - $redeemed;
 
+            Log::info('Loyalty point availability', [
+                'earned' => $earned,
+                'redeemed' => $redeemed,
+                'available' => $available,
+                'client_id' => $clientId,
+            ]);
+            
             // Determine the max redeemable value based on the company's loyalty settings
-            $maxPercent = $program->max_percent_discount ?? 0;
+            $maxPercent = $program->max_discount_percent ?? 0;
             $maxDiscount = round($subtotal * ($maxPercent / 100), 2);
-            $pointValue = $program->dollar_value_per_point;
+            $pointValue = $program->point_value;
             $maxPointsToUse = floor($maxDiscount / $pointValue);
 
+            Log::info('Loyalty point max usage calculation', [
+                'max_percent_discount' => $maxPercent,
+                'subtotal' => $subtotal,
+                'max_discount' => $maxDiscount,
+                'point_value' => $pointValue,
+                'maxPointsToUse' => $maxPointsToUse,
+            ]);
+            
             $pointsToUse = min($available, $maxPointsToUse);
             $pointsValue = round($pointsToUse * $pointValue, 2);
             $pointsRedeemed = $pointsToUse;
@@ -140,7 +155,7 @@ class POSController extends Controller
     }
 
     $amountPaid = collect($payments)->sum('amount');
-    $changeOwed = max(0, $amountPaid - $total);
+    $changeOwed = max(0, $amountPaid - $clientTotalDue);
 
     DB::beginTransaction();
 
@@ -212,6 +227,13 @@ class POSController extends Controller
                     'type' => 'earn',
                     'description' => 'Points earned for Sale #' . $sale->id,
                     'created_at' => now(),
+                ]);
+
+                Log::info('Attempting to redeem loyalty points', [
+                    'client_id' => $clientId,
+                    'pointsRedeemed' => $pointsRedeemed,
+                    'redeemPoints' => $redeemPoints,
+                    'sale_id' => $sale->id,
                 ]);
 
                 if ($redeemPoints && $pointsRedeemed > 0) {
@@ -383,9 +405,16 @@ public function getClientPoints($clientId)
         abort(403, 'Unauthorized');
     }
 
+    $points = round($client->availableLoyaltyPoints(), 2);
+    $pointValue = $client->company->loyaltyProgram->point_value ?? 0;  // Default to 0 if no loyalty program
+    $maxDiscountPercent = $client->company->loyaltyProgram->max_discount_percent ?? 0;
+
     return response()->json([
-        'points' => round($client->availableLoyaltyPoints(), 2),
+        'points' => $points,
+        'point_value' => $pointValue,
+        'max_discount_percent' => $maxDiscountPercent,
     ]);
 }
+
 
 }

@@ -698,20 +698,15 @@
             eventClick: function(info) {
                 const appointmentId = info.event.id;
 
-                console.log('Fetching:', `/api/appointments/${appointmentId}`);
-
                 fetch(`/api/appointments/${appointmentId}`)
                     .then(async response => {
                         const text = await response.text();
-                        console.log('Raw response:', text);
-
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
 
                         const data = JSON.parse(text);
-                        console.log('Parsed JSON:', data);
-
+                
                         const appt = data.appointment;
 
                         // Show recurrence options if part of a series
@@ -903,7 +898,6 @@
 
 
             dateClick: function(info) {
-                console.log('dateClick triggered:', info);
                 window.selectedStaffId = info.resource.id;
 
                 const modal = document.getElementById('appointmentModal');
@@ -921,8 +915,6 @@
                 form.reset();
 
                 form.addEventListener('submit', function () {
-                    console.log('Appointment form is submitting...');
-
                     form.querySelectorAll('input[name="appointment_date"], input[name="start_time"]').forEach(el => el.remove());
 
                     const dateInput = document.createElement('input');

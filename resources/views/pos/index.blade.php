@@ -85,7 +85,7 @@
                         <span>Discount from Loyalty Points:</span>
                         <span id="loyalty-discount-amount" class="font-semibold">–$0.00</span>
                     </div>
-                    
+
                     <div class="flex justify-between mb-2">
                         <span class="text-gray-700 dark:text-gray-300">Subtotal:</span>
                         <span id="subtotal" class="text-gray-900 dark:text-white">$0.00</span>
@@ -117,11 +117,14 @@
      class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Enter Payment</h2>
+
         <div id="payment-entries"></div>
+
         <button type="button" id="add-payment-btn"
                 class="mb-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
             + Add Payment Method
         </button>
+
         <div class="flex justify-end space-x-2">
             <button onclick="closePaymentModal()"
                     type="button"
@@ -130,12 +133,13 @@
             </button>
 
             <button type="button" onclick="submitPayments()"
-        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-    Submit Payment
-</button>
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                Submit Payment
+            </button>
         </div>
     </div>
 </div>
+
 
 <!-- Return Modal -->
 <div id="returnModal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50">
@@ -257,8 +261,6 @@ const clientsJsonUrl = @json(route('clients.json'));
 
 // Global functions (accessible from buttons, modals, etc.)
 window.addToCart = function(productId, name, price) {
-    console.log("addToCart called with:", productId, name, price);
-
     const qtyInput = document.getElementById(`qty-${productId}`);
     if (!qtyInput) {
         console.error("Quantity input not found for product", productId);
@@ -277,8 +279,7 @@ window.addToCart = function(productId, name, price) {
 
     saveCartToLocalStorage();
     renderCart();
-    console.log("Cart after adding:", cart);
-
+    
     // ✅ Clear the search box after adding
     const searchInput = document.getElementById('product-search');
     if (searchInput) {
@@ -299,7 +300,6 @@ function saveCartToLocalStorage() {
 }
 
 function renderCart() {
-    console.log('renderCart was called');
     const cartItems = document.getElementById('cart-items');
     cartItems.innerHTML = '';
 
@@ -334,7 +334,6 @@ function renderCart() {
             </td>
         `;
         cartItems.appendChild(tr);
-        console.log(tr.innerHTML);
     });
 
     updateTotals();
@@ -440,28 +439,158 @@ function updateTotals() {
         }
     });
 
-    const tax = taxableAmount * (productTaxRate / 100);
-    const total = subtotal + tax;
+    let discount = 0;
 
-    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-    document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
-    document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+    // Loyalty logic
+    const applyLoyalty = document.getElementById('apply-loyalty')?.checked;
+    const clientId = clientSelect?.getValue?.() || document.getElementById('client_id')?.value || null;
+
+    if (applyLoyalty && clientId && subtotal > 0) {
+        fetch(`/pos/client/${clientId}/loyalty-points`)
+            .then(res => res.json())
+            .then(data => {
+    
+                const points = parseFloat(data.points) || 0;
+                const pointValue = parseFloat(data.point_value) || 0;
+                const maxPercent = parseFloat(data.max_discount_percent) || 0;
+
+                const maxAllowed = subtotal * (maxPercent / 100);
+    
+                const valueFromPoints = points * pointValue;
+    
+                discount = Math.min(valueFromPoints, maxAllowed);
+    
+                // Adjust taxable amount based on the discount
+                const discountedTaxableAmount = discount > 0 ? subtotal - discount : subtotal;
+
+                // Adjust the subtotal by applying the discount
+                const discountedSubtotal = subtotal - discount;
+
+                // Update the DOM
+                document.getElementById('loyalty-discount-line').classList.remove('hidden');
+                document.getElementById('loyalty-discount-amount').textContent = `–$${discount.toFixed(2)}`;
+
+                const tax = discountedTaxableAmount * (productTaxRate / 100);
+                const total = discountedSubtotal + tax;
+
+                document.getElementById('subtotal').textContent = `$${discountedSubtotal.toFixed(2)}`;
+                document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+                document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+            })
+            .catch(err => {
+                console.error("Error applying loyalty discount:", err);
+                // fallback without discount
+                document.getElementById('loyalty-discount-line').classList.add('hidden');
+                const tax = taxableAmount * (productTaxRate / 100);
+                const total = subtotal + tax;
+                document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+                document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+                document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+            });
+    } else {
+        // Loyalty not applied
+        document.getElementById('loyalty-discount-line').classList.add('hidden');
+        const tax = taxableAmount * (productTaxRate / 100);
+        const total = subtotal + tax;
+
+        document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+        document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+    }
 }
 
 
 function checkoutCart() {
+    // Check if the cart is empty. If it is, alert the user and stop the process.
     if (cart.length === 0) {
         alert("Cart is empty.");
         return;
     }
 
+    // If there are no payment entries, add a default one for the "Cash" method and $0.00 amount.
     if (paymentEntries.length === 0) {
         paymentEntries.push({ method: 'Cash', amount: 0.00, reference_number: '' });
-        renderPaymentEntries();
+        renderPaymentEntries(); // Re-render the payment entries to reflect the new entry.
     }
 
+    // Get the total amount due from the #total element on the main page (pre-discount, tax, etc.)
+    const totalDue = parseFloat(document.getElementById('total').textContent.replace('$', ''));
+
+    // Get the amount paid so far and calculate the remaining balance
+    const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
+    const remainingBalance = totalDue - totalPaid;
+
+    // Update the display of the post-discount total and remaining balance in the Payment Modal
+    renderPaymentEntries(totalDue, remainingBalance);
+
+    // Open the Payment Modal
     document.getElementById('paymentModal').style.display = 'flex';
 }
+
+function renderPaymentEntries() {
+
+const container = document.getElementById('payment-entries');
+container.innerHTML = ''; // Clear the existing payment entries
+
+const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+const taxableAmount = cart.reduce((sum, item) => item.taxable ? sum + (item.price * item.quantity) : sum, 0);
+const tax = taxableAmount * (productTaxRate / 100);
+const total = subtotal + tax;
+
+const totalDue = parseFloat(document.getElementById('total').textContent.replace('$', ''));
+const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
+
+const balance = totalPaid - totalDue;
+
+// Create and insert amount due element
+const postDiscountElement = document.createElement('div');
+postDiscountElement.classList.add('mb-4');
+postDiscountElement.id = 'amountDueDisplay';
+postDiscountElement.textContent = `Amount Due: $${totalDue.toFixed(2)}`;
+container.appendChild(postDiscountElement);
+
+// Create and insert remaining balance/change owed element
+const remainingBalanceElement = document.createElement('div');
+remainingBalanceElement.classList.add('mt-4', 'font-semibold', 'text-gray-900', 'dark:text-white');
+remainingBalanceElement.id = 'remainingBalanceDisplay';
+container.appendChild(remainingBalanceElement);
+
+// Add the payment entries to the modal using safe DOM manipulation
+paymentEntries.forEach((entry, index) => {
+    const entryRow = document.createElement('div');
+    entryRow.className = 'mb-2 flex flex-wrap items-center gap-2';
+
+    entryRow.innerHTML = `
+        <select class="w-32 dark:bg-gray-700 dark:text-white"
+                onchange="updatePaymentMethod(${index}, this.value)">
+            <option value="Cash"${entry.method === 'Cash' ? ' selected' : ''}>Cash</option>
+            <option value="Credit"${entry.method === 'Credit' ? ' selected' : ''}>Credit</option>
+            <option value="Check"${entry.method === 'Check' ? ' selected' : ''}>Check</option>
+            <option value="Other"${entry.method === 'Other' ? ' selected' : ''}>Other</option>
+        </select>
+        <input type="number" placeholder="Amount"
+               class="w-24 px-2 py-1 rounded border dark:bg-gray-700 dark:text-white"
+               value="${entry.amount}" onblur="updatePaymentAmount(${index}, this.value)">
+        <input type="text" placeholder="Reference"
+               class="flex-1 px-2 py-1 rounded border dark:bg-gray-700 dark:text-white"
+               value="${entry.reference_number || ''}" oninput="updatePaymentReference(${index}, this.value)">
+        <button onclick="removePaymentEntry(${index})"
+                class="text-red-600 dark:text-red-400 text-sm">Remove</button>
+    `;
+
+    container.appendChild(entryRow);
+});
+
+// Update the remaining balance or change owed display
+if (balance < 0) {
+    remainingBalanceElement.textContent = `Remaining Balance: $${Math.abs(balance).toFixed(2)}`;
+} else if (balance > 0) {
+    remainingBalanceElement.textContent = `Change Owed: $${balance.toFixed(2)}`;
+} else {
+    remainingBalanceElement.textContent = `No Remaining Balance or Change Owed`;
+}
+}
+
 
 function closePaymentModal() {
     const modal = document.getElementById('paymentModal');
@@ -479,58 +608,6 @@ function closePaymentModal() {
     if (amountDueElem) amountDueElem.textContent = '$0.00';
     const changeDueElem = document.getElementById('changeDueDisplay');
     if (changeDueElem) changeDueElem.textContent = '$0.00';
-}
-
-function renderPaymentEntries() {
-    const container = document.getElementById('payment-entries');
-    const active = document.activeElement;
-    const activeId = active?.getAttribute('data-entry-index');
-    container.innerHTML = '';
-
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const taxableAmount = cart.reduce((sum, item) => item.taxable ? sum + (item.price * item.quantity) : sum, 0);
-    const tax = taxableAmount * (productTaxRate / 100);
-    const total = subtotal + tax;
-    const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
-    const balance = totalPaid - total;
-
-    container.innerHTML += `
-        <div class="mb-4">
-            <div class="text-gray-900 dark:text-white font-semibold">Amount Due: $${total.toFixed(2)}</div>
-        </div>
-    `;
-
-    paymentEntries.forEach((entry, index) => {
-        container.innerHTML += `
-        <div class="mb-2 flex flex-wrap items-center gap-2">
-            <select class="w-32 dark:bg-gray-700 dark:text-white"
-                    onchange="updatePaymentMethod(${index}, this.value)">
-                <option value="Cash"${entry.method === 'Cash' ? ' selected' : ''}>Cash</option>
-                <option value="Credit"${entry.method === 'Credit' ? ' selected' : ''}>Credit</option>
-                <option value="Check"${entry.method === 'Check' ? ' selected' : ''}>Check</option>
-                <option value="Other"${entry.method === 'Other' ? ' selected' : ''}>Other</option>
-            </select>
-            <input type="number" placeholder="Amount"
-                   class="w-24 px-2 py-1 rounded border dark:bg-gray-700 dark:text-white"
-                   value="${entry.amount}" onblur="updatePaymentAmount(${index}, this.value)">
-            <input type="text" placeholder="Reference"
-                   class="flex-1 px-2 py-1 rounded border dark:bg-gray-700 dark:text-white"
-                   value="${entry.reference_number || ''}" oninput="updatePaymentReference(${index}, this.value)">
-            <button onclick="removePaymentEntry(${index})"
-                    class="text-red-600 dark:text-red-400 text-sm">Remove</button>
-        </div>`;
-    });
-
-    container.innerHTML += `
-        <div class="mt-4 font-semibold ${balance < 0 ? 'text-gray-900 dark:text-white' : 'text-green-600 dark:text-green-400'}">
-            ${balance < 0
-                ? `Remaining Balance: $${Math.abs(balance).toFixed(2)}`
-                : totalPaid === 0
-                    ? `Change Owed: $0.00`
-                    : `Change Owed: $${balance.toFixed(2)}`
-            }
-        </div>
-    `;
 }
 
 function addPaymentEntry() {
@@ -562,20 +639,28 @@ function submitPayments() {
         return;
     }
 
-    const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const taxableAmount = cart.reduce((sum, item) => item.taxable ? sum + (item.price * item.quantity) : sum, 0);
-    const tax = taxableAmount * (productTaxRate / 100);
-    const total = subtotal + tax;
+    // Get the client ID from the client select dropdown or from the form field
+    const clientId = clientSelect?.getValue?.() || document.getElementById('client_id')?.value || null;
 
-    const epsilon = 0.01;
-    if (totalPaid + epsilon < total) {
-        alert(`Total due is $${total.toFixed(2)}. You have only entered $${totalPaid.toFixed(2)}.`);
+    if (!clientId) {
+        alert("Please select a client.");
         return;
     }
 
-    const clientId = clientSelect?.getValue?.() || document.getElementById('client_id')?.value || null;
+    // Get the total amount due from the #total element (this is the post-discount total)
+    const totalDue = parseFloat(document.getElementById('total').textContent.replace('$', ''));
 
+    // Calculate the total paid from the payment entries
+    const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
+
+    const epsilon = 0.01;
+    // Check if the total paid is enough to cover the total due
+    if (totalPaid + epsilon < totalDue) {
+        alert(`Total due is $${totalDue.toFixed(2)}. You have only entered $${totalPaid.toFixed(2)}.`);
+        return;
+    }
+
+    // Send the checkout data to the server
     fetch("/pos/checkout", {
         method: "POST",
         headers: {
@@ -585,7 +670,9 @@ function submitPayments() {
         body: JSON.stringify({
             items: cart,
             payments: paymentEntries,
-            client_id: clientId
+            client_id: clientId,
+            redeem_points: document.getElementById('apply-loyalty')?.checked || false,
+            total_due: totalDue
         })
     })
     .then(async response => {
@@ -614,6 +701,9 @@ function submitPayments() {
         alert("An error occurred during checkout.");
     });
 }
+
+
+
 
 // DOM-specific code
 document.addEventListener('DOMContentLoaded', () => {
@@ -671,6 +761,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-payment-btn')?.addEventListener('click', addPaymentEntry);
 
     renderCart();
+
+    // Recalculate totals when loyalty checkbox is changed
+    document.getElementById('apply-loyalty')?.addEventListener('change', updateTotals);
+
 });
 
 function openAddProductModal() {
@@ -790,7 +884,6 @@ document.getElementById('client_id').addEventListener('change', async function (
         const res = await fetch(`/pos/client/${clientId}/unpaid-invoices`);
         if (!res.ok) throw new Error("Failed to fetch unpaid invoices.");
         const text = await res.text();
-        console.log('Raw unpaid invoice response:', text);
         const items = JSON.parse(text);
 
         items.forEach(item => {
@@ -873,9 +966,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data && data.client) {
         const newClient = data.client;
 
-        console.log('🟢 New client created:', newClient);
-        console.log('⏳ Refreshing clientSelect...');
-
         if (clientSelect) {
             const option = {
                 value: String(newClient.id),
@@ -884,8 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             clientSelect.addOption(option);
             clientSelect.addItem(option.value);
-            console.log('✅ New client added and selected:', option);
-
+        
         }
     }
 });
@@ -931,6 +1020,7 @@ document.getElementById('client_id').addEventListener('change', async function (
         document.getElementById('apply-loyalty-wrapper').classList.add('hidden');
     }
 });
+
 
 </script>
 
