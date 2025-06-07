@@ -66,8 +66,38 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                     <input type="password" name="password" placeholder="••••••••"
-                           class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-white"
-                           required>
+                       class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-white">
+
+                </div>
+            </div>
+
+            <div class="col-span-1 md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Automatically Email Options</label>
+
+                <div class="space-y-2 pl-2">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="send_receipts_automatically" value="1"
+                            @if(old('send_receipts_automatically', $settings->send_receipts_automatically)) checked @endif>
+                        <span class="ml-2 text-gray-800 dark:text-gray-200">Send receipts automatically</span>
+                    </label>
+
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="send_invoices_automatically" value="1"
+                            @if(old('send_invoices_automatically', $settings->send_invoices_automatically)) checked @endif>
+                        <span class="ml-2 text-gray-800 dark:text-gray-200">Send invoices automatically</span>
+                    </label>
+
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="send_appointment_reminders" value="1"
+                            @if(old('send_appointment_reminders', $settings->send_appointment_reminders)) checked @endif>
+                        <span class="ml-2 text-gray-800 dark:text-gray-200">Send appointment reminders</span>
+                    </label>
+
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="send_reservation_reminders" value="1"
+                            @if(old('send_reservation_reminders', $settings->send_reservation_reminders)) checked @endif>
+                        <span class="ml-2 text-gray-800 dark:text-gray-200">Send reservation reminders</span>
+                    </label>
                 </div>
             </div>
 

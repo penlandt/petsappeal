@@ -261,6 +261,25 @@ class POSController extends Controller
     
         DB::commit();
     
+        // Send email receipt if conditions are met
+        $emailSettings = \App\Models\EmailSetting::where('company_id', $companyId)->first();
+
+        if (
+            $emailSettings &&
+            $emailSettings->send_receipts_automatically &&
+            $clientId
+        ) {
+            $client = \App\Models\Client::find($clientId);
+            if ($client && filter_var($client->email, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    \Mail::to($client->email)->send(new \App\Mail\ReceiptEmail($sale));
+                    Log::info('📧 Receipt email sent to client', ['email' => $client->email]);
+                } catch (\Throwable $emailException) {
+                    Log::error('❌ Failed to send receipt email', ['error' => $emailException->getMessage()]);
+                }
+            }
+        }
+
         return response()->json([
             'success' => true,
             'sale_id' => $sale->id,

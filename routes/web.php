@@ -196,6 +196,13 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/pos/returns/{return}/receipt', [\App\Http\Controllers\POS\ReturnsReceiptController::class, 'show'])->name('pos.returns.receipt');
 });
 
+    // Settings Management (FIXED: now inside auth+has.company group)
+    Route::prefix('settings')->group(function () {
+        Route::get('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'edit'])->name('settings.email.edit');
+        Route::post('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('settings.email.update');
+        Route::get('email/test', [\App\Http\Controllers\EmailTestController::class, 'send'])->name('settings.email.test');
+    });
+
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->middleware(['auth', 'has.company'])
@@ -243,13 +250,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
         Route::post('/boarding/reservations/{reservation}/cancel', [BoardingReservationController::class, 'cancel'])->name('boarding.reservations.cancel');
     });
 
-    //  Settings Management
-    Route::middleware(['auth'])->prefix('settings')->group(function () {
-        Route::get('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'edit'])->name('settings.email.edit');
-        Route::post('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('settings.email.update');
-    });
-    Route::get('/settings/email/test', [\App\Http\Controllers\EmailTestController::class, 'send'])->name('settings.email.test');    
-
+    
 // Daycare Management
 Route::middleware(['auth', 'has.company', 'ensure.location.selected', 'check.module.access:daycare'])->group(function () {
     Route::get('/modules/daycare', function () {

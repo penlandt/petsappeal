@@ -53,4 +53,8 @@ public function loyaltyProgram()
     return $this->hasOne(LoyaltyProgram::class);
 }
 
+public function settings()
+{
+    return $this->hasOne(CompanySetting::class);
+}
 }

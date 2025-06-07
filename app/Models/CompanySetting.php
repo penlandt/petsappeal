@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class EmailSetting extends Model
+class CompanySetting extends Model
 {
     use HasFactory;
 
@@ -23,25 +23,16 @@ class EmailSetting extends Model
         'send_appointment_reminders',
         'send_reservation_reminders',
     ];
-    
 
-    protected $hidden = [
-        'password',
+    protected $casts = [
+        'send_receipts_automatically'   => 'boolean',
+        'send_invoices_automatically'   => 'boolean',
+        'send_appointment_reminders'    => 'boolean',
+        'send_reservation_reminders'    => 'boolean',
     ];
 
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
-
-    public function getPasswordAttribute($value)
-{
-    try {
-        return decrypt($value);
-    } catch (\Exception $e) {
-        // If it fails to decrypt (e.g., old unencrypted value), return raw
-        return $value;
-    }
-}
-
 }
