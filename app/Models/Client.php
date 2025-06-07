@@ -63,4 +63,9 @@ class Client extends Model
     return min($available, $maxPoints);
 }
 
+public function getFullNameAttribute()
+{
+    return "{$this->first_name} {$this->last_name}";
+}
+
 }

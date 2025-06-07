@@ -24,7 +24,7 @@ use App\Http\Controllers\ClientHistoryController;
 use App\Http\Controllers\POS\ReceiptController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\CompanyLoyaltyProgramController;
-
+use App\Http\Controllers\POS\ReturnsController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -181,7 +181,17 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/pos/sales/{sale}/receipt', [ReceiptController::class, 'show'])
     ->middleware(['auth'])
     ->name('pos.receipt');
-    Route::post('/pos/return', [\App\Http\Controllers\POS\POSController::class, 'processReturn'])->name('pos.return');
+    Route::middleware(['auth'])->prefix('pos')->group(function () {
+        Route::get('/returns', [ReturnsController::class, 'index'])->name('pos.returns.index');
+    });
+    Route::get('pos/returns/client/{clientId}/sales', [\App\Http\Controllers\POS\ReturnsController::class, 'getClientSales'])->name('pos.returns.client.sales');
+    Route::post('/pos/returns/process', [\App\Http\Controllers\POS\ReturnsController::class, 'processReturn'])
+    ->name('pos.returns.process')
+    ->middleware(['auth']);
+    Route::get('/pos/returns/{id}', [\App\Http\Controllers\POS\ReturnsController::class, 'show'])
+    ->name('pos.returns.show')
+    ->middleware(['auth']);
+    Route::get('/pos/returns/{return}/receipt', [\App\Http\Controllers\POS\ReturnsReceiptController::class, 'show'])->name('pos.returns.receipt');
 });
 
     // Profile Management

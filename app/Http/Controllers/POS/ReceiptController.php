@@ -11,7 +11,7 @@ class ReceiptController extends Controller
     public function show(Sale $sale)
     {
         return view('pos.receipt', [
-            'sale' => $sale->load('location', 'client'),
+            'sale' => $sale->load('location.company.loyaltyProgram', 'client'),
         ]);
     }
 }

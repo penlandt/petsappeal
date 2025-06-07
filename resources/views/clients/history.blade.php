@@ -24,36 +24,54 @@
                                 {{ \Carbon\Carbon::parse($item->created_at)->format('M j, Y') }}
                             </td>
                             <td class="py-2 capitalize">
-                                {{ $item->type === 'return' ? 'Return' : $item->type }}
+                                {{ $item->type === 'return' ? 'Return' : ucfirst($item->type) }}
                             </td>
                             <td class="py-2">
                                 {{ $item->location->name ?? $item->location_name ?? '-' }}
                             </td>
                             <td class="py-2">
-                                @if ($item->type === 'return')
-                                -${{ number_format(($item->quantity ?? 1) * ($item->price ?? 0) + ($item->tax_amount ?? 0), 2) }}<br>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">
-                                    via {{ $item->refund_method }} &bull;
-                                    Includes ${{ number_format($item->tax_amount ?? 0, 2) }} tax
-                                </span>
+                            @if ($item->type === 'return')
+                                @php
+                                    $quantity = $item->quantity ?? 1;
+                                    $price = $item->price ?? 0;
+                                    $tax = $item->tax_amount ?? 0;
+                                    $points = $item->points_restored ?? 0;
 
-                                @else
-                                    ${{ number_format($item->total_amount ?? $item->total, 2) }}
-                                @endif
+                                    $pointValue = \App\Models\LoyaltyProgram::where('company_id', auth()->user()->company_id)->value('point_value') ?? 0;
+@endphp
+
+<script>
+    console.log("DEBUG: points value = {{ $points }}");
+    console.log("DEBUG: point value = {{ $pointValue }}");
+</script>
+@php                                    
+                                    $pointsValue = $points * $pointValue;
+                                    $refundAmount = ($quantity * $price) + $tax - $pointsValue;
+                                @endphp
+
+                                ${{ number_format($refundAmount, 2) }}
+                            @else
+                                ${{ number_format($item->total_amount ?? $item->total, 2) }}
+                            @endif
+
                             </td>
                             <td class="py-2">
-                                @if ($item->type === 'invoice')
-                                    <a href="{{ route('invoices.print', $item->id) }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
-                                        View Invoice
-                                    </a>
-                                @elseif ($item->type === 'sale')
-                                    <a href="{{ url("/pos/sales/{$item->id}/receipt") }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
-                                        View Receipt
-                                    </a>
-                                @else
-                                    <span class="text-xs italic text-gray-500 dark:text-gray-400">No document</span>
-                                @endif
-                            </td>
+                            @if ($item->type === 'invoice')
+                                <a href="{{ route('invoices.print', $item->id) }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
+                                    View Invoice
+                                </a>
+                            @elseif ($item->type === 'sale')
+                                <a href="{{ url("/pos/sales/{$item->id}/receipt") }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
+                                    View Receipt
+                                </a>
+                            @elseif ($item->type === 'return')
+                                <a href="{{ route('pos.returns.receipt', $item->id) }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
+                                    View Return
+                                </a>
+                            @else
+                                <span class="text-xs italic text-gray-500 dark:text-gray-400">No document</span>
+                            @endif
+                        </td>
                         </tr>
                     @empty
                         <tr>

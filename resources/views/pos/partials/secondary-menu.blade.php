@@ -8,6 +8,15 @@
     <!-- HARD SPACE FIX -->
     <span class="inline-block w-4"></span>
 
+    <!-- Returns Menu Item -->
+    <a href="{{ route('pos.returns.index') }}"
+       class="text-gray-800 dark:text-gray-100 hover:underline">
+        Returns
+    </a>
+
+    <!-- HARD SPACE FIX -->
+    <span class="inline-block w-4"></span>
+
     <!-- Products Menu Item -->
     <a href="{{ route('pos.products') }}"
        class="text-gray-800 dark:text-gray-100 hover:underline">
@@ -27,10 +36,10 @@
         </button>
 
         <div x-show="open"
-            x-transition
-            class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-10"
-            @mouseenter="open = true"
-            @mouseleave="open = false">
+             x-transition
+             class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-10"
+             @mouseenter="open = true"
+             @mouseleave="open = false">
             <a href="{{ route('inventory.countSheet', ['location' => auth()->user()->selected_location_id]) }}"
                class="block px-4 py-2 text-sm text-gray-800 dark:text-gray-100 hover:text-white"
                style="background-color: transparent;"

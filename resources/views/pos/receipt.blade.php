@@ -59,11 +59,17 @@
         @endif
 
         @php
-            $earned = \App\Models\LoyaltyPointTransaction::where('sale_id', $sale->id)->where('type', 'earn')->sum('points');
-            $redeemed = \App\Models\LoyaltyPointTransaction::where('sale_id', $sale->id)->where('type', 'redeem')->sum('points');
+            $earned = \App\Models\LoyaltyPointTransaction::where('pos_sale_id', $sale->id)
+                ->where('type', 'earn')
+                ->sum('points');
+
+            $redeemed = \App\Models\LoyaltyPointTransaction::where('pos_sale_id', $sale->id)
+                ->where('type', 'redeem')
+                ->sum('points');
+
             $discount = 0;
-            if ($redeemed > 0 && $sale->company && $sale->company->loyaltyProgram) {
-                $discount = $redeemed * $sale->company->loyaltyProgram->dollar_value_per_point;
+            if ($redeemed > 0 && $sale->location->company && $sale->location->company->loyaltyProgram) {
+                $discount = $redeemed * $sale->location->company->loyaltyProgram->point_value;
             }
         @endphp
 

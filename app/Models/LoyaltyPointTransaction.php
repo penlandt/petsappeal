@@ -14,6 +14,7 @@ class LoyaltyPointTransaction extends Model
     protected $fillable = [
         'client_id',
         'company_id',
+        'pos_sale_id',
         'points',
         'type',
         'description',
@@ -28,5 +29,10 @@ class LoyaltyPointTransaction extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function sale()
+    {
+        return $this->belongsTo(\App\Models\POS\Sale::class, 'pos_sale_id');
     }
 }
