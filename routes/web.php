@@ -25,6 +25,8 @@ use App\Http\Controllers\POS\ReceiptController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\CompanyLoyaltyProgramController;
 use App\Http\Controllers\POS\ReturnsController;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -270,5 +272,17 @@ Route::get('/about', [PublicController::class, 'about'])->name('public.about');
 Route::get('/pricing', [PublicController::class, 'pricing'])->name('public.pricing');
 Route::get('/contact', [PublicController::class, 'contact'])->name('public.contact');
 Route::post('/contact', [PublicController::class, 'submitContact'])->name('public.contact.submit');
+Route::get('/company-assets/logo/{companyId}', function ($companyId) {
+    $path = "company-assets/company_{$companyId}_logo.png";
+
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+
+    $file = Storage::disk('public')->get($path);
+    $type = Storage::disk('public')->mimeType($path);
+
+    return Response::make($file, 200)->header("Content-Type", $type);
+});
 
 require __DIR__.'/auth.php';

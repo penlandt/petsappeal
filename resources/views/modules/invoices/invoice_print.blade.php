@@ -7,6 +7,8 @@
     <style>
         body { font-family: sans-serif; background: white; color: #000; padding: 40px; }
         h1 { font-size: 24px; margin-bottom: 10px; }
+        .logo { text-align: center; margin-bottom: 20px; }
+        .logo img { max-height: 100px; }
         .header, .footer { margin-bottom: 40px; }
         .client-info, .invoice-meta { margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
@@ -22,6 +24,12 @@
 <body>
     <div class="print-button">
         <button onclick="window.print()">🖨️ Print Invoice</button>
+    </div>
+
+    <div class="logo">
+    <img src="{{ url('/company-assets/logo/' . $invoice->location->company_id) }}" alt="Company Logo">
+
+
     </div>
 
     <div class="header">

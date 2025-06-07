@@ -6,6 +6,12 @@
     </x-slot>
 
     <div class="py-8 max-w-2xl mx-auto bg-white dark:bg-gray-800 shadow-md rounded px-6 print:px-0 print:shadow-none print:bg-white print:dark:bg-white">
+
+        <!-- Company Logo -->
+        <div class="text-center mb-6">
+            <img src="{{ url('/company-assets/logo/' . $sale->location->company_id) }}" alt="Company Logo" class="mx-auto mb-2" style="max-height: 100px;">
+        </div>
+
         <div class="text-center mb-6">
             <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Sales Receipt</h3>
             <p class="text-sm text-gray-600 dark:text-gray-300">Receipt #: {{ $sale->id }}</p>

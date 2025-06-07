@@ -15,6 +15,13 @@
             font-size: 1.75rem;
             margin-bottom: 1rem;
         }
+        .logo {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .logo img {
+            max-height: 100px;
+        }
         .section {
             margin-bottom: 1.25rem;
         }
@@ -50,6 +57,10 @@
     </style>
 </head>
 <body>
+    <div class="logo">
+        <img src="{{ url('/company-assets/logo/' . $return->location->company_id) }}" alt="Company Logo">
+    </div>
+
     <h1>Return Receipt</h1>
 
     <div class="section">
