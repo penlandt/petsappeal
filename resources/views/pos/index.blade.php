@@ -230,26 +230,35 @@ window.addToCart = function(productId, name, price) {
     }
 
     const quantity = parseFloat(qtyInput.value) || 1;
+    const isTaxable = arguments.length > 3 ? arguments[3] : true;
 
-    const existingItem = cart.find(item => item.id === productId);
+    const itemKey = `product-${productId}`;
+    console.log("🛒 Adding to cart:", { itemKey, productId, name, price, quantity });
+
+    const existingItem = cart.find(item => item.key === itemKey);
+
     if (existingItem) {
         existingItem.quantity += quantity;
     } else {
-        const isTaxable = arguments.length > 3 ? arguments[3] : true; // default true
-        cart.push({ id: productId, name, price, quantity, taxable: isTaxable });
+        cart.push({
+            key: itemKey,
+            id: productId,
+            name,
+            price,
+            quantity,
+            taxable: isTaxable
+        });
     }
 
     saveCartToLocalStorage();
     renderCart();
-    
-    // ✅ Clear the search box after adding
+
     const searchInput = document.getElementById('product-search');
     if (searchInput) {
         searchInput.value = '';
-        searchInput.dispatchEvent(new Event('input')); // Triggers the search to re-clear results
+        searchInput.dispatchEvent(new Event('input'));
     }
 };
-
 
 window.removeFromCart = function(index) {
     cart.splice(index, 1);
@@ -591,44 +600,73 @@ document.addEventListener('DOMContentLoaded', () => {
     const productList = document.getElementById('product-list');
 
     function renderProducts(products) {
-        productList.innerHTML = '';
-        products.forEach(product => {
-            const div = document.createElement('div');
-            div.className = 'flex items-center justify-between border-b border-gray-300 dark:border-gray-600 py-2';
-            div.innerHTML = `
-                <div>
-                    <div class="text-gray-900 dark:text-white font-semibold">${product.name}</div>
-                    <div class="text-sm text-gray-700 dark:text-gray-300">$${parseFloat(product.price).toFixed(2)}</div>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <input type="number" id="qty-${product.id}" value="1" min="0.01" step="0.01"
-                        class="w-20 px-2 py-1 rounded border dark:bg-gray-700 dark:text-white" />
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                        onclick="addToCart(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.price}, ${product.taxable})">
-                        Add
-                    </button>
-                </div>
-            `;
-            productList.appendChild(div);
+    productList.innerHTML = '';
+
+    products.forEach(product => {
+        const container = document.createElement('div');
+        container.className = 'flex items-center justify-between border-b border-gray-300 dark:border-gray-600 py-2';
+
+        const left = document.createElement('div');
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'text-gray-900 dark:text-white font-semibold';
+        nameEl.textContent = product.name;
+
+        const priceEl = document.createElement('div');
+        priceEl.className = 'text-sm text-gray-700 dark:text-gray-300';
+        priceEl.textContent = `$${parseFloat(product.price).toFixed(2)}`;
+
+        left.appendChild(nameEl);
+        left.appendChild(priceEl);
+
+        const right = document.createElement('div');
+        right.className = 'flex items-center space-x-2';
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = `qty-${product.id}`;
+        input.value = 1;
+        input.min = 0.01;
+        input.step = 0.01;
+        input.className = 'w-20 px-2 py-1 rounded border dark:bg-gray-700 dark:text-white';
+
+        const button = document.createElement('button');
+        button.className = 'bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded';
+        button.textContent = 'Add';
+
+        // ✅ This is now fully safe
+        button.addEventListener('click', () => {
+            const cleanName = String(product.name).replace(/[\n\r\t]/g, ' ').trim();
+            addToCart(product.id, cleanName, product.price, product.taxable);
         });
+
+        right.appendChild(input);
+        right.appendChild(button);
+
+        container.appendChild(left);
+        container.appendChild(right);
+
+        productList.appendChild(container);
+    });
+}
+
+
+async function searchProducts(query) {
+    if (!query) {
+        productList.innerHTML = '';
+        return;
     }
 
-    async function searchProducts(query) {
-        if (!query) {
-            productList.innerHTML = '';
-            return;
-        }
-
-        try {
-            const response = await fetch(`/pos/api/products/search?q=${encodeURIComponent(query)}`);
-            if (!response.ok) throw new Error('Network response was not ok');
-            const products = await response.json();
-            renderProducts(products);
-        } catch (error) {
-            productList.innerHTML = `<div class="text-red-600 dark:text-red-400 text-center">Failed to load products</div>`;
-            console.error('Error loading products:', error);
-        }
+    try {
+        const response = await fetch(`/pos/api/products/search?q=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const products = await response.json();
+        renderProducts(products);
+    } catch (error) {
+        productList.innerHTML = `<div class="text-red-600 dark:text-red-400 text-center">Failed to load products</div>`;
+        console.error('Error loading products:', error);
     }
+}
 
     let debounceTimeout = null;
     searchInput.addEventListener('input', () => {

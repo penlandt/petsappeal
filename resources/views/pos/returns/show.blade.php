@@ -1,64 +1,91 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
-            Return Details — #{{ $return->id }}
-        </h2>
-    </x-slot>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Return Receipt #{{ $return->id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+            color: #000;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        .section {
+            margin-bottom: 1.25rem;
+        }
+        .section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 0.25rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #eee;
+        }
+        .totals {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <h1>Return Receipt #{{ $return->id }}</h1>
 
-    <div class="py-12 max-w-4xl mx-auto">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow text-gray-900 dark:text-gray-100 space-y-6">
-
-            <div>
-                <h3 class="text-lg font-semibold mb-2">Return Summary</h3>
-                <p><strong>Date:</strong> {{ $return->created_at->format('F j, Y g:i A') }}</p>
-                <p><strong>Refund Method:</strong> {{ ucfirst($return->refund_method) }}</p>
-                <p><strong>Refunded Amount:</strong> ${{ number_format($return->amount_refunded, 2) }}</p>
-                @if ($return->loyalty_points_redeemed > 0 || $return->loyalty_points_restored > 0)
-                    <p><strong>Loyalty Points:</strong>
-                        @if ($return->loyalty_points_redeemed > 0)
-                            - {{ number_format($return->loyalty_points_redeemed, 2) }} redeemed
-                        @endif
-                        @if ($return->loyalty_points_restored > 0)
-                            &plus; {{ number_format($return->loyalty_points_restored, 2) }} restored
-                        @endif
-                    </p>
-                @endif
-            </div>
-
-            <div>
-                <h3 class="text-lg font-semibold mb-2">Returned Items</h3>
-                <table class="w-full border-t border-gray-300 dark:border-gray-600 text-sm">
-                    <thead>
-                        <tr class="border-b border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
-                            <th class="py-2 px-2 text-left">Product</th>
-                            <th class="py-2 px-2 text-left">Qty</th>
-                            <th class="py-2 px-2 text-left">Unit Price</th>
-                            <th class="py-2 px-2 text-left">Tax</th>
-                            <th class="py-2 px-2 text-left">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($return->items as $item)
-                            <tr class="border-b border-gray-200 dark:border-gray-700">
-                                <td class="py-2 px-2">{{ $item->product->name ?? 'Unknown Product' }}</td>
-                                <td class="py-2 px-2">{{ $item->quantity }}</td>
-                                <td class="py-2 px-2">${{ number_format($item->price, 2) }}</td>
-                                <td class="py-2 px-2">${{ number_format($item->tax_amount, 2) }}</td>
-                                <td class="py-2 px-2">
-                                    ${{ number_format(($item->price + $item->tax_amount) * $item->quantity, 2) }}
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div>
-                <a href="{{ route('clients.show', $return->client_id) }}"
-                   class="text-blue-600 dark:text-blue-400 hover:underline text-sm">
-                    &larr; Back to Client
-                </a>
-            </div>
-        </div>
+    <div class="section">
+        <h2>Client Info</h2>
+        <p><strong>Name:</strong> {{ $return->client->full_name ?? 'N/A' }}</p>
+        <p><strong>Location:</strong> {{ $return->location->name ?? 'N/A' }}</p>
+        <p><strong>Date:</strong> {{ $return->created_at->format('F j, Y g:i A') }}</p>
     </div>
-</x-app-layout>
+
+    <div class="section">
+        <h2>Returned Items</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Tax</th>
+                    <th>Line Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($return->items as $item)
+                    <tr>
+                        <td>{{ $item->product->name ?? 'Unknown' }}</td>
+                        <td>{{ $item->quantity }}</td>
+                        <td>${{ number_format($item->price, 2) }}</td>
+                        <td>${{ number_format($item->tax, 2) }}</td>
+                        <td>${{ number_format($item->line_total, 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section totals">
+        <p><strong>Subtotal:</strong> ${{ number_format($return->items->sum(fn($i) => $i->price * $i->quantity), 2) }}</p>
+        <p><strong>Tax:</strong> ${{ number_format($return->items->sum('tax'), 2) }}</p>
+        <p><strong>Total Refunded:</strong> ${{ number_format($return->refund_amount, 2) }}</p>
+        @if ($return->points_redeemed > 0)
+            <p><strong>Loyalty Points Restored:</strong> {{ $return->points_redeemed }}</p>
+        @endif
+        <p><strong>Refund Method:</strong> {{ $return->refund_method }}</p>
+    </div>
+</body>
+</html>

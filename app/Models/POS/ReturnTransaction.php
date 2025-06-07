@@ -5,7 +5,7 @@ namespace App\Models\POS;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class PosReturn extends Model
+class ReturnTransaction extends Model
 {
     use HasFactory;
 
@@ -14,20 +14,16 @@ class PosReturn extends Model
     protected $fillable = [
         'sale_id',
         'client_id',
-        'product_id',
-        'quantity',
-        'price',
-        'tax_amount',
+        'location_id',
+        'refund_method',
         'refund_amount',
         'points_redeemed',
-        'refund_method',
-        'notes',
-        'location_id',
+        'product_id', // optional: only used if needed
     ];
 
-    public function sale()
+    public function items()
     {
-        return $this->belongsTo(Sale::class, 'sale_id');
+        return $this->hasMany(ReturnItem::class, 'return_id');
     }
 
     public function client()
@@ -39,15 +35,4 @@ class PosReturn extends Model
     {
         return $this->belongsTo(\App\Models\Location::class, 'location_id');
     }
-
-    public function product()
-    {
-        return $this->belongsTo(\App\Models\Product::class, 'product_id');
-    }
-
-    public function items()
-    {
-        return $this->hasMany(\App\Models\POS\ReturnItem::class, 'return_id');
-    }
-    
 }

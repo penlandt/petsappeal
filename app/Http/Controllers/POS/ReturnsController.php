@@ -81,18 +81,17 @@ public function processReturn(Request $request)
     Log::info('processReturn was called.', $request->all());
 
     $request->validate([
-        'sale_id'        => 'required|integer|exists:pos_sales,id',
-        'sale_item_id'   => 'required|integer|exists:pos_sale_items,id',
-        'product_id'     => 'required|integer|exists:products,id',
-        'quantity'       => 'required|integer|min:1',
-        'refund_method'  => 'required|string|max:50',
+        'sale_id'       => 'required|integer|exists:pos_sales,id',
+        'refund_method' => 'required|string|max:50',
+        'items'         => 'required|array|min:1',
+        'items.*.sale_item_id' => 'required|integer|exists:pos_sale_items,id',
+        'items.*.product_id'   => 'required|integer|exists:products,id',
+        'items.*.quantity'     => 'required|integer|min:1',
     ]);
 
     $saleId = $request->input('sale_id');
-    $saleItemId = $request->input('sale_item_id');
-    $productId = $request->input('product_id');
-    $quantity = $request->input('quantity');
     $refundMethod = $request->input('refund_method');
+    $items = $request->input('items');
     $locationId = auth()->user()->selected_location_id;
     $companyId = auth()->user()->company_id;
 
@@ -102,119 +101,136 @@ public function processReturn(Request $request)
         ->firstOrFail();
 
     $clientId = $sale->client_id;
-    $saleItem = $sale->items->where('id', $saleItemId)->first();
-
-    if (!$saleItem) {
-        return response()->json(['success' => false, 'error' => 'Sale item not found in this sale.'], 404);
-    }
-
-    $returnableQty = $saleItem->quantity - $saleItem->returned_quantity;
-    if ($quantity > $returnableQty) {
-        return response()->json(['success' => false, 'error' => 'Return quantity exceeds what was sold.'], 400);
-    }
+    $pointValue = \App\Models\LoyaltyProgram::where('company_id', $companyId)->value('point_value') ?? 0;
+    $totalRefund = 0;
+    $totalPointsRedeemed = 0;
 
     DB::beginTransaction();
 
     try {
-        // Increase product inventory
-        $product = \App\Models\Product::findOrFail($productId);
-        $product->quantity += $quantity;
-        $product->save();
-
-        // Calculate proportional reversals
-        $pointsEarnedToReverse = round($saleItem->points_earned * ($quantity / $saleItem->quantity), 2);
-        $pointsRedeemedToReverse = round($saleItem->points_redeemed * ($quantity / $saleItem->quantity), 2);
-        $taxRefund = round($saleItem->tax_amount * ($quantity / $saleItem->quantity), 2);
-
-        // Reverse earned points
-        if ($clientId && $pointsEarnedToReverse > 0) {
-            \App\Models\LoyaltyPointTransaction::create([
-                'client_id'   => $clientId,
-                'company_id'  => $companyId,
-                'points'      => -$pointsEarnedToReverse,
-                'type'        => 'earn',
-                'description' => 'Return reversal of earned points for Sale Item #' . $saleItem->id,
-                'created_at'  => now(),
-            ]);
-        }
-
-        // Restore redeemed points
-        if ($clientId && $pointsRedeemedToReverse > 0) {
-            \App\Models\LoyaltyPointTransaction::create([
-                'client_id'   => $clientId,
-                'company_id'  => $companyId,
-                'points'      => $pointsRedeemedToReverse,
-                'type'        => 'earn',
-                'description' => 'Return reversal of redeemed points for Sale Item #' . $saleItem->id,
-                'created_at'  => now(),
-            ]);
-        }
-
-        // Update returned quantity
-        $saleItem->returned_quantity += $quantity;
-        $saleItem->save();
-
-        // ✅ Get point value from the correct table
-        $pointValue = \App\Models\LoyaltyProgram::where('company_id', $companyId)->value('point_value') ?? 0;
-        $pointsValue = $pointsRedeemedToReverse * $pointValue;
-
-        $refundAmount = round(($saleItem->price * $quantity) + $taxRefund - $pointsValue, 2);
-
-        // Record the return
-        \DB::table('pos_returns')->insert([
+        // Create the parent return transaction
+        $return = \App\Models\POS\ReturnTransaction::create([
             'sale_id'       => $saleId,
             'client_id'     => $clientId,
-            'product_id'    => $productId,
-            'quantity'      => $quantity,
-            'price'         => $saleItem->price,
-            'tax_amount'    => $taxRefund,
-            'refund_amount' => $refundAmount,
-            'points_redeemed' => $pointsRedeemedToReverse,
             'refund_method' => $refundMethod,
             'location_id'   => $locationId,
-            'created_at'    => now(),
-            'updated_at'    => now(),
+            'refund_amount' => 0, // will update after line item loop
+            'points_redeemed' => 0,
         ]);
 
+        foreach ($items as $item) {
+            $saleItemId = $item['sale_item_id'];
+            $productId = $item['product_id'];
+            $quantity = $item['quantity'];
+
+            $saleItem = $sale->items->where('id', $saleItemId)->first();
+
+            if (!$saleItem) {
+                throw new \Exception("Sale item #$saleItemId not found in sale #$saleId.");
+            }
+
+            $returnableQty = $saleItem->quantity - $saleItem->returned_quantity;
+            if ($quantity > $returnableQty) {
+                throw new \Exception("Return quantity for item #$saleItemId exceeds available.");
+            }
+
+            // Update inventory
+            $product = \App\Models\Product::findOrFail($productId);
+            $product->quantity += $quantity;
+            $product->save();
+
+            // Calculate reversals
+            $earnedToReverse = round($saleItem->points_earned * ($quantity / $saleItem->quantity), 2);
+            $redeemedToRestore = round($saleItem->points_redeemed * ($quantity / $saleItem->quantity), 2);
+            $taxRefund = round($saleItem->tax_amount * ($quantity / $saleItem->quantity), 2);
+            $pointsValue = $redeemedToRestore * $pointValue;
+
+            // Reverse earned points
+            if ($clientId && $earnedToReverse > 0) {
+                \App\Models\LoyaltyPointTransaction::create([
+                    'client_id'   => $clientId,
+                    'company_id'  => $companyId,
+                    'points'      => -$earnedToReverse,
+                    'type'        => 'earn',
+                    'description' => 'Return reversal of earned points for Sale Item #' . $saleItemId,
+                    'created_at'  => now(),
+                ]);
+            }
+
+            // Restore redeemed points
+            if ($clientId && $redeemedToRestore > 0) {
+                \App\Models\LoyaltyPointTransaction::create([
+                    'client_id'   => $clientId,
+                    'company_id'  => $companyId,
+                    'points'      => $redeemedToRestore,
+                    'type'        => 'earn',
+                    'description' => 'Return reversal of redeemed points for Sale Item #' . $saleItemId,
+                    'created_at'  => now(),
+                ]);
+            }
+
+            $saleItem->returned_quantity += $quantity;
+            $saleItem->save();
+
+            $lineSubtotal = $saleItem->price * $quantity;
+            $lineTotal = $lineSubtotal + $taxRefund;
+            $refundAmount = round($lineTotal - $pointsValue, 2);
+
+            // Save return item
+            \App\Models\POS\ReturnItem::create([
+                'return_id'    => $return->id,
+                'sale_item_id' => $saleItemId,
+                'product_id'   => $productId,
+                'quantity'     => $quantity,
+                'price'        => $saleItem->price,
+                'tax'          => $taxRefund,
+                'line_total'   => $lineTotal,
+            ]);
+
+            $totalRefund += $refundAmount;
+            $totalPointsRedeemed += $redeemedToRestore;
+        }
+
+        // Update parent return total
+        $return->update([
+            'refund_amount' => $totalRefund,
+            'points_redeemed' => $totalPointsRedeemed,
+        ]);
 
         DB::commit();
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'return_id' => $return->id,
+            'refund_amount' => round($totalRefund, 2),
+            'refund_method' => $refundMethod,
+        ]);
 
     } catch (\Throwable $e) {
         DB::rollBack();
+        Log::error('Multi-item return failed', ['error' => $e->getMessage()]);
         return response()->json(['success' => false, 'error' => 'Return failed: ' . $e->getMessage()], 500);
     }
 }
 
 public function show($id)
 {
-    $return = \DB::table('pos_returns')
+    $user = auth()->user();
+
+    $return = ReturnTransaction::with(['items.product', 'client', 'location'])
         ->where('id', $id)
-        ->where('company_id', auth()->user()->company_id)
-        ->first();
+        ->where('company_id', $user->company_id)
+        ->firstOrFail();
 
-    if (!$return) {
-        abort(404);
-    }
+    return view('pos.return-receipt', ['return' => $return]);
+}
 
-    // Load related data
-    $return->product = \App\Models\Product::find($return->product_id);
-    $return->client = \App\Models\Client::find($return->client_id);
-    $return->location = \App\Models\Location::find($return->location_id);
 
-    // Wrap in object so we can attach 'items' collection for consistency
-    $return = collect($return)->toBase();
 
-    $return->items = collect([
-        (object)[
-            'product' => $return->product,
-            'quantity' => $return->quantity,
-            'price' => $return->price,
-            'tax_amount' => $return->tax_amount ?? 0,
-        ]
-    ]);
+public function showReceipt($returnId)
+{
+    $return = \App\Models\POS\ReturnTransaction::with(['items.product'])->findOrFail($returnId);
 
-    return view('pos.returns.show', ['return' => $return]);
+    return view('pos.return-receipt', compact('return'));
 }
 
 }

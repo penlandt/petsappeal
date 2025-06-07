@@ -76,6 +76,8 @@ class POSController extends Controller
         'total_due' => 'required|numeric',
     ]);
 
+    Log::info('🧾 POS Checkout items received', ['items' => $validated['items']]);
+
     $clientTotalDue = round($validated['total_due'], 2);
 
     $items = $validated['items'];
@@ -83,30 +85,30 @@ class POSController extends Controller
     $clientId = $validated['client_id'] ?? null;
     $redeemPoints = filter_var($validated['redeem_points'] ?? false, FILTER_VALIDATE_BOOLEAN);
     $location = \App\Models\Location::findOrFail($locationId);
-
-    $subtotal = 0;
-    $tax = 0;
-
-    foreach ($items as &$item) {
+    
+    $items = collect($items)->map(function ($item) use ($location) {
         $product = !empty($item['product_id']) ? \App\Models\Product::find($item['product_id']) : null;
         $isTaxable = $product && (int) $product->taxable === 1;
-
+    
         $lineTotal = $item['price'] * $item['quantity'];
         $lineTax = 0;
-
+    
         if ($isTaxable && $location->product_tax_rate > 0) {
             $lineTax = round($lineTotal * ($location->product_tax_rate / 100), 2);
         }
-
-        $item['line_total'] = $lineTotal;
-        $item['tax_amount'] = $lineTax;
-
-        $subtotal += $lineTotal;
-        $tax += $lineTax;
-    }
-
+    
+        return array_merge($item, [
+            'line_total' => $lineTotal,
+            'tax_amount' => $lineTax,
+            'taxable' => $isTaxable,
+        ]);
+    })->toArray();
+    
+    $subtotal = array_sum(array_column($items, 'line_total'));
+    $tax = array_sum(array_column($items, 'tax_amount'));
     $total = $subtotal + $tax;
     $originalTotal = $total;
+    
 
     $pointsRedeemed = 0;
     $pointsValue = 0;
@@ -146,6 +148,11 @@ class POSController extends Controller
     DB::beginTransaction();
 
     try {
+        // Final totals after all discounts
+        $subtotal = array_sum(array_column($items, 'line_total'));
+        $tax = array_sum(array_column($items, 'tax_amount'));
+        $total = $subtotal + $tax - $pointsValue;
+    
         $sale = \App\Models\POS\Sale::create([
             'company_id' => $companyId,
             'location_id' => $locationId,
@@ -154,29 +161,31 @@ class POSController extends Controller
             'tax' => $tax,
             'total' => $total,
         ]);
-
+    
         foreach ($items as $item) {
             $lineTotal = $item['line_total'];
             $lineTax = $item['tax_amount'];
-
+    
             $itemPointsEarned = 0;
             $itemPointsRedeemed = 0;
-
+    
             if ($clientId && $program) {
                 if ($redeemPoints && $pointsValue > 0 && $subtotal > 0) {
                     $itemDiscountShare = $lineTotal / $subtotal;
                     $itemDiscountValue = $pointsValue * $itemDiscountShare;
                     $itemPointsRedeemed = round($itemDiscountValue / $program->point_value, 2);
                 }
-
+    
                 $earnableAmount = $lineTotal;
                 if ($redeemPoints) {
                     $earnableAmount = max(0, $lineTotal - ($itemPointsRedeemed * $program->point_value));
                 }
-
+    
                 $itemPointsEarned = round($earnableAmount * $program->points_per_dollar, 2);
             }
-
+    
+            Log::info('💾 Saving sale item', ['product_id' => $item['product_id'], 'name' => $item['name']]);
+    
             $sale->items()->create([
                 'product_id' => $item['product_id'] ?? null,
                 'name' => $item['name'],
@@ -187,7 +196,7 @@ class POSController extends Controller
                 'points_earned' => $itemPointsEarned,
                 'points_redeemed' => $itemPointsRedeemed,
             ]);
-
+    
             if (!empty($item['invoice_id'])) {
                 $invoice = \App\Models\Modules\Invoices\Invoice::find($item['invoice_id']);
                 if ($invoice && $invoice->status !== 'Paid') {
@@ -196,19 +205,19 @@ class POSController extends Controller
                     $invoice->save();
                 }
             }
-
+    
             if (!empty($item['product_id'])) {
                 $inventory = \App\Models\ProductInventory::where('product_id', $item['product_id'])
                     ->where('location_id', $locationId)
                     ->first();
-
+    
                 if ($inventory) {
                     $inventory->quantity -= $item['quantity'];
                     $inventory->save();
                 }
             }
         }
-
+    
         foreach ($payments as $payment) {
             $sale->payments()->create([
                 'method' => $payment['method'],
@@ -216,15 +225,15 @@ class POSController extends Controller
                 'reference_number' => $payment['reference_number'] ?? null,
             ]);
         }
-
+    
         if ($clientId && $program) {
             $earnableAmount = $subtotal;
             if ($redeemPoints) {
                 $earnableAmount = max(0, $earnableAmount - $pointsValue);
             }
-
+    
             $pointsEarned = round($earnableAmount * $program->points_per_dollar, 2);
-
+    
             // Earned points
             \App\Models\LoyaltyPointTransaction::create([
                 'client_id' => $clientId,
@@ -235,7 +244,7 @@ class POSController extends Controller
                 'description' => 'Points earned for Sale #' . $sale->id,
                 'created_at' => now(),
             ]);
-
+    
             // Redeemed points
             if ($redeemPoints && $pointsRedeemed > 0) {
                 \App\Models\LoyaltyPointTransaction::create([
@@ -248,11 +257,10 @@ class POSController extends Controller
                     'created_at' => now(),
                 ]);
             }
-
         }
-
+    
         DB::commit();
-
+    
         return response()->json([
             'success' => true,
             'sale_id' => $sale->id,
@@ -265,6 +273,7 @@ class POSController extends Controller
             'error' => 'Checkout failed: ' . $e->getMessage(),
         ], 500);
     }
+    
 }
 
     public function storeProduct(Request $request)

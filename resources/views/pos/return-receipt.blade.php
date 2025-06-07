@@ -78,7 +78,7 @@
     </div>
 
     <div class="section">
-        <h2>Returned Item</h2>
+        <h2>Returned Items</h2>
         <table>
             <thead>
                 <tr>
@@ -89,17 +89,24 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>{{ $return->product->name }}</td>
-                    <td>{{ $return->quantity }}</td>
-                    <td>${{ number_format($return->price, 2) }}</td>
-                    <td>{{ ucfirst($return->refund_method) }}</td>
-                </tr>
+                @foreach ($return->items ?? [] as $item)
+                    <tr>
+                        <td>{{ $item->product->name ?? 'Unknown Product' }}</td>
+                        <td>{{ $item->quantity }}</td>
+                        <td>${{ number_format($item->price, 2) }}</td>
+                        <td>{{ ucfirst($return->refund_method) }}</td>
+                    </tr>
+                @endforeach
             </tbody>
         </table>
+        @php
+            $subtotal = $return->items->sum(fn($item) => $item->price * $item->quantity);
+            $tax = $return->items->sum('tax');
+        @endphp
+
         <div class="summary">
-            <div><strong>Subtotal Refunded:</strong> ${{ number_format($return->price * $return->quantity, 2) }}</div>
-            <div><strong>Tax Refunded:</strong> ${{ number_format($return->tax_amount, 2) }}</div>
+            <div><strong>Subtotal Refunded:</strong> ${{ number_format($subtotal, 2) }}</div>
+            <div><strong>Tax Refunded:</strong> ${{ number_format($tax, 2) }}</div>
             <div><strong>Total Refunded:</strong> ${{ number_format($return->refund_amount, 2) }}</div>
         </div>
     </div>
