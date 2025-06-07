@@ -61,15 +61,43 @@ class CompanyController extends Controller
         'phone' => 'nullable|string|max:20',
         'website' => 'nullable|string|max:255',
         'notes' => 'nullable|string|max:1000',
+        'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // max ~2MB
     ]);
 
     $company = Company::findOrFail($id);
+
+    // Handle logo upload
+    if ($request->hasFile('logo')) {
+        $logoFile = $request->file('logo');
+        $filename = 'company_' . $company->id . '_logo.' . $logoFile->getClientOriginalExtension();
+
+        // Resize the image to max height 80px while maintaining aspect ratio
+        $image = \Image::make($logoFile)->resize(null, 80, function ($constraint) {
+            $constraint->aspectRatio();
+            $constraint->upsize();
+        });
+
+        // Save to storage/app/public/company-assets/
+        $path = storage_path('app/public/company-assets/' . $filename);
+        $image->save($path);
+
+        // Delete old logo if it exists and is different
+        if ($company->logo_path && $company->logo_path !== 'company-assets/' . $filename) {
+            \Storage::disk('public')->delete($company->logo_path);
+        }
+
+        // Save path in DB
+        $company->logo_path = 'company-assets/' . $filename;
+    }
+
+    // Save all other fields
     $company->update($request->only([
         'name', 'email', 'phone', 'website', 'notes'
     ]));
 
     return redirect()->route('companies.index')->with('success', 'Company updated.');
 }
+
 
 
     public function destroy($id)

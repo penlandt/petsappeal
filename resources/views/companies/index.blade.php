@@ -13,7 +13,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('companies.update', $companies->first()->id) }}">
+            <form method="POST" action="{{ route('companies.update', $companies->first()->id) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -46,6 +46,26 @@
                     <textarea id="notes" name="notes"
                         class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         rows="4">{{ old('notes', $companies->first()->notes) }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="logo" class="block font-semibold text-gray-900 dark:text-gray-100">Company Logo</label>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        Recommended size: 300×300 pixels. Max file size: 1MB.
+                    </p>
+                    <input id="logo" name="logo" type="file" accept="image/*"
+                        class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+
+                    @error('logo')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+
+                    @if ($companies->first()->logo_path)
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Current Logo:</p>
+                            <img src="{{ asset('storage/' . $companies->first()->logo_path) }}" alt="Company Logo" class="h-20 rounded shadow">
+                        </div>
+                    @endif
                 </div>
 
                 <div class="flex justify-end">
