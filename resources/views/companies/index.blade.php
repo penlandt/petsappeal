@@ -24,6 +24,16 @@
                 </div>
 
                 <div class="mb-4">
+                    <label for="slug" class="block font-semibold text-gray-900 dark:text-gray-100">Company Slug</label>
+                    <input id="slug" name="slug" type="text" value="{{ old('slug', $companies->first()->slug) }}"
+                        class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="e.g., acme-grooming" required>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        This will be used in your client portal URL: <code>https://pets-appeal.com/book/<span class="italic">your-slug</span></code>
+                    </p>
+                </div>
+                
+                <div class="mb-4">
                     <label for="email" class="block font-semibold text-gray-900 dark:text-gray-100">Email</label>
                     <input id="email" name="email" type="email" value="{{ old('email', $companies->first()->email) }}"
                         class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">

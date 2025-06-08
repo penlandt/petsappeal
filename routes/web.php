@@ -28,6 +28,8 @@ use App\Http\Controllers\POS\ReturnsController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use App\Http\Controllers\Settings\EmailTemplateController;
+use App\Http\Controllers\Client\Auth\AuthenticatedSessionController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -295,5 +297,40 @@ Route::get('/company-assets/logo/{companyId}', function ($companyId) {
 
     return Response::make($file, 200)->header("Content-Type", $type);
 });
+
+// Client login/register entry point
+Route::get('/book/{companySlug}', [\App\Http\Controllers\Client\ClientPortalController::class, 'showLoginOrRegister'])
+    ->name('client.portal.entry');
+// Client login and register routes
+Route::get('/client/login/{companySlug}', [\App\Http\Controllers\Client\AuthController::class, 'showLoginForm'])
+    ->name('client.login');
+
+Route::get('/client/register/{companySlug}', [\App\Http\Controllers\Client\AuthController::class, 'showRegisterForm'])
+    ->name('client.register');
+Route::post('/client/login/{companySlug}', [\App\Http\Controllers\Client\AuthController::class, 'login'])
+    ->name('client.login.submit');
+
+Route::get('/client/dashboard', function () {
+    return view('client.dashboard');
+})->middleware(['auth:client'])->name('client.dashboard');
+    
+Route::middleware(['auth:client'])->prefix('client')->name('client.')->group(function () {
+    Route::get('pets', [\App\Http\Controllers\Client\PetController::class, 'index'])->name('pets.index');
+    Route::get('pets/{pet}/edit', [\App\Http\Controllers\Client\PetController::class, 'edit'])->name('pets.edit');
+    Route::put('pets/{pet}', [\App\Http\Controllers\Client\PetController::class, 'update'])->name('pets.update');
+    Route::get('pets/create', [\App\Http\Controllers\Client\PetController::class, 'create'])->name('pets.create');
+    Route::post('pets', [\App\Http\Controllers\Client\PetController::class, 'store'])->name('pets.store');
+});
+
+Route::post('/client/logout', function () {
+    $companySlug = optional(Auth::guard('client')->user()->company)->slug ?? session('company_slug') ?? 'unknown';
+
+    Auth::guard('client')->logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect()->route('client.login', ['companySlug' => $companySlug]);
+})->middleware('auth:client')->name('client.logout');
+
 
 require __DIR__.'/auth.php';
