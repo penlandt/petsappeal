@@ -27,6 +27,7 @@ use App\Http\Controllers\CompanyLoyaltyProgramController;
 use App\Http\Controllers\POS\ReturnsController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use App\Http\Controllers\Settings\EmailTemplateController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -202,6 +203,14 @@ Route::middleware(['auth', 'has.company'])->group(function () {
         Route::get('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'edit'])->name('settings.email.edit');
         Route::post('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('settings.email.update');
         Route::get('email/test', [\App\Http\Controllers\EmailTestController::class, 'send'])->name('settings.email.test');
+    });
+
+    // Email Template Management
+    Route::prefix('settings/email-templates')->name('settings.email-templates.')->group(function () {
+        Route::get('/', [EmailTemplateController::class, 'index'])->name('index');
+        Route::get('/{emailTemplate}/edit', [EmailTemplateController::class, 'edit'])->name('edit');
+        Route::put('/{emailTemplate}', [EmailTemplateController::class, 'update'])->name('update');
+        Route::post('/{emailTemplate}/test', [EmailTemplateController::class, 'sendTest'])->name('test');
     });
 
     // Profile Management

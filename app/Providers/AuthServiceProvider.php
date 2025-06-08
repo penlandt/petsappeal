@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use App\Models\EmailTemplate;
+use App\Policies\EmailTemplatePolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -29,9 +31,11 @@ class AuthServiceProvider extends ServiceProvider
         if (!$user || !$module || !$user->company) {
             return false;
         }
-    
+
         return $user->company->moduleAccess()->where('module', $module)->exists();
     });
-    
+
+    Gate::policy(\App\Models\EmailTemplate::class, \App\Policies\EmailTemplatePolicy::class);
 }
+
 }

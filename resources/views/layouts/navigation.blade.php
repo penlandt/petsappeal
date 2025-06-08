@@ -97,6 +97,7 @@
                             </x-slot>
                             <x-slot name="content">
                                 <x-dropdown-link :href="route('settings.email.edit')">Email</x-dropdown-link>
+                                <x-dropdown-link :href="route('settings.email-templates.index')">Email Templates</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -235,6 +236,9 @@
                 </button>
                 <div x-show="openSettings" class="pl-6 space-y-1">
                     <x-responsive-nav-link :href="route('settings.email.edit')">Email</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('settings.email-templates.index')" :active="request()->routeIs('settings.email-templates.*')">
+                        Email Templates
+                    </x-responsive-nav-link>
                 </div>
             </div>
 

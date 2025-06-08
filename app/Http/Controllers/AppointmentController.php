@@ -72,102 +72,133 @@ class AppointmentController extends Controller
     }
 
     public function store(Request $request)
-    {
-        \Log::info('Appointment request payload:', $request->all());
+{
+    \Log::info('Appointment request payload:', $request->all());
 
+    $validated = $request->validate([
+        'client_id'     => 'required|exists:clients,id',
+        'pet_id'        => 'required|exists:pets,id',
+        'service_id'    => 'required|exists:services,id',
+        'staff_id'      => 'required|exists:staff,id',
+        'start_time'    => 'required|date_format:H:i',
+        'appointment_date' => 'required|date',
+        'notes'         => 'nullable|string',
+    ]);
+
+    $user = auth()->user();
+    $locationId = $user->selected_location_id;
+
+    $service = Service::findOrFail($validated['service_id']);
+
+    $start = Carbon::parse($validated['appointment_date'] . ' ' . $validated['start_time'], $user->time_zone ?? config('app.timezone'));
+    $end = (clone $start)->addMinutes($service->duration ?? 30);
+
+    $appt = Appointment::create([
+        'company_id'    => $user->company_id,
+        'location_id'   => $locationId,
+        'client_id'     => $validated['client_id'],
+        'pet_id'        => $validated['pet_id'],
+        'service_id'    => $validated['service_id'],
+        'staff_id'      => $validated['staff_id'],
+        'start'         => $start,
+        'end'           => $end,
+        'start_time'    => $start,
+        'notes'         => $validated['notes'],
+        'status'        => 'Booked',
+        'price'         => $service->price,
+    ]);
+
+    $appt->load(['pet.client', 'staff', 'location']);
+
+    \Log::info('Created appointment object:', $appt->toArray());
+
+    $location = \App\Models\Location::find($user->selected_location_id);
+    $taxRate = $location?->service_tax_rate ?? 0;
+
+    $invoice = Invoice::create([
+        'location_id'    => $locationId,
+        'client_id'      => $validated['client_id'],
+        'invoice_date'   => now()->toDateString(),
+        'total_amount'   => 0,
+        'amount_paid'    => 0,
+        'status'         => 'Unpaid',
+    ]);
+
+    $unit_price = $service->price;
+    $quantity = 1;
+    $total_price = $unit_price * $quantity;
+    $tax_amount = $total_price * ($taxRate / 100);
+
+    \Log::info('Invoice item values', [
+        'invoice_id'   => $invoice->id,
+        'item_id'      => $appt->appointment_id,
+        'unit_price'   => $unit_price,
+        'quantity'     => $quantity,
+        'total_price'  => $total_price,
+        'tax_amount'   => $tax_amount,
+    ]);
+
+    InvoiceItem::create([
+        'invoice_id'     => $invoice->id,
+        'item_id'        => $appt->appointment_id,
+        'item_type'      => 'appointment',
+        'description'    => $service->name,
+        'quantity'       => $quantity,
+        'unit_price'     => $unit_price,
+        'total_price'    => $total_price,
+        'tax_amount'     => $tax_amount,
+    ]);
+
+    $invoiceTotal = \App\Models\Modules\Invoices\InvoiceItem::where('invoice_id', $invoice->id)
+        ->sum(\DB::raw('total_price + tax_amount'));
+
+    \DB::table('invoices')
+        ->where('id', $invoice->id)
+        ->update(['total_amount' => (float) $invoiceTotal]);
+
+    \Log::info('🐶 PET DEBUG', [
+        'pet' => $appt->pet ? $appt->pet->toArray() : null,
+        'client' => $appt->pet && $appt->pet->client ? $appt->pet->client->toArray() : null,
+    ]);
         
-        $validated = $request->validate([
-            'client_id'     => 'required|exists:clients,id',
-            'pet_id'        => 'required|exists:pets,id',
-            'service_id'    => 'required|exists:services,id',
-            'staff_id'      => 'required|exists:staff,id',
-            'start_time'    => 'required|date_format:H:i',
-            'appointment_date' => 'required|date',
-            'notes'         => 'nullable|string',
-        ]);
-    
-        $user = auth()->user();
-        $locationId = $user->selected_location_id;
-    
-        $service = Service::findOrFail($validated['service_id']);
-    
-        // Combine date and time into full datetime
-        $start = Carbon::parse($validated['appointment_date'] . ' ' . $validated['start_time'], $user->time_zone ?? config('app.timezone'));
+    try {
+        $template = \App\Models\EmailTemplate::where('company_id', $user->company_id)
+            ->where('type', 'grooming')
+            ->where('template_key', 'appointment_booked')
+            ->first();
 
-        $end = (clone $start)->addMinutes($service->duration ?? 30);
-    
-        // Create the appointment
-        $appt = Appointment::create([
-            'company_id'    => $user->company_id,
-            'location_id'   => $locationId,
-            'client_id'     => $validated['client_id'],
-            'pet_id'        => $validated['pet_id'],
-            'service_id'    => $validated['service_id'],
-            'staff_id'      => $validated['staff_id'],
-            'start'         => $start,
-            'end'           => $end,
-            'start_time'    => $start,
-            'notes'         => $validated['notes'],
-            'status'        => 'Booked',
-            'price'         => $service->price,
-        ]);
-        
-        $appt->refresh(); // ✅ This guarantees the ID is loaded
-        
-        \Log::info('Created appointment object:', $appt->toArray());
+        if ($template) {
+            $client = $appt->pet->client;
+            $pet = $appt->pet;
+            $staff = $appt->staff;
+            $location = $appt->location;
 
-    
-        // Create invoice
-        $user = auth()->user();
-        $location = \App\Models\Location::find($user->selected_location_id);
-        $taxRate = $location?->service_tax_rate ?? 0;
+            $replacements = [
+                '{{ client_name }}' => $client->first_name . ' ' . $client->last_name,
+                '{{ pet_name }}' => $pet->name,
+                '{{ service_name }}' => $service->name,
+                '{{ staff_name }}' => $staff->first_name . ' ' . $staff->last_name,
+                '{{ appointment_date }}' => $start->format('F j, Y'),
+                '{{ appointment_time }}' => $start->format('g:i A'),
+                '{{ location_name }}' => $location->name ?? '',
+                '{{ company_name }}' => $user->company->name ?? '',
+            ];
 
-        // Step 1: Create the invoice with placeholder total
-        $invoice = Invoice::create([
-            'location_id'    => $locationId,
-            'client_id'      => $validated['client_id'],
-            'invoice_date'   => now()->toDateString(),
-            'total_amount'   => 0,
-            'amount_paid'    => 0,
-            'status'         => 'Unpaid',
-        ]);
+            $html = strtr($template->body_html, $replacements);
+            $plain = strtr($template->body_plain, $replacements);
+            $subject = strtr($template->subject, $replacements);
 
-        // Step 2: Calculate and save invoice item
-        $unit_price = $service->price;
-        $quantity = 1;
-        $total_price = $unit_price * $quantity;
-        $tax_amount = $total_price * ($taxRate / 100);
-
-        \Log::info('Invoice item values', [
-            'invoice_id'   => $invoice->id,
-            'item_id'      => $appt->appointment_id,
-            'unit_price'   => $unit_price,
-            'quantity'     => $quantity,
-            'total_price'  => $total_price,
-            'tax_amount'   => $tax_amount,
-        ]);
-
-        InvoiceItem::create([
-            'invoice_id'     => $invoice->id,
-            'item_id'        => $appt->appointment_id,
-            'item_type'      => 'appointment',
-            'description'    => $service->name,
-            'quantity'       => $quantity,
-            'unit_price'     => $unit_price,
-            'total_price'    => $total_price,
-            'tax_amount'     => $tax_amount,
-        ]);
-
-        // Step 3: Recalculate invoice total from all related items
-        $invoiceTotal = \App\Models\Modules\Invoices\InvoiceItem::where('invoice_id', $invoice->id)
-            ->sum(\DB::raw('total_price + tax_amount'));
-
-        \DB::table('invoices')
-            ->where('id', $invoice->id)
-            ->update(['total_amount' => (float) $invoiceTotal]);
-                        
-        return redirect()->route('schedule.index')->with('success', 'Appointment saved successfully.');
+            \Mail::to($client->email)->send(
+                new \App\Mail\GenericEmailTemplate($subject, $html, $plain)
+            );
+        }
+    } catch (\Throwable $e) {
+        \Log::error('Failed to send appointment booked email: ' . $e->getMessage());
     }
+
+    return redirect()->route('schedule.index')->with('success', 'Appointment saved successfully.');
+}
+
     
        
     public function allAppointments()
