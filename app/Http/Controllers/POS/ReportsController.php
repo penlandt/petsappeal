@@ -18,11 +18,16 @@ class ReportsController extends Controller
         $startOfDay = now()->setTimezone($timezone)->startOfDay()->timezone('UTC');
         $endOfDay = now()->setTimezone($timezone)->endOfDay()->timezone('UTC');
 
-        $sales = Sale::with(['client', 'items'])
-            ->where('location_id', $location->id)
-            ->whereBetween('created_at', [$startOfDay, $endOfDay])
-            ->orderBy('created_at', 'asc')
-            ->get();
+        $sales = Sale::with([
+            'client',
+            'items',
+            'loyaltyPointTransactions',
+            'payments',
+        ])
+        ->where('location_id', $location->id)
+        ->whereBetween('created_at', [$startOfDay, $endOfDay])
+        ->orderBy('created_at', 'asc')
+        ->get();
 
         return view('pos.reports.end-of-day', [
             'sales' => $sales,

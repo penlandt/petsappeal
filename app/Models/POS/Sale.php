@@ -25,11 +25,6 @@ class Sale extends Model
         return $this->hasMany(SaleItem::class, 'sale_id');
     }
 
-    public function payments()
-    {
-        return $this->hasMany(Payment::class, 'sale_id');
-    }
-
     public function client()
     {
         return $this->belongsTo(\App\Models\Client::class);
@@ -40,5 +35,14 @@ class Sale extends Model
         return $this->belongsTo(\App\Models\Location::class);
     }
     
-
+    public function loyaltyPointTransactions()
+    {
+        return $this->hasMany(\App\Models\LoyaltyPointTransaction::class, 'pos_sale_id');
+    }
+    
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\POS\Payment::class, 'sale_id');
+    }
+    
 }

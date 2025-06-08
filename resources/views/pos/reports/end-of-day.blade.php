@@ -89,8 +89,8 @@
                     $subtotal = $sale->subtotal ?? 0;
                     $tax = $sale->tax ?? 0;
                     $discount = $sale->discount ?? 0;
-                    $earned = $sale->points_earned ?? 0;
-                    $redeemed = $sale->points_redeemed ?? 0;
+                    $earned = $sale->loyaltyPointTransactions->where('type', 'earn')->sum('points');
+                    $redeemed = abs($sale->loyaltyPointTransactions->where('type', 'redeem')->sum('points'));
                     $total = $subtotal + $tax - $discount;
 
                     $totalSubtotal += $subtotal;
@@ -111,7 +111,13 @@
                     <td class="currency">{{ $earned }}</td>
                     <td class="currency">{{ $redeemed }}</td>
                     <td class="currency">${{ number_format($total, 2) }}</td>
-                    <td>{{ $sale->payment_method ?? 'N/A' }}</td>
+                    <td>
+                        @if ($sale->payments->isNotEmpty())
+                            {{ $sale->payments->pluck('method')->unique()->join(', ') }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>
