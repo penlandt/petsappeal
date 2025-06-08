@@ -13,16 +13,23 @@ use App\Mail\TestEmailTemplate;
 class EmailTemplateController extends Controller
 {
     public function index()
-    {
-        $companyId = Auth::user()->company_id;
+{
+    $companyId = Auth::user()->company_id;
 
-        $templates = EmailTemplate::where('company_id', $companyId)
+    $companyTemplates = EmailTemplate::where('company_id', $companyId)->get();
+
+    if ($companyTemplates->isNotEmpty()) {
+        $templates = $companyTemplates->sortBy(['type', 'template_key']);
+    } else {
+        $templates = EmailTemplate::whereNull('company_id')
             ->orderBy('type')
             ->orderBy('template_key')
             ->get();
-
-        return view('settings.email-templates.index', compact('templates'));
     }
+
+    return view('settings.email-templates.index', compact('templates'));
+}
+
 
     public function edit(EmailTemplate $emailTemplate)
     {
