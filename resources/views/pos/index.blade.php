@@ -230,7 +230,8 @@ window.addToCart = function(productId, name, price) {
     }
 
     const quantity = parseFloat(qtyInput.value) || 1;
-    const isTaxable = arguments.length > 3 ? arguments[3] : true;
+    const isTaxable = arguments.length > 3 ? arguments[3] : false;
+
 
     const itemKey = `product-${productId}`;
     console.log("🛒 Adding to cart:", { itemKey, productId, name, price, quantity });
@@ -314,9 +315,10 @@ function updateTotals() {
     let taxableAmount = 0;
 
     cart.forEach(item => {
+
         const lineTotal = item.price * item.quantity;
         subtotal += lineTotal;
-        if (item.taxable) {
+        if (item.taxable === true) {
             taxableAmount += lineTotal;
         }
     });
@@ -330,35 +332,31 @@ function updateTotals() {
     if (applyLoyalty && clientId && subtotal > 0) {
         fetch(`/pos/client/${clientId}/loyalty-points`)
             .then(res => res.json())
-            .then(data => {
-    
+                        .then(data => {
                 const points = parseFloat(data.points) || 0;
                 const pointValue = parseFloat(data.point_value) || 0;
                 const maxPercent = parseFloat(data.max_discount_percent) || 0;
 
                 const maxAllowed = subtotal * (maxPercent / 100);
-    
                 const valueFromPoints = points * pointValue;
-    
-                discount = Math.min(valueFromPoints, maxAllowed);
-    
-                // Adjust taxable amount based on the discount
-                const discountedTaxableAmount = discount > 0 ? subtotal - discount : subtotal;
 
-                // Adjust the subtotal by applying the discount
+                discount = Math.min(valueFromPoints, maxAllowed);
+
                 const discountedSubtotal = subtotal - discount;
+
+                // Use the correct taxableAmount calculated earlier in the function
+                const tax = taxableAmount * (productTaxRate / 100);
+                const total = discountedSubtotal + tax;
 
                 // Update the DOM
                 document.getElementById('loyalty-discount-line').classList.remove('hidden');
                 document.getElementById('loyalty-discount-amount').textContent = `–$${discount.toFixed(2)}`;
 
-                const tax = discountedTaxableAmount * (productTaxRate / 100);
-                const total = discountedSubtotal + tax;
-
                 document.getElementById('subtotal').textContent = `$${discountedSubtotal.toFixed(2)}`;
                 document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
                 document.getElementById('total').textContent = `$${total.toFixed(2)}`;
             })
+
             .catch(err => {
                 console.error("Error applying loyalty discount:", err);
                 // fallback without discount
@@ -521,7 +519,6 @@ function submitPayments() {
         return;
     }
 
-    // Get the client ID from the client select dropdown or from the form field
     const clientId = clientSelect?.getValue?.() || document.getElementById('client_id')?.value || null;
 
     if (!clientId) {
@@ -529,35 +526,32 @@ function submitPayments() {
         return;
     }
 
-    // Get the total amount due from the #total element (this is the post-discount total)
     const totalDue = parseFloat(document.getElementById('total').textContent.replace('$', ''));
-
-    // Calculate the total paid from the payment entries
     const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
-
     const epsilon = 0.01;
-    // Check if the total paid is enough to cover the total due
+
     if (totalPaid + epsilon < totalDue) {
         alert(`Total due is $${totalDue.toFixed(2)}. You have only entered $${totalPaid.toFixed(2)}.`);
         return;
     }
 
-    // Send the checkout data to the server
     fetch("/pos/checkout", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
+            "X-Requested-With": "XMLHttpRequest"
         },
         body: JSON.stringify({
             items: cart.map(item => ({
-                product_id: item.id,  // ✅ fix is here
+                product_id: typeof item.id === 'number' ? item.id : null,
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,
                 taxable: item.taxable,
-                invoice_id: item.invoice_id ?? null // optional but useful
+                invoice_id: item.invoice_id ?? null
             })),
+
             payments: paymentEntries,
             client_id: clientId,
             redeem_points: document.getElementById('apply-loyalty')?.checked || false,
@@ -565,24 +559,28 @@ function submitPayments() {
         })
     })
     .then(async response => {
-        const text = await response.text();
-        try {
-            const data = JSON.parse(text);
-            if (data.success) {
-                alert(`Sale completed!\nChange owed: $${data.change_owed}`);
-                cart = [];
-                localStorage.removeItem('cart');
-                renderCart();
-                if (typeof clientSelect?.clear === 'function') {
-                    clientSelect.clear(); // ✅ Reset TomSelect to default state
-                }
-                closePaymentModal();
-            } else {
-                alert("Checkout failed: " + (data.error || "Unknown error"));
+        const contentType = response.headers.get("content-type") || "";
+
+        const raw = await response.text();
+        console.log("🧾 Raw server response:", raw);
+
+        if (!contentType.includes("application/json")) {
+            throw new Error("Server did not return JSON");
+        }
+
+        const data = JSON.parse(raw);
+
+        if (data.success) {
+            alert(`Sale completed!\nChange owed: $${data.change_owed}`);
+            cart = [];
+            localStorage.removeItem('cart');
+            renderCart();
+            if (typeof clientSelect?.clear === 'function') {
+                clientSelect.clear();
             }
-        } catch (err) {
-            console.error("Invalid JSON response:", err);
-            alert("Server returned invalid response.");
+            closePaymentModal();
+        } else {
+            alert("Checkout failed: " + (data.error || "Unknown error"));
         }
     })
     .catch(error => {
@@ -824,6 +822,7 @@ document.getElementById('client_id').addEventListener('change', async function (
 
         saveCartToLocalStorage();
         renderCart();
+        updateTotals();
     } catch (err) {
         console.error("Error loading unpaid invoices:", err);
         alert("Could not load unpaid invoices.");

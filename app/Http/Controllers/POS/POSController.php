@@ -62,7 +62,7 @@ class POSController extends Controller
 
     $validated = $request->validate([
         'items' => 'required|array|min:1',
-        'items.*.product_id' => 'nullable|integer',
+        'items.*.product_id' => 'nullable|integer|exists:products,id',
         'items.*.name' => 'required|string',
         'items.*.price' => 'required|numeric',
         'items.*.quantity' => 'required|numeric',
@@ -76,8 +76,6 @@ class POSController extends Controller
         'total_due' => 'required|numeric',
     ]);
 
-    Log::info('🧾 POS Checkout items received', ['items' => $validated['items']]);
-
     $clientTotalDue = round($validated['total_due'], 2);
 
     $items = $validated['items'];
@@ -87,22 +85,36 @@ class POSController extends Controller
     $location = \App\Models\Location::findOrFail($locationId);
     
     $items = collect($items)->map(function ($item) use ($location) {
-        $product = !empty($item['product_id']) ? \App\Models\Product::find($item['product_id']) : null;
-        $isTaxable = $product && (int) $product->taxable === 1;
-    
         $lineTotal = $item['price'] * $item['quantity'];
         $lineTax = 0;
+        $isTaxable = false;
     
-        if ($isTaxable && $location->product_tax_rate > 0) {
-            $lineTax = round($lineTotal * ($location->product_tax_rate / 100), 2);
+        // Skip tax calculation entirely for invoice items
+        if (!empty($item['invoice_id'])) {
+            return array_merge($item, [
+                'line_total' => $lineTotal,
+                'tax_amount' => $lineTax,
+                'taxable' => $isTaxable ?? false,
+            ]);
+        }
+    
+        // Normal product – check if taxable
+        if (!empty($item['product_id'])) {
+            $product = \App\Models\Product::find($item['product_id']);
+            $isTaxable = $product && (int) $product->taxable === 1;
+    
+            if ($isTaxable && $location->product_tax_rate > 0) {
+                $lineTax = round($lineTotal * ($location->product_tax_rate / 100), 2);
+            }
         }
     
         return array_merge($item, [
             'line_total' => $lineTotal,
             'tax_amount' => $lineTax,
-            'taxable' => $isTaxable,
+            'taxable' => $isTaxable ?? false,
         ]);
     })->toArray();
+    
     
     $subtotal = array_sum(array_column($items, 'line_total'));
     $tax = array_sum(array_column($items, 'tax_amount'));
@@ -184,8 +196,6 @@ class POSController extends Controller
                 $itemPointsEarned = round($earnableAmount * $program->points_per_dollar, 2);
             }
     
-            Log::info('💾 Saving sale item', ['product_id' => $item['product_id'], 'name' => $item['name']]);
-    
             $sale->items()->create([
                 'product_id' => $item['product_id'] ?? null,
                 'name' => $item['name'],
@@ -203,8 +213,27 @@ class POSController extends Controller
                     $invoice->status = 'Paid';
                     $invoice->amount_paid = $invoice->total_amount;
                     $invoice->save();
+            
+                    // 📧 Auto-send invoice email if allowed
+                    $emailSettings = \App\Models\EmailSetting::where('company_id', $companyId)->first();
+                    $client = $invoice->client;
+            
+                    if (
+                        $emailSettings &&
+                        $emailSettings->send_invoices_automatically &&
+                        $client &&
+                        filter_var($client->email, FILTER_VALIDATE_EMAIL)
+                    ) {
+                        try {
+                            \Mail::to($client->email)->send(new \App\Mail\InvoiceEmail($invoice));
+                            \Log::info('📧 Invoice email sent to client', ['email' => $client->email]);
+                        } catch (\Throwable $emailEx) {
+                            \Log::error('❌ Failed to send invoice email', ['error' => $emailEx->getMessage()]);
+                        }
+                    }
                 }
             }
+            
     
             if (!empty($item['product_id'])) {
                 $inventory = \App\Models\ProductInventory::where('product_id', $item['product_id'])
@@ -354,7 +383,9 @@ class POSController extends Controller
                 'quantity' => 1,
                 'source' => 'invoice',
                 'invoice_id' => $invoice->id,
+                'taxable' => false,
             ];
+            
         }
 
         return response()->json($cartItems);
