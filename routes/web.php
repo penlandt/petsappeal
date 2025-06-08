@@ -194,6 +194,7 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     ->name('pos.returns.show')
     ->middleware(['auth']);
     Route::get('/pos/returns/{return}/receipt', [\App\Http\Controllers\POS\ReturnsReceiptController::class, 'show'])->name('pos.returns.receipt');
+    Route::get('/pos/reports/end-of-day', [\App\Http\Controllers\POS\ReportsController::class, 'endOfDay'])->name('pos.reports.end_of_day');
 });
 
     // Settings Management (FIXED: now inside auth+has.company group)
