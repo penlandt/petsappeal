@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array<int, class-string>
      */
     protected $commands = [
-        \App\Console\Commands\ResendClientUserWelcome::class,
+ //       \App\Console\Commands\ResendClientUserWelcome::class,
     ];
 
     /**
