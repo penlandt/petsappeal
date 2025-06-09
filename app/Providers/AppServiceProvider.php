@@ -8,6 +8,7 @@ use App\Models\PendingAppointment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Models\EmailSetting;
+use Illuminate\Support\Facades\Config;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Existing logic for pending appointment count
+        // Existing logic: pending appointment counter
         View::composer('*', function ($view) {
             $user = Auth::user();
 
@@ -32,21 +33,16 @@ class AppServiceProvider extends ServiceProvider
             $view->with('pendingRequestsCount', $pendingRequestsCount);
         });
 
-        // Runtime SMTP injection for company email settings
-        Mail::alwaysSending(function ($message) {
+        // Runtime SMTP config override (manual injection)
+        app()->resolving(\Illuminate\Mail\Mailer::class, function ($mailer, $app) {
             if (!app()->environment('production')) {
-                return; // Only enforce in production
+                return;
             }
 
             $user = Auth::user();
 
-            if (!$user) {
-                // Unauthenticated: allow system-level tasks to use .env
-                return;
-            }
-
-            if ($user->is_admin) {
-                // Admins may use system mail config
+            if (!$user || $user->is_admin) {
+                // System or admin email: use .env mail settings
                 return;
             }
 

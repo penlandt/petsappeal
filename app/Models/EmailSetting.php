@@ -45,24 +45,30 @@ class EmailSetting extends Model
     }
 
     public function applyAsMailConfig()
-    {
-        $required = [
-            'host', 'port', 'username', 'password', 'from_email', 'from_name'
-        ];
+{
+    $required = [
+        'host', 'port', 'username', 'password', 'from_email', 'from_name'
+    ];
 
-        foreach ($required as $field) {
-            if (empty($this->{$field})) {
-                throw new \Exception("Missing required email setting: {$field}");
-            }
+    foreach ($required as $field) {
+        if (empty($this->{$field})) {
+            throw new \Exception("Missing required email setting: {$field}");
         }
-
-        Config::set('mail.default', 'smtp');
-        Config::set('mail.mailers.smtp.host', $this->host);
-        Config::set('mail.mailers.smtp.port', $this->port);
-        Config::set('mail.mailers.smtp.username', $this->username);
-        Config::set('mail.mailers.smtp.password', $this->password);
-        Config::set('mail.mailers.smtp.encryption', $this->encryption ?? null);
-        Config::set('mail.from.address', $this->from_email);
-        Config::set('mail.from.name', $this->from_name);
     }
+
+    \Log::info('✅ Injecting SMTP for company', [
+        'from' => $this->from_email,
+        'name' => $this->from_name
+    ]);
+
+    Config::set('mail.default', 'smtp');
+    Config::set('mail.mailers.smtp.host', $this->host);
+    Config::set('mail.mailers.smtp.port', $this->port);
+    Config::set('mail.mailers.smtp.username', $this->username);
+    Config::set('mail.mailers.smtp.password', $this->password);
+    Config::set('mail.mailers.smtp.encryption', $this->encryption ?? null);
+    Config::set('mail.from.address', $this->from_email);
+    Config::set('mail.from.name', $this->from_name);
+}
+
 }
