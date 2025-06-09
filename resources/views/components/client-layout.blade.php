@@ -19,6 +19,7 @@
                 <nav class="space-x-4">
                     <a href="{{ route('client.dashboard') }}" class="text-gray-700 dark:text-gray-200 hover:underline">Dashboard</a>
                     <a href="{{ route('client.pets.index') }}" class="text-gray-700 dark:text-gray-200 hover:underline">Pets</a>
+                    <a href="{{ route('client.appointments.request') }}" class="text-gray-700 dark:text-gray-200 hover:underline">Request Appointment</a>
                     <a href="{{ route('client.profile') }}" class="text-gray-700 dark:text-gray-200 hover:underline">My Profile</a>
                     <form method="POST" action="{{ route('client.logout') }}" class="inline">
                         @csrf

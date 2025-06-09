@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use App\Http\Controllers\Settings\EmailTemplateController;
 use App\Http\Controllers\Client\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Client\AppointmentRequestController;
+use App\Http\Controllers\AppointmentApprovalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -85,6 +87,8 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::get('/pets/{pet}/edit', [\App\Http\Controllers\PetController::class, 'edit'])->name('pets.edit');
     Route::get('/pets', [\App\Http\Controllers\PetController::class, 'index'])->name('pets.index');
     Route::put('/pets/{pet}', [\App\Http\Controllers\PetController::class, 'update'])->name('pets.update');
+    Route::get('/pets/{pet}', [\App\Http\Controllers\PetsController::class, 'show'])
+        ->name('pets.show');
 
     Route::get('/services/create', [\App\Http\Controllers\ServiceController::class, 'create'])->name('services.create');
     Route::get('/services', [\App\Http\Controllers\ServiceController::class, 'index'])->name('services.index');
@@ -120,6 +124,13 @@ Route::middleware(['auth', 'has.company'])->group(function () {
         Route::get('/api/appointments', [AppointmentController::class, 'allAppointments']);
         Route::put('/appointments/{id}', [AppointmentController::class, 'update']);
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+        Route::prefix('appointments/approval')->name('appointments.approval.')->group(function () {
+            Route::get('/', [AppointmentApprovalController::class, 'index'])->name('index');
+            Route::get('{appointment}/edit', [AppointmentApprovalController::class, 'edit'])->name('edit');
+            Route::put('{appointment}', [AppointmentApprovalController::class, 'update'])->name('update');
+        });
+        Route::delete('/appointments/approval/{appointment}/decline', [AppointmentApprovalController::class, 'destroy'])
+            ->name('appointments.approval.decline');
     });
     
 
@@ -310,18 +321,23 @@ Route::get('/client/register/{companySlug}', [\App\Http\Controllers\Client\AuthC
 Route::post('/client/login/{companySlug}', [\App\Http\Controllers\Client\AuthController::class, 'login'])
     ->name('client.login.submit');
 
-Route::middleware(['auth:client', 'force.client.password.change'])->prefix('client')->name('client.')->group(function () {
-    Route::get('/dashboard', fn () => view('client.dashboard'))->name('dashboard');
-    Route::get('pets', [\App\Http\Controllers\Client\PetController::class, 'index'])->name('pets.index');
-    Route::get('pets/{pet}/edit', [\App\Http\Controllers\Client\PetController::class, 'edit'])->name('pets.edit');
-    Route::put('pets/{pet}', [\App\Http\Controllers\Client\PetController::class, 'update'])->name('pets.update');
-    Route::get('pets/create', [\App\Http\Controllers\Client\PetController::class, 'create'])->name('pets.create');
-    Route::post('pets', [\App\Http\Controllers\Client\PetController::class, 'store'])->name('pets.store');
-    Route::get('/client/password/change', [\App\Http\Controllers\Client\PasswordController::class, 'edit'])->name('password.change');
-    Route::post('/client/password/change', [\App\Http\Controllers\Client\PasswordController::class, 'update'])->name('password.update');
-    Route::get('/profile', fn () => view('client.profile'))->name('profile');
-    Route::post('/profile', [\App\Http\Controllers\Client\ProfileController::class, 'update'])->name('profile.update');
-});
+    Route::middleware(['auth:client', 'force.client.password.change'])->prefix('client')->name('client.')->group(function () {
+        Route::get('/dashboard', fn () => view('client.dashboard'))->name('dashboard');
+        Route::get('pets', [\App\Http\Controllers\Client\PetController::class, 'index'])->name('pets.index');
+        Route::get('pets/{pet}/edit', [\App\Http\Controllers\Client\PetController::class, 'edit'])->name('pets.edit');
+        Route::put('pets/{pet}', [\App\Http\Controllers\Client\PetController::class, 'update'])->name('pets.update');
+        Route::get('pets/create', [\App\Http\Controllers\Client\PetController::class, 'create'])->name('pets.create');
+        Route::post('pets', [\App\Http\Controllers\Client\PetController::class, 'store'])->name('pets.store');
+        Route::get('/client/password/change', [\App\Http\Controllers\Client\PasswordController::class, 'edit'])->name('password.change');
+        Route::post('/client/password/change', [\App\Http\Controllers\Client\PasswordController::class, 'update'])->name('password.update');
+        Route::get('/profile', fn () => view('client.profile'))->name('profile');
+        Route::post('/profile', [\App\Http\Controllers\Client\ProfileController::class, 'update'])->name('profile.update');
+        
+        // ✅ Appointment request routes
+        Route::get('/appointments/request', [AppointmentRequestController::class, 'create'])->name('appointments.request');
+        Route::post('/appointments', [AppointmentRequestController::class, 'store'])->name('appointments.store');
+    });
+    
 
 Route::post('/client/logout', function () {
     $companySlug = optional(Auth::guard('client')->user()->company)->slug ?? session('company_slug') ?? 'unknown';

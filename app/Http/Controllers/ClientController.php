@@ -41,7 +41,7 @@ class ClientController extends Controller
 
         $client = Client::create($validated);
 
-        if (!empty($validated['email'])) {
+        if (!empty($validated['email']) && filter_var($validated['email'], FILTER_VALIDATE_EMAIL)) {
             $plainPassword = Str::random(10);
 
             $clientUser = new ClientUser([
