@@ -52,7 +52,7 @@ class AppointmentRequestController extends Controller
         // Notify the location via email, if email is configured
         $location = Location::find($validated['location_id']);
         if (!empty($location->email)) {
-            Mail::to($location->email)->send(new AppointmentRequestReceived($appointment));
+            \App\Services\CompanyMailer::to($location->email)->send(new AppointmentRequestReceived($appointment));
         }
 
         return redirect()->back()->with('success', 'Your appointment request has been submitted and is pending approval.');

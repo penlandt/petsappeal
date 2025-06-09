@@ -81,7 +81,7 @@ class SendAppointmentReminders extends Command
                 $subject = strtr($template->subject, $replacements);
 
                 try {
-                    Mail::to($client->email)->send(new GenericEmailTemplate($subject, $html, $plain));
+                    \App\Services\CompanyMailer::to($client->email)->send(new GenericEmailTemplate($subject, $html, $plain));
 
                     AppointmentReminder::create([
                         'appointment_id' => $appt->appointment_id,

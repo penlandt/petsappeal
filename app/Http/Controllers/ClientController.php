@@ -53,7 +53,7 @@ class ClientController extends Controller
             $clientUser->save();
 
             // Send welcome email with credentials
-            Mail::to($clientUser->email)->send(
+            \App\Services\CompanyMailer::to($clientUser->email)->send(
                 new ClientPortalWelcome($clientUser, $plainPassword)
             );
         }
@@ -174,7 +174,7 @@ class ClientController extends Controller
         $clientUser->save();
     }
 
-    \Illuminate\Support\Facades\Mail::to($client->email)
+    \App\Services\CompanyMailer::to($client->email)
         ->send(new \App\Mail\ClientPortalWelcome($clientUser, $randomPassword));
 
     return redirect()->route('clients.index')->with('success', 'Portal invitation sent successfully.');

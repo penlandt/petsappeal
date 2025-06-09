@@ -106,7 +106,7 @@ class AppointmentApprovalController extends Controller
             $plain = strtr($template->body_plain, $replacements);
             $subject = strtr($template->subject, $replacements);
 
-            \Mail::to($client->email)->send(
+            \App\Services\CompanyMailer::to($client->email)->send(
                 new \App\Mail\GenericEmailTemplate($subject, $html, $plain)
             );
         }
@@ -137,7 +137,7 @@ public function destroy(Request $request, PendingAppointment $appointment)
     $client = $appointment->pet->client;
 
     if (!empty($client->email)) {
-        \Mail::to($client->email)->send(new \App\Mail\AppointmentDeclined($appointment));
+        \App\Services\CompanyMailer::to($client->email)->send(new \App\Mail\AppointmentDeclined($appointment));
     }
 
     return redirect()->route('appointments.approval.index')

@@ -188,7 +188,7 @@ class AppointmentController extends Controller
             $plain = strtr($template->body_plain, $replacements);
             $subject = strtr($template->subject, $replacements);
 
-            \Mail::to($client->email)->send(
+            \App\Services\CompanyMailer::to($client->email)->send(
                 new \App\Mail\GenericEmailTemplate($subject, $html, $plain)
             );
         }

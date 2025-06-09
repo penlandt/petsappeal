@@ -225,7 +225,7 @@ class POSController extends Controller
                         filter_var($client->email, FILTER_VALIDATE_EMAIL)
                     ) {
                         try {
-                            \Mail::to($client->email)->send(new \App\Mail\InvoiceEmail($invoice));
+                            \App\Services\CompanyMailer::to($client->email)->send(new \App\Mail\InvoiceEmail($invoice));
                             \Log::info('📧 Invoice email sent to client', ['email' => $client->email]);
                         } catch (\Throwable $emailEx) {
                             \Log::error('❌ Failed to send invoice email', ['error' => $emailEx->getMessage()]);
@@ -301,7 +301,7 @@ class POSController extends Controller
             $client = \App\Models\Client::find($clientId);
             if ($client && filter_var($client->email, FILTER_VALIDATE_EMAIL)) {
                 try {
-                    \Mail::to($client->email)->send(new \App\Mail\ReceiptEmail($sale));
+                    \App\Services\CompanyMailer::to($client->email)->send(new \App\Mail\ReceiptEmail($sale));
                     Log::info('📧 Receipt email sent to client', ['email' => $client->email]);
                 } catch (\Throwable $emailException) {
                     Log::error('❌ Failed to send receipt email', ['error' => $emailException->getMessage()]);

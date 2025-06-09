@@ -56,11 +56,6 @@ class EmailSetting extends Model
         }
     }
 
-    \Log::info('✅ Injecting SMTP for company', [
-        'from' => $this->from_email,
-        'name' => $this->from_name
-    ]);
-
     Config::set('mail.default', 'smtp');
     Config::set('mail.mailers.smtp.host', $this->host);
     Config::set('mail.mailers.smtp.port', $this->port);
