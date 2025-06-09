@@ -310,16 +310,17 @@ Route::get('/client/register/{companySlug}', [\App\Http\Controllers\Client\AuthC
 Route::post('/client/login/{companySlug}', [\App\Http\Controllers\Client\AuthController::class, 'login'])
     ->name('client.login.submit');
 
-Route::get('/client/dashboard', function () {
-    return view('client.dashboard');
-})->middleware(['auth:client'])->name('client.dashboard');
-    
-Route::middleware(['auth:client'])->prefix('client')->name('client.')->group(function () {
+Route::middleware(['auth:client', 'force.client.password.change'])->prefix('client')->name('client.')->group(function () {
+    Route::get('/dashboard', fn () => view('client.dashboard'))->name('dashboard');
     Route::get('pets', [\App\Http\Controllers\Client\PetController::class, 'index'])->name('pets.index');
     Route::get('pets/{pet}/edit', [\App\Http\Controllers\Client\PetController::class, 'edit'])->name('pets.edit');
     Route::put('pets/{pet}', [\App\Http\Controllers\Client\PetController::class, 'update'])->name('pets.update');
     Route::get('pets/create', [\App\Http\Controllers\Client\PetController::class, 'create'])->name('pets.create');
     Route::post('pets', [\App\Http\Controllers\Client\PetController::class, 'store'])->name('pets.store');
+    Route::get('/client/password/change', [\App\Http\Controllers\Client\PasswordController::class, 'edit'])->name('password.change');
+    Route::post('/client/password/change', [\App\Http\Controllers\Client\PasswordController::class, 'update'])->name('password.update');
+    Route::get('/profile', fn () => view('client.profile'))->name('profile');
+    Route::post('/profile', [\App\Http\Controllers\Client\ProfileController::class, 'update'])->name('profile.update');
 });
 
 Route::post('/client/logout', function () {

@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'module.access' => \App\Http\Middleware\EnsureCompanyHasModuleAccess::class,
         'can.access.module' => \App\Http\Middleware\CheckModuleAccess::class,
         'check.module.access' => \App\Http\Middleware\CheckModuleAccess::class,
+        'force.client.password.change' => \App\Http\Middleware\ForceClientPasswordChange::class,
     ];
 }
