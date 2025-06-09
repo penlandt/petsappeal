@@ -53,8 +53,16 @@
                                 </a>
                                 <a href="{{ route('clients.history', $client) }}"
                                 class="text-blue-600 dark:text-blue-400 hover:underline">
-                                History
+                                    History
                                 </a>
+
+                                <form action="{{ route('clients.send-portal-invite', $client->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    <button type="submit"
+                                        class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                                        Portal Invite
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @empty

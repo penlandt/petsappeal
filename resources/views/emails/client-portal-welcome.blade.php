@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to PETSAppeal</title>
+    <title>Welcome to {{ $companyName }}</title>
 </head>
 <body style="font-family: Arial, sans-serif; background-color: #ffffff; color: #333; padding: 20px;">
 
@@ -12,7 +12,7 @@
              style="max-width: 200px; max-height: 100px;">
     </div>
 
-    <h2>Welcome to PETSAppeal!</h2>
+    <h2>Welcome to {{ $companyName }}!</h2>
 
     <p>Hi {{ $clientUser->client->first_name ?? 'there' }},</p>
 

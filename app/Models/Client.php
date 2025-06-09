@@ -68,4 +68,9 @@ public function getFullNameAttribute()
     return "{$this->first_name} {$this->last_name}";
 }
 
+public function clientUser()
+{
+    return $this->hasOne(ClientUser::class);
+}
+
 }

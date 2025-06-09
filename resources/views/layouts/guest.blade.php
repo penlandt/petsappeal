@@ -45,8 +45,7 @@
             <a href="{{ route('public.contact') }}" class="block py-2 text-gray-700 dark:text-gray-300">Contact</a>
 
             @guest
-                <a href="{{ route('login') }}" class="block py-2 text-blue-600 dark:text-blue-400">Log in</a>
-                <a href="{{ route('register') }}" class="block py-2 text-blue-600 dark:text-blue-400">Register</a>
+                <a href="{{ route('login') }}" class="block py-2 text-blue-600 dark:text-blue-400">Login</a>
             @endguest
         </div>
     </nav>

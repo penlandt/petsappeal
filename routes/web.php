@@ -77,6 +77,9 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     ->name('clients.history');
     Route::post('/clients', [App\Http\Controllers\ClientController::class, 'store'])->name('clients.store');
     Route::get('/pos/client/{client}/loyalty-points', [POSController::class, 'getClientPoints'])->name('pos.client.loyalty-points');
+    Route::post('/clients/{client}/send-portal-invite', [\App\Http\Controllers\ClientController::class, 'sendPortalInvite'])
+    ->name('clients.send-portal-invite');
+
     
 
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
@@ -125,12 +128,11 @@ Route::middleware(['auth', 'has.company'])->group(function () {
         Route::put('/appointments/{id}', [AppointmentController::class, 'update']);
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
         Route::prefix('appointments/approval')->name('appointments.approval.')->group(function () {
-            Route::get('/', [AppointmentApprovalController::class, 'index'])->name('index');
-            Route::get('{appointment}/edit', [AppointmentApprovalController::class, 'edit'])->name('edit');
-            Route::put('{appointment}', [AppointmentApprovalController::class, 'update'])->name('update');
+        Route::get('/', [AppointmentApprovalController::class, 'index'])->name('index');
+        Route::get('{appointment}/edit', [AppointmentApprovalController::class, 'edit'])->name('edit');
+        Route::put('{appointment}', [AppointmentApprovalController::class, 'update'])->name('update');
+        Route::delete('{appointment}/decline', [AppointmentApprovalController::class, 'destroy'])->name('decline');
         });
-        Route::delete('/appointments/approval/{appointment}/decline', [AppointmentApprovalController::class, 'destroy'])
-            ->name('appointments.approval.decline');
     });
     
 

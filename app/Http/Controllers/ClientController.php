@@ -151,4 +151,34 @@ class ClientController extends Controller
 
         return response()->json($clients);
     }
+
+    public function sendPortalInvite(Client $client)
+{
+    $randomPassword = \Illuminate\Support\Str::random(12);
+
+    $clientUser = $client->clientUser;
+
+    if (!$clientUser) {
+        // Create new client_user
+        $clientUser = \App\Models\ClientUser::create([
+            'company_id' => $client->company_id,
+            'client_id' => $client->id,
+            'email' => $client->email,
+            'password' => \Illuminate\Support\Facades\Hash::make($randomPassword),
+            'must_change_password' => true,
+        ]);
+    } else {
+        // Update existing client_user with new password and flag to change it
+        $clientUser->password = \Illuminate\Support\Facades\Hash::make($randomPassword);
+        $clientUser->must_change_password = true;
+        $clientUser->save();
+    }
+
+    \Illuminate\Support\Facades\Mail::to($client->email)
+        ->send(new \App\Mail\ClientPortalWelcome($clientUser, $randomPassword));
+
+    return redirect()->route('clients.index')->with('success', 'Portal invitation sent successfully.');
+}
+
+
 }
