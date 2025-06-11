@@ -16,19 +16,19 @@ class BillingController extends Controller
             [
                 'name' => 'Starter',
                 'price' => 49,
-                'price_id' => 'price_1RYTeQQNK8e4Gmhk211FNqYa',
+                'price_id' => config('services.stripe.price_starter'),
                 'features' => ['1 Location', 'Basic Support'],
             ],
             [
                 'name' => 'Pro',
                 'price' => 99,
-                'price_id' => 'price_1RYTfwQNK8e4Gmhk9JRdxqfa',
+                'price_id' => config('services.stripe.price_pro'),
                 'features' => ['Up to 3 Locations', 'Priority Support'],
             ],
             [
                 'name' => 'Multi-Location',
                 'price' => 149,
-                'price_id' => 'price_1RYTghQNK8e4GmhkUN1B094b',
+                'price_id' => config('services.stripe.price_multi'),
                 'features' => ['Unlimited Locations', 'Premium Support'],
             ],
         ];
@@ -55,76 +55,75 @@ class BillingController extends Controller
     }
 
     public function success(Request $request)
-{
-    $user = Auth::user();
-    $company = $user->company;
+    {
+        $user = Auth::user();
+        $company = $user->company;
 
-    Stripe::setApiKey(config('cashier.secret'));
+        Stripe::setApiKey(config('cashier.secret'));
 
-    // Fetch the latest Checkout session for this customer
-    $sessions = StripeSession::all([
-        'customer' => $company->stripe_id,
-        'limit' => 1,
-    ]);
-
-    $latestSession = $sessions->data[0] ?? null;
-
-    if ($latestSession && $latestSession->subscription) {
-        $subscriptionId = $latestSession->subscription;
-
-        $company->subscriptions()->create([
-            'name' => 'default',
-            'stripe_id' => $subscriptionId,
-            'stripe_status' => 'active',
-            'stripe_price' => $latestSession->display_items[0]->price->id ?? null,
-            'quantity' => 1,
-            'trial_ends_at' => null,
-            'ends_at' => null,
+        // Fetch the latest Checkout session for this customer
+        $sessions = StripeSession::all([
+            'customer' => $company->stripe_id,
+            'limit' => 1,
         ]);
 
-        $company->is_active = true;
-        $company->stripe_plan_id = $latestSession->display_items[0]->price->id ?? null;
-        $company->plan_name = 'Unknown'; // You can map it if needed
-        $company->save();
+        $latestSession = $sessions->data[0] ?? null;
+
+        if ($latestSession && $latestSession->subscription) {
+            $subscriptionId = $latestSession->subscription;
+
+            $company->subscriptions()->create([
+                'name' => 'default',
+                'stripe_id' => $subscriptionId,
+                'stripe_status' => 'active',
+                'stripe_price' => $latestSession->display_items[0]->price->id ?? null,
+                'quantity' => 1,
+                'trial_ends_at' => null,
+                'ends_at' => null,
+            ]);
+
+            $company->is_active = true;
+            $company->stripe_plan_id = $latestSession->display_items[0]->price->id ?? null;
+            $company->plan_name = 'Unknown'; // You can map it if needed
+            $company->save();
+        }
+
+        return view('billing.success');
     }
 
-    return view('billing.success');
-}
+    public function cancel()
+    {
+        $company = Auth::user()->company;
 
-public function cancel()
-{
-    $company = Auth::user()->company;
+        $subscription = $company->subscription('default');
 
-    $subscription = $company->subscription('default');
+        if ($subscription && $subscription->valid()) {
+            $subscription->cancel(); // cancels at end of billing period
+            $company->is_active = false;
+            $company->save();
+        }
 
-    if ($subscription && $subscription->valid()) {
-        $subscription->cancel(); // cancels at end of billing period
-        $company->is_active = false;
-        $company->save();
+        return redirect()->route('billing.plans')->with('status', 'Your subscription has been canceled. You will retain access until the end of your current billing period.');
     }
 
-    return redirect()->route('billing.plans')->with('status', 'Your subscription has been canceled. You will retain access until the end of your current billing period.');
-}
+    public function myPlan()
+    {
+        $company = auth()->user()->company;
 
-public function myPlan()
-{
-    $company = auth()->user()->company;
+        $subscription = $company->subscription('default');
+        $onTrial = $company->onTrial();
+        $trialEndsAt = $company->trial_ends_at;
+        $endsAt = $subscription?->ends_at;
+        $plan = $subscription?->stripe_price;
 
-    $subscription = $company->subscription('default');
-    $onTrial = $company->onTrial();
-    $trialEndsAt = $company->trial_ends_at;
-    $endsAt = $subscription?->ends_at;
-    $plan = $subscription?->stripe_price;
+        return view('billing.my-plan', compact('subscription', 'onTrial', 'trialEndsAt', 'endsAt', 'plan'));
+    }
 
-    return view('billing.my-plan', compact('subscription', 'onTrial', 'trialEndsAt', 'endsAt', 'plan'));
-}
+    public function myHistory()
+    {
+        $company = auth()->user()->company;
+        $invoices = $company->invoices();
 
-public function myHistory()
-{
-    $company = auth()->user()->company;
-    $invoices = $company->invoices();
-
-    return view('billing.my-history', compact('invoices'));
-}
-
+        return view('billing.my-history', compact('invoices'));
+    }
 }
