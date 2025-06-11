@@ -105,18 +105,27 @@ class BillingController extends Controller
 }
 
 
-    public function myPlan()
-    {
-        $company = auth()->user()->company;
+public function myPlan()
+{
+    $company = auth()->user()->company;
 
-        $subscription = $company->subscription('default');
-        $onTrial = $company->onTrial();
-        $trialEndsAt = $company->trial_ends_at;
-        $endsAt = $subscription?->ends_at;
-        $plan = $subscription?->stripe_price;
+    $subscription = $company->subscription('default');
+    $onTrial = $company->onTrial();
+    $trialEndsAt = $company->trial_ends_at;
+    $endsAt = $subscription?->ends_at;
 
-        return view('billing.my-plan', compact('subscription', 'onTrial', 'trialEndsAt', 'endsAt', 'plan'));
-    }
+    // Map Stripe price ID to readable plan names
+    $priceId = $subscription?->stripe_price;
+    $planNames = [
+        config('services.stripe.price_starter') => 'PETSAppeal Starter',
+        config('services.stripe.price_pro')     => 'PETSAppeal Pro',
+        config('services.stripe.price_multi')   => 'PETSAppeal Multi-Location',
+    ];
+    $plan = $planNames[$priceId] ?? 'Unknown Plan';
+
+    return view('billing.my-plan', compact('subscription', 'onTrial', 'trialEndsAt', 'endsAt', 'plan'));
+}
+
 
     public function myHistory()
     {
