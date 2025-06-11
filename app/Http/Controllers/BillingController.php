@@ -76,13 +76,13 @@ class BillingController extends Controller
                 'name' => 'default',
                 'stripe_id' => $subscriptionId,
                 'stripe_status' => 'active',
-                'stripe_price' => $latestSession->display_items[0]->price->id ?? null,
+                'stripe_price' => $latestSession->metadata['price_id'] ?? null,
                 'quantity' => 1,
                 'trial_ends_at' => null,
                 'ends_at' => null,
             ]);
 
-            $company->is_active = true;
+            $company->active = true;
             $company->stripe_plan_id = $latestSession->display_items[0]->price->id ?? null;
             $company->plan_name = 'Unknown'; // You can map it if needed
             $company->save();
@@ -99,7 +99,7 @@ class BillingController extends Controller
 
         if ($subscription && $subscription->valid()) {
             $subscription->cancel(); // cancels at end of billing period
-            $company->is_active = false;
+            $company->active = false;
             $company->save();
         }
 
