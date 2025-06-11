@@ -8,7 +8,9 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 use Laravel\Cashier\Subscription;
 use Stripe\Subscription as StripeSubscription;
-
+use App\Mail\SubscriptionSuccessMail;
+use App\Services\CompanyMailer;
+use App\Mail\SubscriptionCanceledMail;
 
 class BillingController extends Controller
 {
@@ -57,91 +59,91 @@ class BillingController extends Controller
     }
 
     public function success(Request $request)
-{
-    $user = Auth::user();
-    $company = $user->company;
+    {
+        $user = Auth::user();
+        $company = $user->company;
 
-    Stripe::setApiKey(config('cashier.secret'));
+        Stripe::setApiKey(config('cashier.secret'));
 
-    // Fetch the latest Checkout session for this customer
-    $sessions = StripeSession::all([
-        'customer' => $company->stripe_id,
-        'limit' => 1,
-    ]);
+        $sessions = StripeSession::all([
+            'customer' => $company->stripe_id,
+            'limit' => 1,
+        ]);
 
-    $latestSession = $sessions->data[0] ?? null;
+        $latestSession = $sessions->data[0] ?? null;
 
-    if ($latestSession && $latestSession->subscription) {
-        $subscriptionId = $latestSession->subscription;
+        if ($latestSession && $latestSession->subscription) {
+            $subscriptionId = $latestSession->subscription;
 
-        // Fetch the actual subscription from Stripe to get the correct price ID
-        $stripeSubscription = \Stripe\Subscription::retrieve($subscriptionId);
-        $stripePriceId = $stripeSubscription->items->data[0]->price->id ?? null;
+            $stripeSubscription = \Stripe\Subscription::retrieve($subscriptionId);
+            $stripePriceId = $stripeSubscription->items->data[0]->price->id ?? null;
 
-        // Map price ID to PETSAppeal plan name
+            $planNames = [
+                config('services.stripe.price_starter') => 'PETSAppeal Starter',
+                config('services.stripe.price_pro')     => 'PETSAppeal Pro',
+                config('services.stripe.price_multi')   => 'PETSAppeal Multi-Location',
+            ];
+            $planName = $planNames[$stripePriceId] ?? 'Unknown Plan';
+
+            $company->subscriptions()->create([
+                'name' => 'default',
+                'stripe_id' => $subscriptionId,
+                'stripe_status' => 'active',
+                'stripe_price' => $stripePriceId,
+                'quantity' => 1,
+                'trial_ends_at' => null,
+                'ends_at' => null,
+            ]);
+
+            $company->active = true;
+            $company->stripe_plan_id = $stripePriceId;
+            $company->plan_name = $planName;
+            $company->save();
+
+            // ✅ Send welcome email
+            CompanyMailer::to($company->email)->send(new SubscriptionSuccessMail($company, $planName));
+        }
+
+        return view('billing.success');
+    }
+
+    public function cancelSubscription(Request $request)
+    {
+        $user = Auth::user();
+    
+        if ($user->subscribed('default')) {
+            $user->subscription('default')->cancel();
+    
+            // ✅ Send cancellation confirmation email
+            CompanyMailer::to($user->company->email)
+                ->send(new SubscriptionCanceledMail($user->company));
+    
+            return redirect()->back()->with('success', 'Your subscription has been canceled. You will retain access until the end of your billing period.');
+        }
+    
+        return redirect()->back()->with('error', 'No active subscription found.');
+    }
+    
+
+    public function myPlan()
+    {
+        $company = auth()->user()->company;
+
+        $subscription = $company->subscription('default');
+        $onTrial = $company->onTrial();
+        $trialEndsAt = $company->trial_ends_at;
+        $endsAt = $subscription?->ends_at;
+
+        $priceId = $subscription?->stripe_price;
         $planNames = [
             config('services.stripe.price_starter') => 'PETSAppeal Starter',
             config('services.stripe.price_pro')     => 'PETSAppeal Pro',
             config('services.stripe.price_multi')   => 'PETSAppeal Multi-Location',
         ];
-        $planName = $planNames[$stripePriceId] ?? 'Unknown Plan';
+        $plan = $planNames[$priceId] ?? 'Unknown Plan';
 
-        $company->subscriptions()->create([
-            'name' => 'default',
-            'stripe_id' => $subscriptionId,
-            'stripe_status' => 'active',
-            'stripe_price' => $stripePriceId,
-            'quantity' => 1,
-            'trial_ends_at' => null,
-            'ends_at' => null,
-        ]);
-
-        $company->active = true;
-        $company->stripe_plan_id = $stripePriceId;
-        $company->plan_name = $planName;
-        $company->save();
+        return view('billing.my-plan', compact('subscription', 'onTrial', 'trialEndsAt', 'endsAt', 'plan'));
     }
-
-    return view('billing.success');
-}
-
-
-
-    public function cancelSubscription(Request $request)
-{
-    $user = Auth::user();
-
-    if ($user->subscribed('default')) {
-        $user->subscription('default')->cancel();
-
-        return redirect()->back()->with('success', 'Your subscription has been canceled. You will retain access until the end of your billing period.');
-    }
-
-    return redirect()->back()->with('error', 'No active subscription found.');
-}
-
-
-public function myPlan()
-{
-    $company = auth()->user()->company;
-
-    $subscription = $company->subscription('default');
-    $onTrial = $company->onTrial();
-    $trialEndsAt = $company->trial_ends_at;
-    $endsAt = $subscription?->ends_at;
-
-    // Map Stripe price ID to readable plan names
-    $priceId = $subscription?->stripe_price;
-    $planNames = [
-        config('services.stripe.price_starter') => 'PETSAppeal Starter',
-        config('services.stripe.price_pro')     => 'PETSAppeal Pro',
-        config('services.stripe.price_multi')   => 'PETSAppeal Multi-Location',
-    ];
-    $plan = $planNames[$priceId] ?? 'Unknown Plan';
-
-    return view('billing.my-plan', compact('subscription', 'onTrial', 'trialEndsAt', 'endsAt', 'plan'));
-}
-
 
     public function myHistory()
     {
