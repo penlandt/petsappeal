@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 use Laravel\Cashier\Subscription;
+use Stripe\Subscription as StripeSubscription;
+
 
 class BillingController extends Controller
 {
@@ -55,41 +57,55 @@ class BillingController extends Controller
     }
 
     public function success(Request $request)
-    {
-        $user = Auth::user();
-        $company = $user->company;
+{
+    $user = Auth::user();
+    $company = $user->company;
 
-        Stripe::setApiKey(config('cashier.secret'));
+    Stripe::setApiKey(config('cashier.secret'));
 
-        // Fetch the latest Checkout session for this customer
-        $sessions = StripeSession::all([
-            'customer' => $company->stripe_id,
-            'limit' => 1,
+    // Fetch the latest Checkout session for this customer
+    $sessions = StripeSession::all([
+        'customer' => $company->stripe_id,
+        'limit' => 1,
+    ]);
+
+    $latestSession = $sessions->data[0] ?? null;
+
+    if ($latestSession && $latestSession->subscription) {
+        $subscriptionId = $latestSession->subscription;
+
+        // Fetch the actual subscription from Stripe to get the correct price ID
+        $stripeSubscription = \Stripe\Subscription::retrieve($subscriptionId);
+        $stripePriceId = $stripeSubscription->items->data[0]->price->id ?? null;
+
+        // Map price ID to PETSAppeal plan name
+        $planNames = [
+            config('services.stripe.price_starter') => 'PETSAppeal Starter',
+            config('services.stripe.price_pro')     => 'PETSAppeal Pro',
+            config('services.stripe.price_multi')   => 'PETSAppeal Multi-Location',
+        ];
+        $planName = $planNames[$stripePriceId] ?? 'Unknown Plan';
+
+        $company->subscriptions()->create([
+            'name' => 'default',
+            'stripe_id' => $subscriptionId,
+            'stripe_status' => 'active',
+            'stripe_price' => $stripePriceId,
+            'quantity' => 1,
+            'trial_ends_at' => null,
+            'ends_at' => null,
         ]);
 
-        $latestSession = $sessions->data[0] ?? null;
-
-        if ($latestSession && $latestSession->subscription) {
-            $subscriptionId = $latestSession->subscription;
-
-            $company->subscriptions()->create([
-                'name' => 'default',
-                'stripe_id' => $subscriptionId,
-                'stripe_status' => 'active',
-                'stripe_price' => $latestSession->metadata['price_id'] ?? null,
-                'quantity' => 1,
-                'trial_ends_at' => null,
-                'ends_at' => null,
-            ]);
-
-            $company->active = true;
-            $company->stripe_plan_id = $latestSession->display_items[0]->price->id ?? null;
-            $company->plan_name = 'Unknown'; // You can map it if needed
-            $company->save();
-        }
-
-        return view('billing.success');
+        $company->active = true;
+        $company->stripe_plan_id = $stripePriceId;
+        $company->plan_name = $planName;
+        $company->save();
     }
+
+    return view('billing.success');
+}
+
+
 
     public function cancelSubscription(Request $request)
 {
