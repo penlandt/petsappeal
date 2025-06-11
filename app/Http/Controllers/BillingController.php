@@ -91,20 +91,19 @@ class BillingController extends Controller
         return view('billing.success');
     }
 
-    public function cancel()
-    {
-        $company = Auth::user()->company;
+    public function cancelSubscription(Request $request)
+{
+    $user = Auth::user();
 
-        $subscription = $company->subscription('default');
+    if ($user->subscribed('default')) {
+        $user->subscription('default')->cancel();
 
-        if ($subscription && $subscription->valid()) {
-            $subscription->cancel(); // cancels at end of billing period
-            $company->active = false;
-            $company->save();
-        }
-
-        return redirect()->route('billing.plans')->with('status', 'Your subscription has been canceled. You will retain access until the end of your current billing period.');
+        return redirect()->back()->with('success', 'Your subscription has been canceled. You will retain access until the end of your billing period.');
     }
+
+    return redirect()->back()->with('error', 'No active subscription found.');
+}
+
 
     public function myPlan()
     {

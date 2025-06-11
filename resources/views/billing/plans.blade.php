@@ -36,20 +36,6 @@
                     </div>
                 @endforeach
             </div>
-
-            {{-- Cancel Button --}}
-            @auth
-                @if ($company && $company->subscribed('default') && !$company->subscription('default')->onGracePeriod())
-                    <div class="mt-8 text-center">
-                        <form method="POST" action="{{ route('billing.cancel') }}" onsubmit="return confirm('Are you sure you want to cancel your subscription?');">
-                            @csrf
-                            <button type="submit" class="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700">
-                                Cancel Subscription
-                            </button>
-                        </form>
-                    </div>
-                @endif
-            @endauth
         </div>
     </div>
 </x-app-layout>

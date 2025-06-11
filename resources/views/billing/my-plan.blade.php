@@ -52,6 +52,22 @@
                         @endif
                     </div>
 
+                    {{-- Cancel Subscription Button --}}
+                    <div class="mt-6">
+                        <form method="POST" action="{{ route('billing.cancel-subscription') }}"
+                              onsubmit="return confirm('Are you sure you want to cancel your subscription?');">
+                            @csrf
+                            <button type="submit"
+                                    class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition">
+                                Cancel Subscription
+                            </button>
+                        </form>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                            Canceling will stop renewal at the end of your billing cycle. You will retain full access until then.
+                            <strong>No refunds will be issued.</strong>
+                        </p>
+                    </div>
+
                 @else
                     <p class="text-red-500 mb-4">Your company does not currently have an active subscription.</p>
                     <a href="{{ route('billing.plans') }}"

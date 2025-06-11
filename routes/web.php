@@ -69,9 +69,11 @@ Route::middleware(['auth', 'has.company', 'check.company.access'])->group(functi
     Route::get('/billing/plans', [\App\Http\Controllers\BillingController::class, 'showPlans'])->name('billing.plans');
     Route::post('/billing/checkout', [\App\Http\Controllers\BillingController::class, 'checkout'])->name('billing.checkout');
     Route::get('/billing/success', [\App\Http\Controllers\BillingController::class, 'success'])->name('billing.success');
-    Route::post('/billing/cancel', [\App\Http\Controllers\BillingController::class, 'cancel'])->name('billing.cancel');
     Route::get('/my-plan', [BillingController::class, 'myPlan'])->name('billing.my-plan');
     Route::get('/my-history', [\App\Http\Controllers\BillingController::class, 'myHistory'])->name('billing.my-history');
+    Route::post('/billing/cancel', [\App\Http\Controllers\BillingController::class, 'cancelSubscription'])
+    ->middleware(['auth'])
+    ->name('billing.cancel-subscription');
 
     Route::resource('companies', CompanyController::class)->except(['create', 'store']);
     
