@@ -92,8 +92,7 @@ Route::middleware(['auth', 'has.company', 'check.company.access'])->group(functi
     Route::get('/pets/{pet}/edit', [\App\Http\Controllers\PetController::class, 'edit'])->name('pets.edit');
     Route::get('/pets', [\App\Http\Controllers\PetController::class, 'index'])->name('pets.index');
     Route::put('/pets/{pet}', [\App\Http\Controllers\PetController::class, 'update'])->name('pets.update');
-    Route::get('/pets/{pet}', [\App\Http\Controllers\PetsController::class, 'show'])
-        ->name('pets.show');
+    Route::get('/pets/{pet}', [\App\Http\Controllers\PetController::class, 'show'])->name('pets.show');
 
     Route::get('/services/create', [\App\Http\Controllers\ServiceController::class, 'create'])->name('services.create');
     Route::get('/services', [\App\Http\Controllers\ServiceController::class, 'index'])->name('services.index');
