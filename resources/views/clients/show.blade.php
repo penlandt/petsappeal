@@ -8,14 +8,27 @@
     <div class="py-6 max-w-5xl mx-auto">
         <div class="bg-white dark:bg-gray-800 shadow p-6 rounded-lg">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Client Information</h3>
+
             <p class="text-gray-900 dark:text-gray-100">
                 <strong>Name:</strong>
                 <a href="{{ route('clients.edit', $client) }}" class="text-blue-600 dark:text-blue-400 hover:underline">
                     {{ $client->first_name }} {{ $client->last_name }}
                 </a>
             </p>
-            <p class="text-gray-900 dark:text-gray-100"><strong>Email:</strong> {{ $client->email }}</p>
-            <p class="text-gray-900 dark:text-gray-100"><strong>Phone:</strong> {{ $client->phone }}</p>
+
+            <div class="flex flex-col md:flex-row md:justify-between md:space-x-8 mt-2">
+                <div class="md:w-1/2">
+                    <p class="text-gray-900 dark:text-gray-100"><strong>Email:</strong> {{ $client->email }}</p>
+                    <p class="text-gray-900 dark:text-gray-100"><strong>Phone:</strong> {{ $client->phone }}</p>
+                </div>
+
+                <div class="md:w-1/2 mt-4 md:mt-0">
+                    <p class="text-gray-900 dark:text-gray-100"><strong>Address:</strong><br>
+                        {{ $client->address }}<br>
+                        {{ $client->city }}, {{ $client->state }} {{ $client->postal_code }}
+                    </p>
+                </div>
+            </div>
 
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-2">Pets</h3>
             <a href="{{ route('pets.create', ['client_id' => $client->id]) }}"

@@ -21,6 +21,9 @@ class Company extends Model
         'logo_path',
         'active',
         'trial_ends_at',
+        'stripe_id',
+        'pm_type',
+        'pm_last_four',
     ];
 
     protected $casts = [
