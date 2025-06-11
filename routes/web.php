@@ -49,6 +49,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 // Company creation (accessible before company exists)
 Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
+Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
 Route::put('/companies/{company}', [App\Http\Controllers\CompanyController::class, 'update'])->name('companies.update');
 Route::middleware(['auth'])->group(function () {
     Route::get('/companies/loyalty-program', [CompanyLoyaltyProgramController::class, 'edit'])
@@ -72,7 +73,6 @@ Route::middleware(['auth', 'has.company', 'check.company.access'])->group(functi
     Route::get('/my-plan', [BillingController::class, 'myPlan'])->name('billing.my-plan');
     Route::get('/my-history', [\App\Http\Controllers\BillingController::class, 'myHistory'])->name('billing.my-history');
 
-    Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
     Route::resource('companies', CompanyController::class)->except(['create', 'store']);
     
     Route::resource('clients', \App\Http\Controllers\ClientController::class);

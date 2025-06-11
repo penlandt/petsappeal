@@ -25,7 +25,7 @@ class CompanyController extends Controller
 
     public function store(Request $request)
 {
-    $request->validate([
+   $validated = $request->validate([
         'name' => 'required|string|max:255',
         'slug' => 'required|string|max:255|unique:companies,slug',
         'email' => 'nullable|email|max:255',
@@ -34,25 +34,31 @@ class CompanyController extends Controller
         'notes' => 'nullable|string',
     ]);
 
-    $company = new Company();
-    $company->name = $request->name;
-    $company->slug = $request->slug;
-    $company->email = $request->email;
-    $company->phone = $request->phone;
-    $company->website = $request->website;
-    $company->notes = $request->notes;
-    $company->active = true;
-    $company->trial_ends_at = now()->addDays(15);
-    $company->save();
+    try {
+        $company = Company::create([
+            'name' => $validated['name'],
+            'slug' => $validated['slug'],
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'website' => $validated['website'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'active' => true,
+            'trial_ends_at' => now()->addDays(15),
+        ]);
 
-    $user = auth()->user();
-    $user->company_id = $company->id;
-    $user->save();
+        $user = auth()->user();
+        $user->company_id = $company->id;
+        $user->save();
 
-    auth()->setUser($user->fresh());
+        auth()->setUser($user->fresh());
 
-    return redirect()->route('dashboard')->with('success', 'Company created successfully with a 15-day free trial.');
+        return redirect()->route('dashboard')->with('success', 'Company created successfully with a 15-day free trial.');
+    } catch (\Exception $e) {
+        \Log::error('Company creation failed', ['error' => $e->getMessage()]);
+        return redirect()->back()->withErrors('Failed to create company. Please try again.')->withInput();
+    }
 }
+
 
 
     public function show($id)

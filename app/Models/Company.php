@@ -19,6 +19,8 @@ class Company extends Model
         'website',
         'notes',
         'logo_path',
+        'active',
+        'trial_ends_at',
     ];
 
     protected $casts = [
