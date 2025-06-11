@@ -1,40 +1,80 @@
-@extends('layouts.guest')
+<x-guest-layout>
+    <x-slot name="title">Pricing</x-slot>
 
-@section('content')
-    <h1 class="text-3xl font-bold mb-6">Pricing</h1>
+    <div class="py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-4xl font-extrabold text-center text-gray-900 dark:text-white mb-4">
+                Simple, Transparent Pricing
+            </h1>
 
-    <p class="mb-6 text-lg">
-        PETSAppeal offers flexible pricing plans to grow with your grooming business. Whether you're just getting started or managing a full salon staff, we have a plan that fits.
-    </p>
+            <p class="text-center text-lg text-blue-600 dark:text-blue-400 font-semibold mb-12">
+                Start with a <strong>15-day free trial</strong> – all features, no credit card required!
+            </p>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <h2 class="text-xl font-bold mb-2">Free Plan</h2>
-            <p class="mb-4 text-gray-600 dark:text-gray-300">Up to 10 clients</p>
-            <p class="text-2xl font-semibold mb-2">$0/month</p>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Starter Plan -->
+                <div class="border border-gray-300 dark:border-gray-700 rounded-lg p-6 shadow-sm bg-white dark:bg-gray-800">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">PETSAppeal Starter</h2>
+                    <p class="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">$49<span class="text-base font-medium text-gray-600 dark:text-gray-300">/mo</span></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">or $499/year (15% off)</p>
 
-        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow border border-blue-500">
-            <h2 class="text-xl font-bold mb-2">Standard Plan</h2>
-            <p class="mb-4 text-gray-600 dark:text-gray-300">Up to 25 clients</p>
-            <p class="text-2xl font-semibold mb-2">$24.99/month</p>
-        </div>
+                    <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                        <li>✓ Appointment Scheduling</li>
+                        <li>✓ Client & Pet Management</li>
+                        <li>✓ Single Location</li>
+                        <li>✓ Free 24hr Turnaround Email Support</li>
+                    </ul>
 
-        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <h2 class="text-xl font-bold mb-2">Pro Plan</h2>
-            <p class="mb-4 text-gray-600 dark:text-gray-300">Up to 100 clients</p>
-            <p class="text-2xl font-semibold mb-2">$99.99/month</p>
-        </div>
+                    <div class="mt-6">
+                        <a href="{{ route('register') }}"
+                           class="w-full block text-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
+                            Get Started
+                        </a>
+                    </div>
+                </div>
 
-        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow md:col-span-3">
-            <h2 class="text-xl font-bold mb-2">Unlimited Plan</h2>
-            <p class="mb-4 text-gray-600 dark:text-gray-300">No client limits. All features included.</p>
-            <p class="text-2xl font-semibold mb-2">$199.99/month</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">Annual plans receive a 10% discount</p>
+                <!-- Pro Plan -->
+                <div class="border-2 border-blue-600 rounded-lg p-6 shadow-md bg-white dark:bg-gray-800">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">PETSAppeal Pro</h2>
+                    <p class="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">$99<span class="text-base font-medium text-gray-600 dark:text-gray-300">/mo</span></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">or $999/year (16% off)</p>
+
+                    <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                        <li>✓ Everything in Starter</li>
+                        <li>✓ Staff Scheduling</li>
+                        <li>✓ Boarding & Daycare</li>
+                        <li>✓ Priority Email Support</li>
+                    </ul>
+
+                    <div class="mt-6">
+                        <a href="{{ route('register') }}"
+                           class="w-full block text-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
+                            Try Pro
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Multi-Location Plan -->
+                <div class="border border-gray-300 dark:border-gray-700 rounded-lg p-6 shadow-sm bg-white dark:bg-gray-800">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">PETSAppeal Multi-Location</h2>
+                    <p class="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">$149<span class="text-base font-medium text-gray-600 dark:text-gray-300">/mo</span></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">or $1,499/year (16% off)</p>
+
+                    <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                        <li>✓ Everything in Pro</li>
+                        <li>✓ Unlimited Locations</li>
+                        <li>✓ Advanced Reporting</li>
+                        <li>✓ Priority Phone Support</li>
+                    </ul>
+
+                    <div class="mt-6">
+                        <a href="{{ route('register') }}"
+                           class="w-full block text-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
+                            Upgrade Now
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <a href="{{ route('register') }}" class="inline-block px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded hover:bg-blue-700 transition">
-        Start Free Today
-    </a>
-@endsection
+</x-guest-layout>

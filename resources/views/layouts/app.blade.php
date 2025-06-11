@@ -15,7 +15,6 @@
     @stack('styles')
 
     <style>
-        /* Spinning logo animation */
         @keyframes spinY {
             from { transform: rotateY(0deg); }
             to { transform: rotateY(360deg); }
@@ -52,6 +51,20 @@
     <div class="min-h-screen">
         @include('layouts.navigation')
 
+        {{-- 🔔 Trial Expired Banner --}}
+        @php
+            $company = Auth::user()?->company;
+            $isTrialExpired = $company?->trial_ends_at && now()->greaterThan($company->trial_ends_at);
+            $isSubscribed = $company?->subscribed('default');
+        @endphp
+
+        @if ($isTrialExpired && !$isSubscribed && !Request::is('billing/*'))
+            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 text-center">
+                <strong>Your free trial has ended.</strong>
+                Please <a href="{{ route('billing.plans') }}" class="underline font-semibold">select a subscription plan</a> to continue using PETSAppeal.
+            </div>
+        @endif
+
         @if (isset($header))
             <header class="bg-white dark:bg-gray-800 shadow">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -70,17 +83,14 @@
     @stack('scripts')
 
     <script>
-        // Show overlay before page unload (browser-controlled, fallback)
         window.addEventListener('beforeunload', function () {
             document.getElementById('loading-overlay').style.display = 'flex';
         });
 
-        // Hide overlay when page is fully loaded
         window.addEventListener('pageshow', function () {
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
-        // Show overlay when internal links are clicked
         document.addEventListener('DOMContentLoaded', function () {
             const links = document.querySelectorAll('a[href]');
             links.forEach(link => {

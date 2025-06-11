@@ -16,6 +16,16 @@
                         class="w-full mt-1 rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                 </div>
 
+                <!-- Slug -->
+                <div class="mt-4">
+                <label for="slug" class="block font-medium text-sm text-gray-700 dark:text-gray-200">Company Slug</label>
+                    <input id="slug" name="slug" type="text" value="{{ old('slug') }}" required autofocus
+                        class="block mt-1 w-full rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    @error('slug')
+                        <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block font-medium text-sm text-gray-700 dark:text-gray-200">Email</label>

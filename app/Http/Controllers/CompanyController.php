@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Company;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\RedirectResponse;
+
 
 class CompanyController extends Controller
 {
@@ -24,6 +27,7 @@ class CompanyController extends Controller
 {
     $request->validate([
         'name' => 'required|string|max:255',
+        'slug' => 'required|string|max:255|unique:companies,slug',
         'email' => 'nullable|email|max:255',
         'phone' => 'nullable|string|max:20',
         'website' => 'nullable|string|max:255',
@@ -32,14 +36,24 @@ class CompanyController extends Controller
 
     $company = new Company();
     $company->name = $request->name;
+    $company->slug = $request->slug;
     $company->email = $request->email;
     $company->phone = $request->phone;
     $company->website = $request->website;
     $company->notes = $request->notes;
+    $company->active = true;
+    $company->trial_ends_at = now()->addDays(15);
     $company->save();
 
-    return redirect()->route('companies.index')->with('success', 'Company created successfully.');
+    $user = auth()->user();
+    $user->company_id = $company->id;
+    $user->save();
+
+    auth()->setUser($user->fresh());
+
+    return redirect()->route('dashboard')->with('success', 'Company created successfully with a 15-day free trial.');
 }
+
 
     public function show($id)
     {

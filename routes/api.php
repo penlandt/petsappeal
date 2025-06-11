@@ -7,6 +7,9 @@ use App\Http\Controllers\AppointmentController;
 use App\Models\Modules\Boarding\BoardingUnit;
 use App\Models\Location;
 
+use App\Http\Controllers\StripeWebhookController;
+
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -17,6 +20,8 @@ use App\Models\Location;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

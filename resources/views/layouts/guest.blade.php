@@ -31,7 +31,7 @@
                 <a href="{{ route('public.contact') }}" class="hover:underline text-gray-700 dark:text-gray-300">Contact</a>
 
                 @guest
-                    <a href="{{ route('login') }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Log in</a>
+                    <a href="{{ route('login') }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Login</a>
                     <a href="{{ route('register') }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Register</a>
                 @endguest
             </div>

@@ -31,18 +31,16 @@ use App\Http\Controllers\Settings\EmailTemplateController;
 use App\Http\Controllers\Client\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Client\AppointmentRequestController;
 use App\Http\Controllers\AppointmentApprovalController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BillingController;
+
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-use App\Http\Controllers\DashboardController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'has.company'])
@@ -51,7 +49,6 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 // Company creation (accessible before company exists)
 Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
-Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
 Route::put('/companies/{company}', [App\Http\Controllers\CompanyController::class, 'update'])->name('companies.update');
 Route::middleware(['auth'])->group(function () {
     Route::get('/companies/loyalty-program', [CompanyLoyaltyProgramController::class, 'edit'])
@@ -63,13 +60,21 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/clients/json', [\App\Http\Controllers\ClientController::class, 'json'])->name('clients.json');
 
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
+
 // All other routes require login and a company
-Route::middleware(['auth', 'has.company'])->group(function () {
+Route::middleware(['auth', 'has.company', 'check.company.access'])->group(function () {
+    // 💳 Stripe Billing
+    Route::get('/billing/plans', [\App\Http\Controllers\BillingController::class, 'showPlans'])->name('billing.plans');
+    Route::post('/billing/checkout', [\App\Http\Controllers\BillingController::class, 'checkout'])->name('billing.checkout');
+    Route::get('/billing/success', [\App\Http\Controllers\BillingController::class, 'success'])->name('billing.success');
+    Route::post('/billing/cancel', [\App\Http\Controllers\BillingController::class, 'cancel'])->name('billing.cancel');
+    Route::get('/my-plan', [BillingController::class, 'myPlan'])->name('billing.my-plan');
+    Route::get('/my-history', [\App\Http\Controllers\BillingController::class, 'myHistory'])->name('billing.my-history');
+
+    Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
     Route::resource('companies', CompanyController::class)->except(['create', 'store']);
-
     
-
-
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
     Route::post('/clients/ajax-store', [\App\Http\Controllers\ClientController::class, 'ajaxStore'])->name('clients.ajax-store');
     Route::get('/clients/{client}/history', [ClientHistoryController::class, 'show'])
@@ -80,12 +85,9 @@ Route::middleware(['auth', 'has.company'])->group(function () {
     Route::post('/clients/{client}/send-portal-invite', [\App\Http\Controllers\ClientController::class, 'sendPortalInvite'])
     ->name('clients.send-portal-invite');
 
-    
-
     Route::get('/pets/create', [\App\Http\Controllers\PetController::class, 'create'])->name('pets.create');
     Route::post('/pets', [\App\Http\Controllers\PetController::class, 'store'])->name('pets.store');
     Route::post('/pets/ajax-store', [PetController::class, 'ajaxStore'])->name('pets.ajax-store');
-
 
     Route::get('/pets/{pet}/edit', [\App\Http\Controllers\PetController::class, 'edit'])->name('pets.edit');
     Route::get('/pets', [\App\Http\Controllers\PetController::class, 'index'])->name('pets.index');

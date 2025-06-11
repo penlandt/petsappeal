@@ -77,6 +77,7 @@ class AppointmentApprovalController extends Controller
             'start_time'  => $start->format('Y-m-d H:i:s'),  // <--- fixed here
             'status'      => 'Booked',
             'notes'       => $notes,
+            'price'       => $appointment->service->price ?? 0.00,
         ]);
 
         $appointment->delete();

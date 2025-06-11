@@ -102,6 +102,26 @@
                         </x-dropdown>
                     </div>
 
+                    <!-- Subscriptions Dropdown -->
+                    <div class="hidden sm:ml-10 sm:flex sm:items-center">
+                        <x-dropdown align="left" width="48">
+                            <x-slot name="trigger">
+                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 hover:text-gray-700 dark:hover:text-white focus:outline-none transition">
+                                    <div>Subscriptions</div>
+                                    <div class="ml-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </x-slot>
+                            <x-slot name="content">
+                                <x-dropdown-link :href="route('billing.my-plan')">My Plan</x-dropdown-link>
+                                <x-dropdown-link :href="route('billing.my-history')">My History</x-dropdown-link>
+                                <x-dropdown-link :href="route('billing.plans')">View Plans</x-dropdown-link>
+                            </x-slot>
+                        </x-dropdown>
+                    </div>
 
                     <!-- Admin Dropdown -->
                     @if(Auth::user()->is_admin)
@@ -242,7 +262,17 @@
                 </div>
             </div>
 
-
+            <!-- Subscriptions -->
+            <div x-data="{ openSubscriptions: false }">
+                <button @click="openSubscriptions = !openSubscriptions" class="w-full text-left px-4 py-2 font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    Subscriptions
+                </button>
+                <div x-show="openSubscriptions" class="pl-6 space-y-1">
+                    <x-responsive-nav-link :href="route('billing.my-plan')">My Plan</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('billing.my-history')">My History</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('billing.plans')">View Plans</x-responsive-nav-link>
+                </div>
+            </div>
 
             <!-- Admin -->
             @if(Auth::user()->is_admin)

@@ -6,6 +6,7 @@
         "guzzlehttp/guzzle": "^7.0.1",
         "intervention/image": "^2.7",
         "laravel/breeze": "^1.20",
+        "laravel/cashier": "^13.17",
         "laravel/framework": "^10.0",
         "laravel/sail": "^1.21",
         "laravel/sanctum": "^3.3"
