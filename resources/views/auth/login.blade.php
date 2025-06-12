@@ -53,14 +53,16 @@
     <!-- reCAPTCHA v3 Script -->
     <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
     <script>
-        document.getElementById('login-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            grecaptcha.ready(function () {
-                grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', { action: 'login' }).then(function (token) {
-                    document.getElementById('recaptcha_token').value = token;
-                    e.target.submit();
-                });
+    document.getElementById('login-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const form = this; // <== this is the correct reference to the form
+        grecaptcha.ready(function () {
+            grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', { action: 'login' }).then(function (token) {
+                document.getElementById('recaptcha_token').value = token;
+                form.submit(); // <== call submit on the actual form
             });
         });
-    </script>
+    });
+</script>
+
 </x-app-layout>

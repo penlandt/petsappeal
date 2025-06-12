@@ -37,6 +37,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\StripeConnectController;
 
 
 /*
@@ -207,6 +208,8 @@ Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.
     Route::get('/pos/products', [ProductController::class, 'index'])->name('pos.products');
     Route::post('/pos/select-location', [POSController::class, 'setLocation'])->name('pos.set-location');
     Route::post('/pos/checkout', [POSController::class, 'checkout'])->name('pos.checkout');
+    Route::post('/pos/create-payment-intent', [POSController::class, 'createPaymentIntent'])->name('pos.create-payment-intent');
+
 
     Route::get('/pos/products/create', [ProductController::class, 'create'])->name('pos.products.create');
     Route::post('/pos/products', [ProductController::class, 'store'])->name('pos.products.store');
@@ -244,6 +247,9 @@ Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.
         Route::post('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('settings.email.update');
         Route::get('email/test', [\App\Http\Controllers\EmailTestController::class, 'send'])->name('settings.email.test');
     });
+    Route::get('settings/stripe', [StripeConnectController::class, 'index'])->name('stripe.settings');
+    Route::get('settings/stripe/connect', [StripeConnectController::class, 'redirectToStripe'])->name('stripe.connect');
+    Route::get('settings/stripe/callback', [StripeConnectController::class, 'handleStripeCallback'])->name('stripe.callback');
 
     // Email Template Management
     Route::prefix('settings/email-templates')->name('settings.email-templates.')->group(function () {

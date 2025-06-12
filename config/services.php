@@ -43,6 +43,10 @@ return [
     'price_starter_annual' => env('STRIPE_PRICE_STARTER_ANNUAL'),
     'price_pro_annual' => env('STRIPE_PRICE_PRO_ANNUAL'),
     'price_multi_annual' => env('STRIPE_PRICE_MULTI_ANNUAL'),
+
+    
+    // Connect OAuth Client ID
+    'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'),
 ],
 
 'recaptcha' => [

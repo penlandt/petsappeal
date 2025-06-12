@@ -50,5 +50,8 @@ public function company()
     return $this->belongsTo(\App\Models\Company::class);
 }
 
-
+public function selectedLocation()
+{
+    return $this->belongsTo(\App\Models\Location::class, 'selected_location_id');
+}
 }

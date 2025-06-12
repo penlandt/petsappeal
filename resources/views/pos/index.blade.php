@@ -120,6 +120,19 @@
 
         <div id="payment-entries"></div>
 
+        {{-- Stripe Card Element (only if location has connected Stripe account) --}}
+        @if (!empty($location?->stripe_account_id))
+            <div id="stripe-card-section" class="my-4 p-4 border rounded bg-white dark:bg-gray-700 dark:text-white">
+                <label for="card-element" class="block text-sm font-medium mb-2">
+                    Credit Card
+                </label>
+                <div id="card-element" class="p-2 border rounded bg-white dark:bg-gray-800">
+                    <!-- Stripe Elements will be injected here -->
+                </div>
+                <div id="card-errors" class="mt-2 text-red-600 dark:text-red-400 text-sm"></div>
+            </div>
+        @endif
+
         <button type="button" id="add-payment-btn"
                 class="mb-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
             + Add Payment Method
@@ -139,6 +152,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Add Product Modal -->
 <div id="addProductModal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-50">
@@ -513,7 +527,8 @@ function updatePaymentReference(index, value) {
     paymentEntries[index].reference_number = value;
 }
 
-function submitPayments() {
+
+async function submitPayments() {
     if (cart.length === 0) {
         alert("Cart is empty.");
         return;
@@ -535,6 +550,58 @@ function submitPayments() {
         return;
     }
 
+    // Check if any of the payments are Credit
+    const creditPayment = paymentEntries.find(p => p.method === 'Credit');
+
+    if (creditPayment && typeof stripe !== 'undefined' && typeof cardElement !== 'undefined') {
+        try {
+            const intentResponse = await fetch('/pos/create-payment-intent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    amount: creditPayment.amount
+                })
+            });
+
+            const intentData = await intentResponse.json();
+
+            if (!intentData.clientSecret) {
+                alert("Failed to initialize Stripe PaymentIntent.");
+                return;
+            }
+
+            const result = await stripe.confirmCardPayment(intentData.clientSecret, {
+                payment_method: {
+                    card: cardElement
+                }
+            });
+
+            if (result.error) {
+                console.error("Stripe confirmation error:", result.error);
+                alert("Card payment failed: " + result.error.message);
+                return;
+            }
+
+            if (result.paymentIntent?.status !== 'succeeded') {
+                alert("Card payment did not succeed.");
+                return;
+            }
+
+            // Store reference to Stripe intent ID
+            creditPayment.reference_number = result.paymentIntent.id;
+
+        } catch (error) {
+            console.error("Stripe error:", error);
+            alert("An error occurred processing the credit card.");
+            return;
+        }
+    }
+
+    // Submit the sale as usual
     fetch("/pos/checkout", {
         method: "POST",
         headers: {
@@ -551,7 +618,6 @@ function submitPayments() {
                 taxable: item.taxable,
                 invoice_id: item.invoice_id ?? null
             })),
-
             payments: paymentEntries,
             client_id: clientId,
             redeem_points: document.getElementById('apply-loyalty')?.checked || false,
@@ -560,7 +626,6 @@ function submitPayments() {
     })
     .then(async response => {
         const contentType = response.headers.get("content-type") || "";
-
         const raw = await response.text();
         console.log("🧾 Raw server response:", raw);
 
@@ -588,7 +653,6 @@ function submitPayments() {
         alert("An error occurred during checkout.");
     });
 }
-
 
 
 
@@ -940,6 +1004,52 @@ document.getElementById('client_id').addEventListener('change', async function (
 
 
 </script>
+
+@if (!empty($location?->stripe_account_id))
+    <!-- Stripe.js and Elements initialization -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const stripe = Stripe("{{ config('services.stripe.key') }}");
+            const elements = stripe.elements();
+
+const card = elements.create('card', {
+    style: {
+        base: {
+            color: '#ffffff',
+            fontFamily: 'inherit',
+            fontSize: '16px',
+            '::placeholder': {
+                color: '#cbd5e1' // Tailwind's slate-300
+            },
+            iconColor: '#ffffff',
+            backgroundColor: '#1f2937' // Tailwind's gray-800
+        },
+        invalid: {
+            color: '#f87171', // red-400
+            iconColor: '#f87171'
+        }
+    }
+});
+
+card.mount('#card-element');
+
+            // Optional: handle validation errors
+            card.on('change', event => {
+                const displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+
+            // Save Stripe references for use in submitPayments()
+            window.stripe = stripe;
+            window.cardElement = card;
+        });
+    </script>
+@endif
 
 @include('partials.modals.new-client')
 
