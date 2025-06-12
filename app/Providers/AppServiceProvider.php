@@ -4,11 +4,12 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
-use App\Models\PendingAppointment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use App\Models\EmailSetting;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Blade;
+use App\Models\PendingAppointment;
+use App\Models\EmailSetting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // ✅ Register custom Blade component for client guest layout
+        Blade::component('layouts.client-guest', 'client-guest-layout');
+
         // Existing logic: pending appointment counter
         View::composer('*', function ($view) {
             $user = Auth::user();
