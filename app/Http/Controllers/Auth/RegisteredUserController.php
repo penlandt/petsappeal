@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class RegisteredUserController extends Controller
 {
@@ -35,17 +36,38 @@ class RegisteredUserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'terms' => ['accepted'],
+            'name'            => ['required', 'string', 'max:255'],
+            'email'           => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password'        => ['required', 'confirmed', Rules\Password::defaults()],
+            'terms'           => ['accepted'],
+            'recaptcha_token' => ['required', 'string'],
         ]);
 
+        // reCAPTCHA v3 verification
+        $recaptchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret'   => config('services.recaptcha.secret_key'),
+            'response' => $request->recaptcha_token,
+            'remoteip' => $request->ip(),
+        ]);
+
+        $result = $recaptchaResponse->json();
+
+        if (
+            !$result['success'] ||
+            !isset($result['score']) ||
+            $result['score'] < 0.5 ||
+            $result['action'] !== 'register'
+        ) {
+            return back()->withErrors([
+                'recaptcha' => 'reCAPTCHA verification failed. Please try again.',
+            ])->withInput();
+        }
+
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'terms_accepted_at' => Carbon::now(),
+            'name'               => $request->name,
+            'email'              => $request->email,
+            'password'           => Hash::make($request->password),
+            'terms_accepted_at'  => Carbon::now(),
         ]);
 
         event(new Registered($user));

@@ -11,70 +11,91 @@
                 Start with a <strong>15-day free trial</strong> – all features, no credit card required!
             </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Starter Plan -->
-                <div class="border border-gray-300 dark:border-gray-700 rounded-lg p-6 shadow-sm bg-white dark:bg-gray-800">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">PETSAppeal Starter</h2>
-                    <p class="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">$49<span class="text-base font-medium text-gray-600 dark:text-gray-300">/mo</span></p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">or $499/year (15% off)</p>
-
-                    <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                        <li>✓ Appointment Scheduling</li>
-                        <li>✓ Client & Pet Management</li>
-                        <li>✓ Single Location</li>
-                        <li>✓ Free 24hr Turnaround Email Support</li>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <!-- Pricing Plans -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Starter</h2>
+                    <p class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">$49/mo</p>
+                    <ul class="text-gray-700 dark:text-gray-300 space-y-2">
+                        <li>1 Location</li>
+                        <li>Basic Support</li>
+                        <li>All Core Features</li>
                     </ul>
-
-                    <div class="mt-6">
-                        <a href="{{ route('register') }}"
-                           class="w-full block text-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
-                            Get Started
-                        </a>
-                    </div>
                 </div>
-
-                <!-- Pro Plan -->
-                <div class="border-2 border-blue-600 rounded-lg p-6 shadow-md bg-white dark:bg-gray-800">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">PETSAppeal Pro</h2>
-                    <p class="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">$99<span class="text-base font-medium text-gray-600 dark:text-gray-300">/mo</span></p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">or $999/year (16% off)</p>
-
-                    <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                        <li>✓ Everything in Starter</li>
-                        <li>✓ Staff Scheduling</li>
-                        <li>✓ Boarding & Daycare</li>
-                        <li>✓ Priority Email Support</li>
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Pro</h2>
+                    <p class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">$99/mo</p>
+                    <ul class="text-gray-700 dark:text-gray-300 space-y-2">
+                        <li>Up to 3 Locations</li>
+                        <li>Priority Email Support</li>
+                        <li>All Core Features</li>
                     </ul>
-
-                    <div class="mt-6">
-                        <a href="{{ route('register') }}"
-                           class="w-full block text-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
-                            Try Pro
-                        </a>
-                    </div>
                 </div>
-
-                <!-- Multi-Location Plan -->
-                <div class="border border-gray-300 dark:border-gray-700 rounded-lg p-6 shadow-sm bg-white dark:bg-gray-800">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">PETSAppeal Multi-Location</h2>
-                    <p class="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">$149<span class="text-base font-medium text-gray-600 dark:text-gray-300">/mo</span></p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">or $1,499/year (16% off)</p>
-
-                    <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                        <li>✓ Everything in Pro</li>
-                        <li>✓ Unlimited Locations</li>
-                        <li>✓ Advanced Reporting</li>
-                        <li>✓ Priority Phone Support</li>
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Multi-Location</h2>
+                    <p class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">$149/mo</p>
+                    <ul class="text-gray-700 dark:text-gray-300 space-y-2">
+                        <li>Unlimited Locations</li>
+                        <li>Priority Phone Support</li>
+                        <li>All Core Features</li>
                     </ul>
-
-                    <div class="mt-6">
-                        <a href="{{ route('register') }}"
-                           class="w-full block text-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded">
-                            Upgrade Now
-                        </a>
-                    </div>
                 </div>
             </div>
+
+            <!-- Ancillary Services Section -->
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">Additional Services</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <!-- Flat-Fee Services -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">Flat-Fee Services</h3>
+                    <ul class="space-y-4 text-gray-700 dark:text-gray-300">
+                        <li>
+                            <strong>Client Onboarding & Training:</strong><br>
+                            Personalized setup and walkthrough – <span class="font-semibold">$270 one-time</span>
+                        </li>
+                        <li>
+                            <strong>Basic Data Import (≤500 records):</strong><br>
+                            Import pets, clients, and services into PETSAppeal – <span class="font-semibold">$395 one-time</span>
+                        </li>
+                        <li>
+                            <strong>Priority Support Plan:</strong><br>
+                            Faster responses for urgent issues – <span class="font-semibold">$89/month</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Hourly Services -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">Hourly Services</h3>
+                    <ul class="space-y-4 text-gray-700 dark:text-gray-300">
+                        <li>
+                            <strong>Data Export Assistance:</strong><br>
+                            Help extracting data from legacy systems – <span class="font-semibold">$135/hr</span>
+                        </li>
+                        <li>
+                            <strong>Custom Report Design:</strong><br>
+                            On-screen or PDF reports tailored to your needs – <span class="font-semibold">$180/hr</span>
+                        </li>
+                        <li>
+                            <strong>Custom Software Development:</strong><br>
+                            Add features unique to your business – <span class="font-semibold">$225/hr</span>
+                        </li>
+                        <li>
+                            <strong>Screen-Sharing Support:</strong><br>
+                            Live Zoom/Meet assistance with setup or training – <span class="font-semibold">$112.50/hr</span>
+                        </li>
+                        <li>
+                            <strong>Printed Materials Customization:</strong><br>
+                            Branded intake forms, receipts, and invoices – <span class="font-semibold">$90/hr</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                Need something not listed here? <a href="{{ route('public.contact') }}" class="text-blue-600 dark:text-blue-400 underline">Contact us</a> for a custom quote.
+            </p>
         </div>
     </div>
 </x-guest-layout>
