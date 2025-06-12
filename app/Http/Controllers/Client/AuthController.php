@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Company;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use App\Models\ClientUser;
 
 class AuthController extends Controller
@@ -24,9 +25,28 @@ class AuthController extends Controller
         $company = Company::where('slug', $companySlug)->where('active', true)->firstOrFail();
 
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+            'email'           => 'required|email',
+            'password'        => 'required|string',
+            'recaptcha_token' => 'required|string',
         ]);
+
+        // reCAPTCHA v3 validation
+        $recaptcha = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret'   => config('services.recaptcha.secret_key'),
+            'response' => $request->recaptcha_token,
+            'remoteip' => $request->ip(),
+        ])->json();
+
+        if (
+            !$recaptcha['success'] ||
+            !isset($recaptcha['score']) ||
+            $recaptcha['score'] < 0.3 ||
+            $recaptcha['action'] !== 'client_login'
+        ) {
+            return back()->withErrors([
+                'recaptcha' => 'reCAPTCHA verification failed. Please try again.',
+            ])->withInput();
+        }
 
         $credentials = [
             'email' => $request->email,
@@ -36,7 +56,7 @@ class AuthController extends Controller
 
         if (Auth::guard('client')->attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
-            $request->session()->put('company_slug', $companySlug); // <-- ADDED THIS LINE
+            $request->session()->put('company_slug', $companySlug);
             return redirect()->route('client.dashboard');
         }
 
