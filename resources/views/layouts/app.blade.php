@@ -80,6 +80,16 @@
         </main>
     </div>
 
+    <footer class="mt-12 border-t border-gray-200 dark:border-gray-700 py-6 text-center text-sm text-gray-500 dark:text-gray-400 space-y-2">
+        <div class="space-x-4">
+            <a href="{{ route('terms') }}" class="hover:underline">Terms of Service</a>
+            <a href="{{ route('privacy') }}" class="hover:underline">Privacy Policy</a>
+        </div>
+        <div>
+            &copy; {{ date('Y') }} PETSAppeal. All rights reserved.
+        </div>
+    </footer>
+
     @stack('scripts')
 
     <script>

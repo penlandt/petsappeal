@@ -63,6 +63,9 @@ Route::get('/clients/json', [\App\Http\Controllers\ClientController::class, 'jso
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
+Route::view('/terms', 'terms')->name('terms');
+Route::view('/privacy', 'privacy')->name('privacy');
+
 // All other routes require login and a company
 Route::middleware(['auth', 'has.company', 'check.company.access'])->group(function () {
     // 💳 Stripe Billing
@@ -74,6 +77,9 @@ Route::middleware(['auth', 'has.company', 'check.company.access'])->group(functi
     Route::post('/billing/cancel', [\App\Http\Controllers\BillingController::class, 'cancelSubscription'])
     ->middleware(['auth'])
     ->name('billing.cancel-subscription');
+    Route::get('/billing/cancel', function () {
+        return redirect()->route('billing.plans', ['cancelled' => '1']);
+    })->name('billing.cancel');
 
     Route::resource('companies', CompanyController::class)->except(['create', 'store']);
     

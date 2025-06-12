@@ -34,6 +34,21 @@
                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
                 </div>
 
+                <div class="mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="terms" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
+                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                            I agree to the
+                            <a href="{{ route('terms') }}" class="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200" target="_blank">Terms of Service</a>
+                            and
+                            <a href="{{ route('privacy') }}" class="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200" target="_blank">Privacy Policy</a>.
+                        </span>
+                    </label>
+                    @error('terms')
+                        <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="flex items-center justify-between">
                     <a href="{{ route('login') }}" class="text-sm text-blue-500 hover:underline">Already registered?</a>
 

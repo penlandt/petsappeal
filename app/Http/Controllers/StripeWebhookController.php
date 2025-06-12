@@ -26,27 +26,52 @@ class StripeWebhookController extends Controller
         try {
             $event = Webhook::constructEvent($payload, $sigHeader, $secret);
         } catch (UnexpectedValueException $e) {
-            // Invalid payload
             Log::error('Invalid Stripe webhook payload', ['error' => $e->getMessage()]);
             return response('Invalid payload', Response::HTTP_BAD_REQUEST);
         } catch (SignatureVerificationException $e) {
-            // Invalid signature
             Log::error('Invalid Stripe webhook signature', ['error' => $e->getMessage()]);
             return response('Invalid signature', Response::HTTP_BAD_REQUEST);
         }
 
-        // Handle the event types you care about
         switch ($event->type) {
             case 'checkout.session.completed':
                 Log::info('Checkout session completed.', ['data' => $event->data->object]);
                 break;
+
             case 'invoice.payment_failed':
                 Log::info('Invoice payment failed.', ['data' => $event->data->object]);
                 break;
+
             case 'customer.subscription.created':
                 Log::info('Subscription created.', ['data' => $event->data->object]);
                 break;
-            // Add more cases as needed
+
+            case 'customer.subscription.deleted':
+                $subscription = $event->data->object;
+
+                if ($subscription->cancel_at_period_end !== true) {
+                    break;
+                }
+
+                $scheduledDowngrade = $subscription->metadata->scheduled_downgrade_price_id ?? null;
+                if (!$scheduledDowngrade) {
+                    break;
+                }
+
+                $customerId = $subscription->customer;
+                $user = \App\Models\User::whereHas('company', function ($query) use ($customerId) {
+                    $query->where('stripe_id', $customerId);
+                })->first();
+
+                if ($user) {
+                    $company = $user->company;
+                    $company->newSubscription('default', $scheduledDowngrade)->create();
+                    Log::info('Scheduled downgrade completed for company ' . $company->id);
+                } else {
+                    Log::warning("Could not find user for scheduled downgrade. Stripe customer ID: $customerId");
+                }
+                break;
+
             default:
                 Log::info('Unhandled event type: ' . $event->type);
         }

@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('appointments:extend-recurring')->dailyAt('01:00');
         $schedule->command('appointments:send-reminders')->dailyAt('08:00');
         $schedule->command('companies:deactivate-expired')->daily();
+        $schedule->command('subscriptions:send-renewal-reminders')->dailyAt('06:00');
     }
 
     /**
