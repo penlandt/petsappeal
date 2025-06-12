@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-client-guest-layout>
     <div class="max-w-xl mx-auto text-center mt-10">
         <img src="{{ asset('storage/company-assets/company_' . $company->id . '_logo.png') }}"
              alt="{{ $company->name }} Logo"
@@ -19,4 +19,4 @@
             </a>
         </div>
     </div>
-</x-guest-layout>
+</x-client-guest-layout>

@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-client-guest-layout>
     <div class="max-w-md mx-auto mt-10 bg-white dark:bg-gray-800 p-8 rounded shadow">
         <div class="text-center mb-6">
             <img src="{{ asset('storage/company-assets/company_' . $company->id . '_logo.png') }}"
@@ -53,4 +53,4 @@
             });
         });
     </script>
-</x-guest-layout>
+</x-client-guest-layout>
