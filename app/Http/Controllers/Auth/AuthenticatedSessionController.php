@@ -28,37 +28,45 @@ class AuthenticatedSessionController extends Controller
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(LoginRequest $request)
-    {
-        $request->validate([
-            'recaptcha_token' => ['required', 'string'],
-        ]);
+{
+    $request->validate([
+        'recaptcha_token' => ['required', 'string'],
+    ]);
 
-        // reCAPTCHA v3 verification
-        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret'   => config('services.recaptcha.secret_key'),
-            'response' => $request->recaptcha_token,
-            'remoteip' => $request->ip(),
-        ]);
+    // reCAPTCHA v3 verification
+    $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+        'secret'   => config('services.recaptcha.secret_key'),
+        'response' => $request->recaptcha_token,
+        'remoteip' => $request->ip(),
+    ]);
 
-        $result = $response->json();
+    $result = $response->json();
 
-        if (
-            !$result['success'] ||
-            !isset($result['score']) ||
-            $result['score'] < 0.3 ||
-            $result['action'] !== 'login'
-        ) {
-            return back()->withErrors([
-                'recaptcha' => 'reCAPTCHA verification failed. Please try again.',
-            ])->withInput();
-        }
-
-        $request->authenticate();
-
-        $request->session()->regenerate();
-
-        return redirect()->intended(RouteServiceProvider::HOME);
+    if (
+        !$result['success'] ||
+        !isset($result['score']) ||
+        $result['score'] < 0.3 ||
+        $result['action'] !== 'login'
+    ) {
+        return back()->withErrors([
+            'recaptcha' => 'reCAPTCHA verification failed. Please try again.',
+        ])->withInput();
     }
+
+    $request->authenticate();
+    $request->session()->regenerate();
+
+    // Check onboarding status
+    $user = Auth::user();
+    $company = $user->company;
+
+    if (!$company || $company->locations()->count() === 0 || $company->staff()->count() === 0 || $company->services()->count() === 0) {
+        return redirect()->route('onboarding.index');
+    }
+
+    return redirect()->intended(RouteServiceProvider::HOME);
+}
+
 
     /**
      * Destroy an authenticated session.

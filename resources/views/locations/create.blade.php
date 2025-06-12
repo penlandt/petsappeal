@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
-            Add New Location
+            Step 2 of 4: Add Your First Location
         </h2>
     </x-slot>
 
     <div class="py-6 max-w-4xl mx-auto">
         <div class="bg-white dark:bg-gray-800 shadow p-6 rounded-lg">
-            <form method="POST" action="{{ route('locations.store') }}">
+        <form method="POST" action="{{ session('onboarding') ? route('onboarding.locations.store') : route('locations.store') }}">
                 @csrf
 
                 @if ($errors->any())
@@ -128,10 +128,8 @@
                     </label>
                     <input type="number" step="0.01" min="0" max="100" name="boarding_chg_per_addl_occpt" id="boarding_chg_per_addl_occpt"
                         class="mt-1 block w-full border-gray-300 dark:border-gray-600 bg-white text-black dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        value="{{ old('boarding_chg_per_addl_occpt', isset($location) ? $location->boarding_chg_per_addl_occpt : '') }}">
+                        value="{{ old('boarding_chg_per_addl_occpt') }}">
                 </div>
-
-
 
                 <div class="mb-6 flex items-center">
                     <input type="checkbox" name="inactive" id="inactive"
@@ -142,7 +140,7 @@
                 <div>
                     <button type="submit"
                         class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Create Location
+                        Save & Continue
                     </button>
                 </div>
             </form>

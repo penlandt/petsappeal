@@ -24,6 +24,7 @@ class Company extends Model
         'stripe_id',
         'pm_type',
         'pm_last_four',
+        'onboarding_complete', // ✅ Added
     ];
 
     protected $casts = [
@@ -68,5 +69,10 @@ class Company extends Model
     public function settings()
     {
         return $this->hasOne(CompanySetting::class);
+    }
+
+    public function staff()
+    {
+        return $this->hasMany(\App\Models\Staff::class);
     }
 }

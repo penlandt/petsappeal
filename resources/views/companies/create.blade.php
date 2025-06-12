@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Create Your Company
+            Step 1 of 4: Create Your Company
         </h2>
     </x-slot>
 
@@ -18,7 +18,7 @@
 
                 <!-- Slug -->
                 <div class="mt-4">
-                <label for="slug" class="block font-medium text-sm text-gray-700 dark:text-gray-200">Company Slug</label>
+                    <label for="slug" class="block font-medium text-sm text-gray-700 dark:text-gray-200">Company Slug</label>
                     <input id="slug" name="slug" type="text" value="{{ old('slug') }}" required autofocus
                         class="block mt-1 w-full rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                     @error('slug')
@@ -53,7 +53,7 @@
 
                 <div class="pt-6 text-right">
                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                        Create Company
+                        Save & Continue
                     </button>
                 </div>
             </form>

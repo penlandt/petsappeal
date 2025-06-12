@@ -52,7 +52,7 @@ class CompanyController extends Controller
 
         auth()->setUser($user->fresh());
 
-        return redirect()->route('dashboard')->with('success', 'Company created successfully with a 15-day free trial.');
+        return redirect()->route('onboarding.index')->with('success', 'Company created successfully with a 15-day free trial.');
     } catch (\Exception $e) {
         \Log::error('Company creation failed', ['error' => $e->getMessage()]);
         return redirect()->back()->withErrors('Failed to create company. Please try again.')->withInput();

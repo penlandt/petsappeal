@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
-            Add Staff Member
+            Step 3 of 4: Add Your First Staff Member
         </h2>
     </x-slot>
 
     <div class="py-12 max-w-4xl mx-auto">
         <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <form method="POST" action="{{ route('staff.store') }}" class="space-y-6">
+        <form method="POST" action="{{ session('onboarding') ? route('onboarding.staff.store') : route('staff.store') }}">
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -146,7 +146,7 @@
 
                 <div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                        Save Staff Member
+                        Save & Continue
                     </button>
                 </div>
             </form>

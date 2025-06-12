@@ -34,6 +34,9 @@ use App\Http\Controllers\AppointmentApprovalController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\ServiceController;
 
 
 /*
@@ -41,6 +44,19 @@ use App\Http\Controllers\BillingController;
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+Route::middleware(['auth'])->prefix('onboarding')->name('onboarding.')->group(function () {
+    Route::get('/', [OnboardingController::class, 'index'])->name('index');
+
+    // These routes alias onboarding steps to existing controller methods
+    Route::get('/step/company', [CompanyController::class, 'create'])->name('step.company');
+    Route::get('/step/location', [LocationController::class, 'create'])->name('step.location');
+    Route::get('/step/staff', [StaffController::class, 'create'])->name('step.staff');
+    Route::get('/step/service', [ServiceController::class, 'create'])->name('step.service');
+    Route::post('/locations', [LocationController::class, 'store'])->name('locations.store');
+    Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+    Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
+});
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'has.company'])
@@ -67,7 +83,7 @@ Route::view('/terms', 'terms')->name('terms');
 Route::view('/privacy', 'privacy')->name('privacy');
 
 // All other routes require login and a company
-Route::middleware(['auth', 'has.company', 'check.company.access'])->group(function () {
+Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.access'])->group(function () {
     // 💳 Stripe Billing
     Route::get('/billing/plans', [\App\Http\Controllers\BillingController::class, 'showPlans'])->name('billing.plans');
     Route::post('/billing/checkout', [\App\Http\Controllers\BillingController::class, 'checkout'])->name('billing.checkout');

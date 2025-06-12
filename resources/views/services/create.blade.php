@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
-            Add New Service
+            Step 4 of 4: Add Your First Service
         </h2>
     </x-slot>
 
     <div class="py-12 max-w-3xl mx-auto">
         <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <form method="POST" action="{{ route('services.store') }}">
+        <form method="POST" action="{{ session('onboarding') ? route('onboarding.services.store') : route('services.store') }}">
                 @csrf
 
                 <div class="mb-4">
@@ -43,7 +43,7 @@
                 <div class="flex justify-end">
                     <button type="submit"
                         class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                        Save Service
+                        Save & Finish
                     </button>
                 </div>
             </form>

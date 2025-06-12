@@ -8,9 +8,6 @@ use App\Models\Service;
 
 class ServiceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -36,52 +33,39 @@ class ServiceController extends Controller
         return view('services.index', compact('services', 'showInactive'));
     }
 
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('services.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'duration' => 'required|integer|min:1',
-        'price' => 'required|numeric|min:0',
-    ]);
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'duration' => 'required|integer|min:1',
+            'price' => 'required|numeric|min:0',
+        ]);
 
-    $validated['company_id'] = auth()->user()->company_id;
+        $validated['company_id'] = auth()->user()->company_id;
 
-    $service = \App\Models\Service::create($validated);
+        $service = Service::create($validated);
 
-    // If the request expects JSON (AJAX from modal), return the new service
-    if ($request->expectsJson()) {
-        return response()->json($service);
+        if ($request->expectsJson()) {
+            return response()->json($service);
+        }
+
+        if (session('onboarding')) {
+            return redirect()->route('onboarding.index');
+        }
+
+        return redirect()->route('services.index')->with('success', 'Service created successfully!');
     }
 
-    // Otherwise (normal form), redirect as usual
-    return redirect()->route('services.index')
-                     ->with('success', 'Service created successfully!');
-}
-
-
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit($id)
     {
         $user = auth()->user();
@@ -92,9 +76,6 @@ class ServiceController extends Controller
         return view('services.edit', compact('service'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
         $user = auth()->user();
@@ -117,9 +98,6 @@ class ServiceController extends Controller
         return redirect()->route('services.index')->with('success', 'Service updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         //

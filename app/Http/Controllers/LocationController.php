@@ -27,35 +27,42 @@ class LocationController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $data = $request->all();
+{
+    $data = $request->all();
 
-        $data['inactive'] = $request->has('inactive');
-        $data['company_id'] = auth()->user()->company->id;
+    $data['inactive'] = $request->has('inactive');
+    $data['company_id'] = auth()->user()->company->id;
 
-        $validated = validator($data, [
-            'name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|size:2',
-            'postal_code' => 'required|string|max:20',
-            'timezone' => 'required|string|timezone',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'product_tax_rate' => 'nullable|numeric|min:0|max:100',
-            'service_tax_rate' => 'nullable|numeric|min:0|max:100',
-            'boarding_check_in_time' => 'nullable',
-            'boarding_check_out_time' => 'nullable',
-            'boarding_chg_per_addl_occpt' => 'nullable|numeric|min:0|max:100',
-            'inactive' => 'boolean',
-            'company_id' => 'required|exists:companies,id',
-        ])->validate();
-        
+    $validator = validator($data, [
+        'name' => 'required|string|max:255',
+        'address' => 'required|string|max:255',
+        'city' => 'required|string|max:100',
+        'state' => 'required|string|size:2',
+        'postal_code' => 'required|string|max:20',
+        'timezone' => 'required|string|timezone',
+        'phone' => 'nullable|string|max:50',
+        'email' => 'nullable|email|max:255',
+        'product_tax_rate' => 'nullable|numeric|min:0|max:100',
+        'service_tax_rate' => 'nullable|numeric|min:0|max:100',
+        'boarding_check_in_time' => 'nullable',
+        'boarding_check_out_time' => 'nullable',
+        'boarding_chg_per_addl_occpt' => 'nullable|numeric|min:0|max:100',
+        'inactive' => 'boolean',
+        'company_id' => 'required|exists:companies,id',
+    ]);
 
-        Location::create($validated);
-
-        return redirect()->route('locations.index')->with('success', 'Location created successfully.');
+    if ($validator->fails()) {
+        \Log::debug('Location validation failed', $validator->errors()->toArray());
+        return redirect()->back()->withErrors($validator)->withInput();
     }
+
+    Location::create($validator->validated());
+
+    $redirectRoute = session('onboarding', false) ? 'onboarding.index' : 'locations.index';
+
+    return redirect()->route($redirectRoute)->with('success', 'Location created successfully.');
+}
+
 
     public function edit(Location $location)
     {
