@@ -16,6 +16,9 @@ class Payment extends Model
         'method',
         'amount',
         'reference_number',
+        'stripe_payment_intent_id',
+        'stripe_charge_id',
+        'stripe_status',
     ];
 
     public function sale()

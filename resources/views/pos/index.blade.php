@@ -29,7 +29,7 @@
                         Select Client (optional)
                     </label>
                     <div class="flex items-center space-x-2">
-                        <select id="client_id" name="client_id" class="tom-select w-full" autocomplete="off" required placeholder="Select a client (optional)">
+                        <select id="client_id" name="client_id" class="tom-select w-full" autocomplete="off" placeholder="Select a client (optional)">
 
                             <!-- Options will be populated dynamically -->
                         </select>
@@ -131,7 +131,7 @@
 
         {{-- Stripe Card Element (only if location has connected Stripe account) --}}
         @if (!empty($location?->stripe_account_id))
-            <div id="stripe-card-section" class="my-4 p-4 border rounded bg-white dark:bg-gray-700 dark:text-white">
+            <div id="stripe-card-section" style="display: none;" class="my-4 p-4 border rounded bg-white dark:bg-gray-700 dark:text-white">
                 <label for="card-element" class="block text-sm font-medium mb-2">
                     Credit Card
                 </label>
@@ -255,7 +255,6 @@ window.addToCart = function(productId, name, price) {
     const quantity = parseFloat(qtyInput.value) || 1;
     const isTaxable = arguments.length > 3 ? arguments[3] : false;
 
-
     const itemKey = `product-${productId}`;
     console.log("🛒 Adding to cart:", { itemKey, productId, name, price, quantity });
 
@@ -281,8 +280,10 @@ window.addToCart = function(productId, name, price) {
     if (searchInput) {
         searchInput.value = '';
         searchInput.dispatchEvent(new Event('input'));
+        searchInput.focus(); // ✅ This line sets the focus back
     }
 };
+
 
 window.removeFromCart = function(index) {
     cart.splice(index, 1);
@@ -430,6 +431,14 @@ function checkoutCart() {
     document.getElementById('paymentModal').style.display = 'flex';
 }
 
+function toggleStripeCardSection() {
+    const usingCredit = paymentEntries.some(entry => entry.method === 'Credit');
+    const cardSection = document.getElementById('stripe-card-section');
+    if (cardSection) {
+        cardSection.style.display = usingCredit ? 'block' : 'none';
+    }
+}
+
 function renderPaymentEntries() {
 
 const container = document.getElementById('payment-entries');
@@ -492,6 +501,7 @@ if (balance < 0) {
 } else {
     remainingBalanceElement.textContent = `No Remaining Balance or Change Owed`;
 }
+toggleStripeCardSection();
 }
 
 
@@ -516,15 +526,18 @@ function closePaymentModal() {
 function addPaymentEntry() {
     paymentEntries.push({ method: 'Cash', amount: 0.00, reference_number: '' });
     renderPaymentEntries();
+    toggleStripeCardSection(); 
 }
 
 function removePaymentEntry(index) {
     paymentEntries.splice(index, 1);
     renderPaymentEntries();
+    toggleStripeCardSection();
 }
 
 function updatePaymentMethod(index, value) {
     paymentEntries[index].method = value;
+    toggleStripeCardSection();
 }
 
 function updatePaymentAmount(index, value) {
@@ -544,11 +557,6 @@ async function submitPayments() {
     }
 
     const clientId = clientSelect?.getValue?.() || document.getElementById('client_id')?.value || null;
-
-    if (!clientId) {
-        alert("Please select a client.");
-        return;
-    }
 
     const totalDue = parseFloat(document.getElementById('total').textContent.replace('$', ''));
     const totalPaid = paymentEntries.reduce((sum, p) => sum + p.amount, 0);
@@ -572,8 +580,10 @@ async function submitPayments() {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
-                    amount: creditPayment.amount
+                    amount: creditPayment.amount,
+                    stripe_account_id: "{{ $location?->stripe_account_id }}"
                 })
+
             });
 
             const intentData = await intentResponse.json();
@@ -722,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 
-async function searchProducts(query) {
+window.searchProducts = async function(query) {
     if (!query) {
         productList.innerHTML = '';
         return;
@@ -796,16 +806,24 @@ document.getElementById('addProductForm')?.addEventListener('submit', async func
         });
 
         const result = await response.json();
-        if (result.success) {
+        console.log('🧪 Product response:', result); // ✅ log it regardless of success
+
+        if (result.success && result.product) {
             alert('Product added successfully!');
             closeAddProductModal();
-            document.getElementById('product-search').value = data.name;
-            searchProducts(data.name);
+
+            const searchInput = document.getElementById('product-search');
+            if (searchInput) {
+                searchInput.value = result.product.name;
+                searchInput.focus();
+                searchProducts(result.product.name);
+            }
         } else {
             alert('Failed to add product.');
         }
+
     } catch (err) {
-        console.error(err);
+        console.error('🔥 Error during product creation:', err.message, err.stack);
         alert('An error occurred.');
     }
 });
@@ -1019,7 +1037,9 @@ document.getElementById('client_id').addEventListener('change', async function (
     <script src="https://js.stripe.com/v3/"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
-            const stripe = Stripe("{{ config('services.stripe.key') }}");
+            const stripe = Stripe("{{ config('services.stripe.key') }}", {
+                stripeAccount: "{{ $location?->stripe_account_id }}"
+            });
             const elements = stripe.elements();
 
 const card = elements.create('card', {

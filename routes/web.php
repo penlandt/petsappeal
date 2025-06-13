@@ -83,6 +83,11 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 Route::view('/terms', 'terms')->name('terms');
 Route::view('/privacy', 'privacy')->name('privacy');
 
+Route::get('/pos/test-route', function () {
+    return 'Test route works!';
+});
+
+
 // All other routes require login and a company
 Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.access'])->group(function () {
     // 💳 Stripe Billing
@@ -98,7 +103,8 @@ Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.
         return redirect()->route('billing.plans', ['cancelled' => '1']);
     })->name('billing.cancel');
 
-    Route::resource('companies', CompanyController::class)->except(['create', 'store']);
+    Route::resource('companies', CompanyController::class)->except(['create', 'store', 'update']);
+
     
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
     Route::post('/clients/ajax-store', [\App\Http\Controllers\ClientController::class, 'ajaxStore'])->name('clients.ajax-store');
@@ -239,6 +245,9 @@ Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.
     ->middleware(['auth']);
     Route::get('/pos/returns/{return}/receipt', [\App\Http\Controllers\POS\ReturnsReceiptController::class, 'show'])->name('pos.returns.receipt');
     Route::get('/pos/reports/end-of-day', [\App\Http\Controllers\POS\ReportsController::class, 'endOfDay'])->name('pos.reports.end_of_day');
+    Route::post('/pos/refund', [App\Http\Controllers\POS\POSController::class, 'refundPayment'])->name('pos.refund');
+    Route::get('/pos/test-anon-sales', [App\Http\Controllers\POS\ReturnsController::class, 'getAnonymousSales'])->name('pos.test.anonymous');
+
 });
 
     // Settings Management (FIXED: now inside auth+has.company group)
