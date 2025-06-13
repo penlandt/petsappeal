@@ -28,7 +28,6 @@
                 <a href="{{ route('public.home') }}" class="hover:underline text-gray-700 dark:text-gray-300">Home</a>
                 <a href="{{ route('public.about') }}" class="hover:underline text-gray-700 dark:text-gray-300">About</a>
                 <a href="{{ route('public.pricing') }}" class="hover:underline text-gray-700 dark:text-gray-300">Pricing</a>
-                <a href="{{ route('public.contact') }}" class="hover:underline text-gray-700 dark:text-gray-300">Contact</a>
             </div>
         </div>
 
@@ -54,6 +53,7 @@
             <a href="{{ route('privacy') }}" class="hover:underline">
                 Privacy Policy
             </a>
+            <a href="{{ route('public.contact') }}" class="hover:underline">Contact</a>
         </div>
         <div>
             &copy; {{ date('Y') }} PETSAppeal. All rights reserved.

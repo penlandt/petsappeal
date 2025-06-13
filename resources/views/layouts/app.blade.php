@@ -84,6 +84,7 @@
         <div class="space-x-4">
             <a href="{{ route('terms') }}" class="hover:underline">Terms of Service</a>
             <a href="{{ route('privacy') }}" class="hover:underline">Privacy Policy</a>
+            <a href="{{ route('public.contact') }}" class="hover:underline">Contact</a>
         </div>
         <div>
             &copy; {{ date('Y') }} PETSAppeal. All rights reserved.

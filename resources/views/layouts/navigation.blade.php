@@ -31,7 +31,6 @@
                                 <x-dropdown-link :href="route('services.index')">Services</x-dropdown-link>
                                 <x-dropdown-link :href="route('locations.index')">Locations</x-dropdown-link>
                                 <x-dropdown-link :href="route('staff.index')">Staff</x-dropdown-link>
-                                <x-dropdown-link :href="route('companies.loyalty-program.edit')">Loyalty Program</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -98,6 +97,8 @@
                             <x-slot name="content">
                                 <x-dropdown-link :href="route('settings.email.edit')">Email</x-dropdown-link>
                                 <x-dropdown-link :href="route('settings.email-templates.index')">Email Templates</x-dropdown-link>
+                                <x-dropdown-link :href="route('settings.stripe')">Stripe Settings</x-dropdown-link>
+                                <x-dropdown-link :href="route('companies.loyalty-program.edit')">Loyalty Program</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -221,7 +222,6 @@
                     <x-responsive-nav-link :href="route('services.index')">Services</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('locations.index')">Locations</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('staff.index')">Staff</x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('companies.loyalty-program.edit')">Loyalty Program</x-responsive-nav-link>
                 </div>
             </div>
 
@@ -259,6 +259,8 @@
                     <x-responsive-nav-link :href="route('settings.email-templates.index')" :active="request()->routeIs('settings.email-templates.*')">
                         Email Templates
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('settings.stripe')">Stripe Settings</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('companies.loyalty-program.edit')">Loyalty Program</x-responsive-nav-link>
                 </div>
             </div>
 

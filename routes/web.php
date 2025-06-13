@@ -247,7 +247,7 @@ Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.
         Route::post('email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('settings.email.update');
         Route::get('email/test', [\App\Http\Controllers\EmailTestController::class, 'send'])->name('settings.email.test');
     });
-    Route::get('settings/stripe', [StripeConnectController::class, 'index'])->name('stripe.settings');
+    Route::get('settings/stripe', [StripeConnectController::class, 'index'])->name('settings.stripe');
     Route::get('settings/stripe/connect', [StripeConnectController::class, 'redirectToStripe'])->name('stripe.connect');
     Route::get('settings/stripe/callback', [StripeConnectController::class, 'handleStripeCallback'])->name('stripe.callback');
 

@@ -12,7 +12,7 @@
 
         <form method="POST" action="{{ route('profile.update') }}" class="bg-white dark:bg-gray-800 shadow-sm rounded p-6">
             @csrf
-            @method('PUT')
+            @method('PATCH')
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>

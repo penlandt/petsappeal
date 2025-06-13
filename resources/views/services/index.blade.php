@@ -2,6 +2,17 @@
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
             Services
+            <span class="relative inline-block align-middle ml-2" x-data="{ show: false }">
+                <svg @mouseenter="show = true" @mouseleave="show = false"
+                    class="w-5 h-5 text-blue-500 cursor-pointer"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10c0 4.418-3.582 8-8 8s-8-3.582-8-8 3.582-8 8-8 8 3.582 8 8zm-9-1h2v5H9v-5zm0-4h2v2H9V5z" clip-rule="evenodd" />
+                </svg>
+                <div x-show="show" x-cloak
+                    class="absolute z-50 bg-gray-700 text-white text-sm rounded py-2 px-3 bottom-full mb-2 left-0 w-64 whitespace-normal shadow-lg">
+                    Services are what your business provides to customers — from simple nail trims to full grooming packages. Describe them in as much or as little detail as you like — PETSAppeal takes care of the rest!
+                </div>
+            </span>
         </h2>
     </x-slot>
 
