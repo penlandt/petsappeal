@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Location;
 use App\Models\StaffAvailability;
+use App\Models\User;
 
 class Staff extends Model
 {
@@ -13,6 +14,8 @@ class Staff extends Model
 
     protected $fillable = [
         'location_id',
+        'company_id',
+        'user_id',
         'type',
         'first_name',
         'last_name',
@@ -30,7 +33,7 @@ class Staff extends Model
 
     public function availabilities()
     {
-        return $this->hasMany(\App\Models\StaffAvailability::class);
+        return $this->hasMany(StaffAvailability::class);
     }
 
     public function availabilityExceptions()
@@ -49,8 +52,12 @@ class Staff extends Model
     }
 
     public function company()
-{
-    return $this->belongsTo(Company::class);
-}
+    {
+        return $this->belongsTo(Company::class);
+    }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

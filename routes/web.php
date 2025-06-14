@@ -38,6 +38,8 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StripeConnectController;
+use App\Http\Controllers\CompanyUserInviteController;
+
 
 
 /*
@@ -110,6 +112,9 @@ Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.
 
 
     Route::resource('companies', CompanyController::class)->except(['create', 'store', 'update']);
+    Route::get('/company/invite-user', [CompanyUserInviteController::class, 'create'])->name('company.invite-user.create');
+    Route::post('/company/invite-user', [CompanyUserInviteController::class, 'store'])->name('company.invite-user.store');
+
 
     
     Route::resource('clients', \App\Http\Controllers\ClientController::class);

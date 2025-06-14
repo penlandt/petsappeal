@@ -29,7 +29,7 @@ class CompanyMailer
         return (new static())->mailer->send($mailable);
     }
 
-    protected function applyCompanySmtpSettings(): void
+    public function applyCompanySmtpSettings(): void
     {
         if (!app()->environment('production')) {
             return;

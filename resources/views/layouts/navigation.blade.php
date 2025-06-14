@@ -76,6 +76,7 @@
                             </x-slot>
                             <x-slot name="content">
                                 <x-dropdown-link :href="route('import_export.index')">Import / Export</x-dropdown-link>
+                                <x-dropdown-link :href="route('company.invite-user.create')">Assign Delegate</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -245,6 +246,7 @@
                 </button>
                 <div x-show="openTools" class="pl-6 space-y-1">
                     <x-responsive-nav-link :href="route('import_export.index')">Import / Export</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('company.invite-user.create')">Assign Delegate</x-responsive-nav-link>
                 </div>
             </div>
 
