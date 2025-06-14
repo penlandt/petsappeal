@@ -1,10 +1,4 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Welcome to PETSAppeal
-        </h2>
-    </x-slot>
-
+<x-guest-layout>
     @if (session('error'))
         <div class="mb-4 bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded shadow-sm">
             {{ session('error') }}
@@ -21,14 +15,14 @@
                 <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">
                     PETSAppeal helps you manage appointments, clients, pets, POS, boarding, and staff — all in one beautiful and easy-to-use system.
                 </p>
-                <div class="flex flex-wrap gap-4">
-                    <a href="{{ route('register') }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg">
+                <div class="flex flex-wrap md:flex-nowrap gap-4 min-w-0">
+                    <a href="{{ route('register') }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg w-auto shrink-0">
                         Start Free Trial
                     </a>
-                    <a href="{{ route('public.about') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                    <a href="{{ route('public.about') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg w-auto shrink-0">
                         Learn More
                     </a>
-                    <a href="{{ route('public.pricing') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg">
+                    <a href="{{ route('public.pricing') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg w-auto shrink-0">
                         View Pricing
                     </a>
                 </div>
@@ -67,9 +61,9 @@
             <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">
                 Start your free trial today and see why groomers love PETSAppeal.
             </p>
-            <a href="{{ route('register') }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg">
+            <a href="{{ route('register') }}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">
                 Get Started Free
             </a>
         </div>
     </div>
-</x-app-layout>
+</x-guest-layout>

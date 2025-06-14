@@ -23,7 +23,7 @@
                 </svg>
             </button>
 
-            <!-- Links (hidden on small screens) -->
+            <!-- Desktop Links -->
             <div class="hidden sm:flex space-x-4 items-center">
                 <a href="{{ route('public.home') }}" class="hover:underline text-gray-700 dark:text-gray-300">Home</a>
                 <a href="{{ route('public.about') }}" class="hover:underline text-gray-700 dark:text-gray-300">About</a>
@@ -40,10 +40,9 @@
             <a href="{{ route('public.home') }}" class="block py-2 text-gray-700 dark:text-gray-300">Home</a>
             <a href="{{ route('public.about') }}" class="block py-2 text-gray-700 dark:text-gray-300">About</a>
             <a href="{{ route('public.pricing') }}" class="block py-2 text-gray-700 dark:text-gray-300">Pricing</a>
-            <a href="{{ route('public.contact') }}" class="block py-2 text-gray-700 dark:text-gray-300">Contact</a>
-
             @guest
                 <a href="{{ route('login') }}" class="block py-2 text-blue-600 dark:text-blue-400">Login</a>
+                <a href="{{ route('register') }}" class="block py-2 text-blue-600 dark:text-blue-400">Register</a>
             @endguest
         </div>
     </nav>
