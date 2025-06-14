@@ -102,6 +102,12 @@ Route::middleware(['auth', 'onboarding.complete', 'has.company', 'check.company.
     Route::get('/billing/cancel', function () {
         return redirect()->route('billing.plans', ['cancelled' => '1']);
     })->name('billing.cancel');
+    Route::post('/billing/update-subscription', [App\Http\Controllers\BillingController::class, 'updateSubscription'])
+    ->middleware(['auth'])
+    ->name('billing.update-subscription');
+    Route::post('/billing/update-subscription', [\App\Http\Controllers\BillingController::class, 'updateSubscription'])->name('billing.update-subscription');
+    Route::post('/billing/downgrade-subscription', [BillingController::class, 'downgradeSubscription'])->name('billing.downgrade-subscription');
+
 
     Route::resource('companies', CompanyController::class)->except(['create', 'store', 'update']);
 

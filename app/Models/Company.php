@@ -75,4 +75,9 @@ class Company extends Model
     {
         return $this->hasMany(\App\Models\Staff::class);
     }
+
+    public function subscribedModules()
+    {
+        return $this->hasMany(\App\Models\CompanySubscribedModule::class);
+    }
 }

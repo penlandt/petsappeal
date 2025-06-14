@@ -23,7 +23,6 @@
                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition">
                         Choose a Subscription Plan
                     </a>
-
                 @elseif ($subscription && $subscription->valid())
                     <div class="space-y-2">
                         <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -53,7 +52,7 @@
                     </div>
 
                     {{-- Cancel Subscription Button --}}
-                    <div class="mt-6">
+                    <div class="mt-6 space-y-4">
                         <form method="POST" action="{{ route('billing.cancel-subscription') }}"
                               onsubmit="return confirm('Are you sure you want to cancel your subscription?');">
                             @csrf
@@ -62,7 +61,28 @@
                                 Cancel Subscription
                             </button>
                         </form>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+
+                        @php
+                            $supportPriceIds = [
+                                config('services.stripe.support.chat.monthly'),
+                                config('services.stripe.support.chat.annual'),
+                                config('services.stripe.support.phone.monthly'),
+                                config('services.stripe.support.phone.annual'),
+                            ];
+                        @endphp
+
+                        @if (!empty($subscription->stripe_price) && collect(json_decode($subscription->stripe_price))->intersect($supportPriceIds)->isNotEmpty())
+                            <form method="POST" action="{{ route('billing.downgrade-subscription') }}"
+                                  onsubmit="return confirm('This will remove support from your subscription. Continue?');">
+                                @csrf
+                                <button type="submit"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded transition">
+                                    Downgrade (Remove Support)
+                                </button>
+                            </form>
+                        @endif
+
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
                             Canceling will stop renewal at the end of your billing cycle. You will retain full access until then.
                             <strong>No refunds will be issued.</strong>
                         </p>

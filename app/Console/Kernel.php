@@ -15,7 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
  //       \App\Console\Commands\ResendClientUserWelcome::class,
          \App\Console\Commands\DeactivateExpiredCompanies::class,
-
+         \App\Console\Commands\RevokeExpiredTrials::class,
     ];
 
     /**
@@ -31,6 +31,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('appointments:send-reminders')->dailyAt('08:00');
         $schedule->command('companies:deactivate-expired')->daily();
         $schedule->command('subscriptions:send-renewal-reminders')->dailyAt('06:00');
+        $schedule->command('app:revoke-expired-trials')->dailyAt('02:00');
     }
 
     /**
